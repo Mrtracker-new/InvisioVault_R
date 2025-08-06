@@ -50,22 +50,9 @@ def setup_application():
     if icon_path.exists():
         app.setWindowIcon(QIcon(str(icon_path)))
     
-    # Enable high DPI scaling (with compatibility check)
-    try:
-        app.setAttribute(Qt.ApplicationAttribute.AA_EnableHighDpiScaling, True)
-    except AttributeError:
-        try:
-            app.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-        except AttributeError:
-            pass  # Attribute may not exist in newer Qt versions
-    
-    try:
-        app.setAttribute(Qt.ApplicationAttribute.AA_UseHighDpiPixmaps, True)
-    except AttributeError:
-        try:
-            app.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-        except AttributeError:
-            pass  # Attribute may not exist in newer Qt versions
+    # Note: High DPI scaling is automatically enabled in Qt6/PySide6
+    # The AA_EnableHighDpiScaling and AA_UseHighDpiPixmaps attributes are deprecated
+    # and no longer needed as high DPI support is built-in
     
     return app, logger, config, error_handler
 

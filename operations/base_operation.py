@@ -35,14 +35,14 @@ class OperationType(Enum):
 class BaseOperation(ABC):
     """Abstract base class for all steganography operations."""
     
-    def __init__(self, operation_type: OperationType, operation_id: Optional[str] = None):
+    def __init__(self, operation_id: Optional[str] = None):
         """Initialize base operation.
         
         Args:
             operation_type: Type of operation
             operation_id: Unique operation identifier
         """
-        self.operation_type = operation_type
+        self.operation_type = OperationType.EXTRACT  # Default, should be overridden by subclasses
         self.operation_id = operation_id or self._generate_operation_id()
         self.status = OperationStatus.PENDING
         self.created_at = datetime.now()

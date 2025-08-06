@@ -15,7 +15,7 @@ from core.file_manager import FileManager
 from utils.file_utils import FileUtils, CompressionType
 from utils.config_manager import ConfigManager
 from utils.logger import Logger
-from utils.error_handler import ErrorHandler, ValidationError, OperationError
+from utils.error_handler import ErrorHandler, UserInputError, InvisioVaultError
 
 
 class ExtractOperation(BaseOperation):
@@ -97,20 +97,18 @@ class ExtractOperation(BaseOperation):
         try:
             # Validate steganographic image
             if not self.steganographic_image_path or not self.steganographic_image_path.exists():
-                raise ValidationError(
-                    "Steganographic image not found", 
-                    file_path=str(self.steganographic_image_path)
+                raise UserInputError(
+                    "Steganographic image not found"
                 )
             
             if not self.file_manager.validate_image_file(self.steganographic_image_path):
-                raise ValidationError(
-                    "Invalid steganographic image format", 
-                    file_path=str(self.steganographic_image_path)
+                raise UserInputError(
+                    "Invalid steganographic image format"
                 )
             
             # Validate output directory
             if not self.output_directory:
-                raise ValidationError("Output directory not specified")
+                raise UserInputError("Output directory not specified")
             
             # Create output directory if it doesn't exist
             self.output_directory.mkdir(parents=True, exist_ok=True)
@@ -118,7 +116,7 @@ class ExtractOperation(BaseOperation):
             # Validate keyfile if two-factor is enabled
             if self.two_factor_enabled:
                 if not self.keyfile_path or not self.keyfile_path.exists():
-                    raise ValidationError("Keyfile required when two-factor authentication is enabled")
+                    raise UserInputError("Keyfile required when two-factor authentication is enabled")
             
             self.logger.info("Extract operation inputs validated successfully")
             return True
@@ -150,7 +148,7 @@ class ExtractOperation(BaseOperation):
             raw_payload = self.steg_engine.extract_data(self.steganographic_image_path)
             
             if not raw_payload:
-                raise OperationError("No hidden data found in image")
+                raise InvisioVaultError("No hidden data found in image")
             
             if progress_callback:
                 progress_callback(0.3)
@@ -173,7 +171,7 @@ class ExtractOperation(BaseOperation):
                 try:
                     payload_data = self.encryption_engine.decrypt_data(payload_data, self.encryption_key)
                 except Exception as e:
-                    raise OperationError(f"Decryption failed. Wrong password or corrupted data: {e}")
+                    raise InvisioVaultError(f"Decryption failed. Wrong password or corrupted data: {e}")
             
             if progress_callback:
                 progress_callback(0.6)
@@ -227,7 +225,7 @@ class ExtractOperation(BaseOperation):
             self.fail(str(e))
             self.logger.error(f"Extract operation failed: {e}")
             self.error_handler.handle_exception(e)
-            raise OperationError(f"Extract operation failed: {e}")
+            raise InvisioVaultError(f"Extract operation failed: {e}")
     
     def _handle_decoy_data(self, payload_data: bytes) -> bytes:
         """Handle decoy data detection and removal.
@@ -246,12 +244,12 @@ class ExtractOperation(BaseOperation):
                 
                 # Extract decoy length (4 bytes after marker)
                 if len(payload_data) < 9:  # 5 bytes marker + 4 bytes length
-                    raise OperationError("Invalid decoy data format")
+                    raise InvisioVaultError("Invalid decoy data format")
                 
                 decoy_length = int.from_bytes(payload_data[5:9], 'big')
                 
                 if len(payload_data) < 9 + decoy_length:
-                    raise OperationError("Incomplete decoy data")
+                    raise InvisioVaultError("Incomplete decoy data")
                 
                 # Extract decoy data
                 self.decoy_data = payload_data[9:9+decoy_length]
@@ -323,45 +321,45 @@ class ExtractOperation(BaseOperation):
             
             # Read file count (4 bytes)
             if len(payload_data) < 4:
-                raise OperationError("Invalid payload data: too short")
+                raise InvisioVaultError("Invalid payload data: too short")
             
             file_count = int.from_bytes(payload_data[offset:offset+4], 'big')
             offset += 4
             
             if file_count <= 0 or file_count > 1000:  # Sanity check
-                raise OperationError(f"Invalid file count: {file_count}")
+                raise InvisioVaultError(f"Invalid file count: {file_count}")
             
             self.logger.info(f"Extracting {file_count} files from payload")
             
             # Extract each file
             for i in range(file_count):
                 if offset >= len(payload_data):
-                    raise OperationError(f"Unexpected end of payload at file {i}")
+                    raise InvisioVaultError(f"Unexpected end of payload at file {i}")
                 
                 # Read file name length (4 bytes)
                 if offset + 4 > len(payload_data):
-                    raise OperationError(f"Cannot read filename length for file {i}")
+                    raise InvisioVaultError(f"Cannot read filename length for file {i}")
                 
                 name_length = int.from_bytes(payload_data[offset:offset+4], 'big')
                 offset += 4
                 
                 # Read file name
                 if offset + name_length > len(payload_data):
-                    raise OperationError(f"Cannot read filename for file {i}")
+                    raise InvisioVaultError(f"Cannot read filename for file {i}")
                 
                 file_name = payload_data[offset:offset+name_length].decode('utf-8')
                 offset += name_length
                 
                 # Read file data length (8 bytes)
                 if offset + 8 > len(payload_data):
-                    raise OperationError(f"Cannot read data length for file {i}: {file_name}")
+                    raise InvisioVaultError(f"Cannot read data length for file {i}: {file_name}")
                 
                 data_length = int.from_bytes(payload_data[offset:offset+8], 'big')
                 offset += 8
                 
                 # Read file data
                 if offset + data_length > len(payload_data):
-                    raise OperationError(f"Cannot read data for file {i}: {file_name}")
+                    raise InvisioVaultError(f"Cannot read data for file {i}: {file_name}")
                 
                 file_data = payload_data[offset:offset+data_length]
                 offset += data_length

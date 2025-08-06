@@ -126,8 +126,10 @@ class DecoyWorkerThread(QThread):
             else:
                 temp_image_path = Path(output_path)
             
-            # Hide data in image
-            seed = hash(dataset['password']) % (2**32)
+            # Hide data in image - use SHA-256 based seed generation
+            import hashlib
+            seed_hash = hashlib.sha256(dataset['password'].encode('utf-8')).digest()
+            seed = int.from_bytes(seed_hash[:4], byteorder='big') % (2**32)
             success = self.stego_engine.hide_data(
                 carrier_path if i == 0 else temp_image_path,
                 combined_data,
@@ -157,8 +159,10 @@ class DecoyWorkerThread(QThread):
         self.status_updated.emit("Extracting decoy data...")
         self.progress_updated.emit(20)
         
-        # Extract data using the provided password
-        seed = hash(password) % (2**32)
+        # Extract data using the provided password - use SHA-256 based seed generation
+        import hashlib
+        seed_hash = hashlib.sha256(password.encode('utf-8')).digest()
+        seed = int.from_bytes(seed_hash[:4], byteorder='big') % (2**32)
         combined_data = self.stego_engine.extract_data(
             stego_path, randomize=True, seed=seed
         )
