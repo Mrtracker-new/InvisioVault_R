@@ -101,7 +101,8 @@ class KeyfileWorkerThread(QThread):
         self.progress_updated.emit(80)
         
         # Hide encrypted data
-        seed = hash(combined_key) % (2**32)
+        seed_hash = hashlib.sha256(combined_key.encode('utf-8')).digest()
+        seed = int.from_bytes(seed_hash[:4], byteorder='big') % (2**32)
         success = self.stego_engine.hide_data(
             carrier_path, encrypted_data, output_path,
             randomize=True, seed=seed
@@ -135,8 +136,11 @@ class KeyfileWorkerThread(QThread):
         self.status_updated.emit("Extracting data from image...")
         self.progress_updated.emit(40)
         
-        # Extract encrypted data
-        encrypted_data = self.stego_engine.extract_data(stego_path, randomize=True)
+        # Extract encrypted data using the same seed generation method
+        seed_hash = hashlib.sha256(combined_key.encode('utf-8')).digest()
+        seed = int.from_bytes(seed_hash[:4], byteorder='big') % (2**32)
+        
+        encrypted_data = self.stego_engine.extract_data(stego_path, randomize=True, seed=seed)
         if not encrypted_data:
             raise Exception("No data found in image")
         

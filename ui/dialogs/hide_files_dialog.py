@@ -81,7 +81,13 @@ class HideWorkerThread(QThread):
             self.progress_updated.emit(70)
             
             # Hide encrypted data in the carrier image
-            seed = hash(self.password) % (2**32) if self.randomize else None
+            seed = None
+            if self.randomize:
+                # Generate deterministic seed from password for reproducible randomization
+                import hashlib
+                seed_hash = hashlib.sha256(self.password.encode('utf-8')).digest()
+                seed = int.from_bytes(seed_hash[:4], byteorder='big') % (2**32)
+            
             success = self.stego_engine.hide_data(
                 self.carrier_path, 
                 encrypted_data, 
@@ -374,7 +380,7 @@ class HideFilesDialog(QDialog):
     def check_ready_state(self):
         """Check if all requirements are met to enable hide button."""
         password_ok = len(self.password_input.text().strip()) >= 6
-        ready = (
+        ready = bool(
             self.carrier_image_path and 
             self.files_to_hide and 
             self.output_path and

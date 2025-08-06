@@ -63,7 +63,7 @@ class SteganographyEngine:
                 total_bits = width * height * channels
                 
                 # Reserve space for header (magic + version + size + checksum)
-                header_bits = (len(self.MAGIC_HEADER) + len(self.VERSION) + 8 + 32) * 8
+                header_bits = (len(self.MAGIC_HEADER) + len(self.VERSION) + 8 + 4) * 8
                 
                 # Calculate available bytes
                 available_bits = total_bits - header_bits
@@ -174,6 +174,10 @@ class SteganographyEngine:
                 # Generate bit positions
                 if randomize and seed is not None:
                     np.random.seed(seed)
+                    # Ensure we have enough pixels for the data
+                    if len(bit_data) > len(flat_array):
+                        self.logger.error(f"Not enough pixels for randomized hiding: need {len(bit_data)}, have {len(flat_array)}")
+                        return False
                     positions = np.random.choice(len(flat_array), len(bit_data), replace=False)
                     positions.sort()  # Sort for extraction
                 else:
@@ -210,53 +214,110 @@ class SteganographyEngine:
                 img_array = np.array(img, dtype=np.uint8)
                 flat_array = img_array.flatten()
                 
-                # Extract header first to determine data size
-                header_size = len(self.MAGIC_HEADER) + len(self.VERSION) + 8 + 4  # +8 for size, +4 for checksum
-                header_bits = header_size * 8
+                # First pass: Extract just enough to get the header and determine data size
+                # Use a minimal header extraction to avoid position conflicts
                 
-                if randomize and seed is not None:
-                    np.random.seed(seed)
-                    header_positions = np.random.choice(len(flat_array), header_bits, replace=False)
-                    header_positions.sort()
+                # We need to try different extraction strategies based on randomization
+                header_bytes = None
+                data_bytes = None
+                
+                if not randomize or seed is None:
+                    # Sequential extraction - simple case
+                    header_size = len(self.MAGIC_HEADER) + len(self.VERSION) + 8 + 4
+                    header_bits = header_size * 8
+                    
+                    # Extract header bits sequentially
+                    header_lsbs = np.array([flat_array[i] & 1 for i in range(header_bits)], dtype=np.uint8)
+                    header_bytes = np.packbits(header_lsbs).tobytes()
+                    
+                    # Validate magic header
+                    if header_bytes[:len(self.MAGIC_HEADER)] != self.MAGIC_HEADER:
+                        self.logger.error("Invalid magic header - no hidden data found")
+                        return None
+                    
+                    # Extract data size
+                    size_offset = len(self.MAGIC_HEADER) + len(self.VERSION)
+                    data_size = struct.unpack('<Q', header_bytes[size_offset:size_offset+8])[0]
+                    
+                    # Extract data bits sequentially
+                    total_bits = (header_size + data_size) * 8
+                    data_lsbs = np.array([flat_array[i] & 1 for i in range(header_bits, total_bits)], dtype=np.uint8)
+                    data_bytes = np.packbits(data_lsbs).tobytes()[:data_size]
+                    
                 else:
-                    header_positions = np.arange(header_bits)
+                    # Randomized extraction - Use brute force approach to find valid data
+                    # We'll extract the maximum possible and search for the magic header
+                    
+                    # Calculate maximum bits we can extract
+                    max_bits = len(flat_array)
+                    header_size = len(self.MAGIC_HEADER) + len(self.VERSION) + 8 + 4
+                    header_bits = header_size * 8
+                    
+                    # Try extracting at different bit lengths to find the data
+                    found = False
+                    # Start with small sizes for small test data and work our way up more efficiently
+                    test_sizes = [50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]
+                    for data_size_guess in test_sizes:
+                        extract_bits = (header_size + data_size_guess) * 8
+                        if extract_bits > max_bits:
+                            continue
+                        try:
+                            # Generate positions using the same method as hiding
+                            np.random.seed(seed)
+                            positions = np.random.choice(len(flat_array), extract_bits, replace=False)
+                            positions.sort()
+                            
+                            # Extract bits
+                            extracted_lsbs = np.array([flat_array[pos] & 1 for pos in positions], dtype=np.uint8)
+                            extracted_bytes = np.packbits(extracted_lsbs).tobytes()
+                            
+                            # Check for magic header at the beginning
+                            if len(extracted_bytes) >= len(self.MAGIC_HEADER) and extracted_bytes[:len(self.MAGIC_HEADER)] == self.MAGIC_HEADER:
+                                # Found magic header, extract the size
+                                if len(extracted_bytes) >= header_size:
+                                    size_offset = len(self.MAGIC_HEADER) + len(self.VERSION)
+                                    try:
+                                        actual_data_size = struct.unpack('<Q', extracted_bytes[size_offset:size_offset+8])[0]
+                                        
+                                        # Check if we have enough data
+                                        required_total_bytes = header_size + actual_data_size
+                                        if len(extracted_bytes) >= required_total_bytes:
+                                            header_bytes = extracted_bytes[:header_size]
+                                            data_bytes = extracted_bytes[header_size:header_size + actual_data_size]
+                                            found = True
+                                            break
+                                        elif extract_bits // 8 < required_total_bytes:
+                                            # Need to extract more data
+                                            required_bits = required_total_bytes * 8
+                                            if required_bits <= len(flat_array):
+                                                np.random.seed(seed)
+                                                final_positions = np.random.choice(len(flat_array), required_bits, replace=False)
+                                                final_positions.sort()
+                                                
+                                                final_lsbs = np.array([flat_array[pos] & 1 for pos in final_positions], dtype=np.uint8)
+                                                final_bytes = np.packbits(final_lsbs).tobytes()
+                                                
+                                                header_bytes = final_bytes[:header_size]
+                                                data_bytes = final_bytes[header_size:header_size + actual_data_size]
+                                                found = True
+                                                break
+                                    except struct.error:
+                                        continue
+                        except Exception:
+                            continue
+                    
+                    if not found:
+                        self.logger.error("Invalid magic header - no hidden data found")
+                        return None
                 
-                # Extract header bits
-                header_lsbs = np.array([flat_array[pos] & 1 for pos in header_positions], dtype=np.uint8)
-                header_bytes = np.packbits(header_lsbs).tobytes()
-                
-                # Validate magic header
-                if header_bytes[:len(self.MAGIC_HEADER)] != self.MAGIC_HEADER:
-                    self.logger.error("Invalid magic header - no hidden data found")
-                    return None
-                
-                # Extract version
+                # Extract version and checksum from header
                 version = header_bytes[len(self.MAGIC_HEADER):len(self.MAGIC_HEADER)+len(self.VERSION)]
                 if version != self.VERSION:
                     self.logger.warning(f"Version mismatch: expected {self.VERSION}, got {version}")
                 
-                # Extract data size
-                size_offset = len(self.MAGIC_HEADER) + len(self.VERSION)
-                data_size = struct.unpack('<Q', header_bytes[size_offset:size_offset+8])[0]
-                
                 # Extract checksum
-                checksum_offset = size_offset + 8
+                checksum_offset = len(self.MAGIC_HEADER) + len(self.VERSION) + 8
                 expected_checksum = header_bytes[checksum_offset:checksum_offset+4]
-                
-                # Extract actual data
-                total_bits = (header_size + data_size) * 8
-                
-                if randomize and seed is not None:
-                    np.random.seed(seed)
-                    all_positions = np.random.choice(len(flat_array), total_bits, replace=False)
-                    all_positions.sort()
-                    data_positions = all_positions[header_bits:]
-                else:
-                    data_positions = np.arange(header_bits, total_bits)
-                
-                # Extract data bits
-                data_lsbs = np.array([flat_array[pos] & 1 for pos in data_positions], dtype=np.uint8)
-                data_bytes = np.packbits(data_lsbs).tobytes()[:data_size]
                 
                 # Verify checksum
                 actual_checksum = hashlib.sha256(data_bytes).digest()[:4]

@@ -48,7 +48,13 @@ class ExtractWorkerThread(QThread):
             self.progress_updated.emit(10)
             
             # Extract encrypted data from the image
-            seed = hash(self.password) % (2**32) if self.randomize else None
+            seed = None
+            if self.randomize:
+                # Generate deterministic seed from password for reproducible randomization
+                import hashlib
+                seed_hash = hashlib.sha256(self.password.encode('utf-8')).digest()
+                seed = int.from_bytes(seed_hash[:4], byteorder='big') % (2**32)
+            
             encrypted_data = self.stego_engine.extract_data(
                 self.stego_path,
                 randomize=self.randomize,
