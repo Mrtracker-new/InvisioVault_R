@@ -314,33 +314,20 @@ class SteganographyEngine:
                     
                     # PHASE 2: If estimation failed, use MINIMAL high-confidence candidates
                     if header_bytes is None:
-                        # ULTRA-SLIM candidate list - only most likely sizes for speed
-                        # Focus on common encryption patterns with minimal overlap
+                        # MINIMAL candidate list - only absolutely essential sizes for maximum speed
+                        # This should ONLY be reached if Stage 1 instant detection failed
                         high_confidence_sizes = [
-                            # Critical small sizes
-                            160, 208, 256, 320, 448, 512, 640, 768, 896, 1024,
-                            # Key medium sizes 
-                            1072, 1168, 1264, 1360, 1456, 1504, 1552, 1600, 1648, 1696,
-                            2096, 2144, 2192, 2240, 2288, 2336, 2384, 2432, 2480, 2528,
-                            # Strategic large sizes (every ~1KB)
-                            3088, 4112, 5040, 6064, 7088, 8112, 9136, 10160,
-                            11184, 12208, 13232, 14256, 15280, 16304, 17328, 18352,
-                            19376, 20400, 21424, 22448, 23472, 24496, 25520, 26544,
-                            27568, 28592, 29616, 30640, 31664, 32688, 33712, 34736,
-                            35760, 36784, 37808, 38832, 39856, 40880, 41904, 42928,
-                            43952, 44976, 46000, 47024, 48048, 49072, 50096, 51120,
-                            52144, 53168, 54192, 55216, 56240, 57264, 58288, 59312,
-                            60336, 61360, 62384, 63408, 64432, 65456, 66480, 67504,
-                            68528, 69552, 70576, 71600, 72624, 73648, 74672, 75696,
-                            76720, 77744, 78768, 79792, 80816, 81840, 82864, 83888,
-                            84912, 85936, 86960, 87984, 89008, 90032, 91056, 92080,
-                            93104, 94128, 95152, 96176, 97200, 98224, 99248, 100272,
-                            # Large file sizes (every ~2-5KB for speed)
-                            105000, 110000, 115000, 120000, 125000, 130000, 135000,
-                            140000, 150000, 160000, 170000, 180000, 190000, 200000,
-                            220000, 240000, 260000, 280000, 300000, 350000, 400000,
-                            450000, 500000, 600000, 700000, 800000, 900000, 1000000,
-                            1200000, 1500000, 2000000
+                            # Only test sizes that instant detection might have missed
+                            # These are mostly edge cases and unusual encryption overheads
+                            
+                            # Small files with unusual overheads
+                            160, 208, 240, 272, 304, 336, 368, 400, 432, 464,
+                            
+                            # Medium files that didn't match exact patterns
+                            1024, 1072, 2048, 2096, 4096, 4144, 8192, 8240,
+                            
+                            # Large files with unusual encryption (only most common)
+                            50000, 75000, 100000, 150000, 200000, 500000, 1000000
                         ]
                         
                         # Filter sizes and limit to reasonable range for speed
@@ -518,29 +505,40 @@ class SteganographyEngine:
             max_size = len(flat_array) // 8  # Maximum possible data size
             
             # STAGE 1: INSTANT DETECTION - Test exact common large file sizes
+            # PRIORITY ORDER: Most common sizes first for maximum speed
             instant_detection_sizes = [
-                # PDF and document sizes (most common)
-                97088, 97152, 97216, 97280, 97344,  # Around 94.8KB with encryption
-                98304, 98368, 98432, 98496, 98560,  # Slightly larger PDFs
-                99328, 99392, 99456, 99520, 99584,  # More PDF variants
-                100352, 100416, 100480, 100544, 100608,  # ~100KB files
+                # HIGHEST PRIORITY: 94.8KB PDF patterns (your primary use case)
+                97088, 97120, 97152, 97184, 97216, 97248, 97280, 97312, 97344,
                 
-                # Common office document sizes
-                51200, 52224, 53248, 54272, 55296,  # ~50KB docs
-                76800, 77824, 78848, 79872, 80896,  # ~75KB docs
-                102400, 103424, 104448, 105472, 106496,  # ~100KB docs
+                # Common small document sizes with encryption overhead
+                51232, 51264, 51296,  # ~50KB docs
+                76832, 76864, 76896,  # ~75KB docs  
+                102432, 102464, 102496,  # ~100KB docs
                 
-                # Image file sizes with encryption
-                204800, 307200, 409600, 512000, 614400,  # 200KB-600KB
-                716800, 819200, 921600, 1024000, 1126400,  # 700KB-1.1MB
-                1228800, 1331200, 1433600, 1536000, 1638400,  # 1.2MB-1.6MB
+                # Power-of-2 patterns (very common)
+                1024, 1072, 2048, 2096, 4096, 4144, 8192, 8240,
+                16384, 16432, 32768, 32816, 65536, 65584,
                 
-                # Archive and compressed file patterns
-                262144, 524288, 1048576, 2097152, 4194304,  # Powers of 2
+                # 200KB document patterns
+                204832, 204848, 204864, 204880, 204896, 204912, 204928,
                 
-                # Common encryption pattern sizes
-                1072, 2096, 4144, 8192, 16384, 32768, 65536,
-                131072, 262144, 524288, 1048576, 2097152
+                # 500KB file patterns  
+                512032, 512048, 512064, 512080, 512096, 512112, 512128,
+                
+                # 1MB file patterns
+                1048608, 1048624, 1048640, 1048656, 1048672, 1048688, 1048704,
+                
+                # Large powers of 2
+                131072, 262144, 524288, 1048576, 2097152,
+                
+                # 2MB file patterns
+                2097184, 2097200, 2097216, 2097232, 2097248, 2097264, 2097280,
+                
+                # 3MB file patterns
+                3145760, 3145776, 3145792, 3145808, 3145824, 3145840, 3145856,
+                
+                # Other common sizes
+                153632, 153664, 153696,  # ~150KB docs
             ]
             
             # Filter to valid sizes and sort by likelihood (smaller first for speed)
