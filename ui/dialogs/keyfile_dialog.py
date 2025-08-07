@@ -85,7 +85,8 @@ class KeyfileWorkerThread(QThread):
         
         with zipfile.ZipFile(temp_zip_path, 'w', zipfile.ZIP_DEFLATED) as archive:
             for file_path in files_to_hide:
-                archive.write(file_path, file_path.name)
+                file_path_obj = Path(file_path)
+                archive.write(file_path_obj, file_path_obj.name)
         
         with open(temp_zip_path, 'rb') as f:
             archive_data = f.read()
