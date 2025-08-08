@@ -68,12 +68,12 @@ class AnalysisWorkerThread(QThread):
     
     def _analyze_image(self) -> Dict:
         """Perform comprehensive image analysis."""
-        if not Image or np is None:
+        if not PILImage or np is None:
             raise ImportError("PIL and numpy are required for image analysis")
         
         # Load image
         try:
-            with Image.open(self.image_path) as img:
+            with PILImage.open(self.image_path) as img:
                 # Convert to RGB if necessary
                 if img.mode != 'RGB':
                     img = img.convert('RGB')
@@ -802,6 +802,9 @@ class AnalysisDialog(QDialog):
     def _write_report(self, file_path: str):
         """Write analysis report to file."""
         results = self.analysis_results
+        
+        if not results:
+            return
         
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write("InvisioVault - Image Analysis Report\n")
