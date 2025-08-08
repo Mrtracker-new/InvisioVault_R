@@ -46,6 +46,7 @@ class ExtractOperation(BaseOperation):
         self.total_extracted_bytes: int = 0
         self.decoy_data: Optional[bytes] = None
         self.decoy_detected: bool = False
+        self.extraction_results: Dict[str, Any] = {}
     
     def configure(self, steganographic_image_path: str, output_directory: str,
                  password: Optional[str] = None, two_factor_enabled: bool = False,
@@ -74,8 +75,8 @@ class ExtractOperation(BaseOperation):
             # Generate encryption key if needed
             if self.password:
                 salt = self.encryption_engine.generate_salt()
-                self.encryption_key = self.encryption_engine.derive_key_from_password(
-                    self.password, salt, keyfile_path=str(self.keyfile_path) if self.keyfile_path else None
+                self.encryption_key = self.encryption_engine.derive_key(
+                    self.password, salt
                 )
             
             self.logger.info(f"Extract operation configured for image: {self.steganographic_image_path}")
@@ -125,86 +126,60 @@ class ExtractOperation(BaseOperation):
             self.logger.error(f"Validation failed: {e}")
             raise
     
-    def execute(self, progress_callback: Optional[Callable[[float], None]] = None,
-               status_callback: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
-        """Execute the extract operation.
+    def execute(self) -> bool:
+        """Execute the extract operation (required by BaseOperation).
         
-        Args:
-            progress_callback: Callback for progress updates (0.0 to 1.0)
-            status_callback: Callback for status updates
-            
         Returns:
-            Dictionary containing operation results
+            True if operation succeeded, False otherwise
         """
         try:
-            self.start()
-            
-            if progress_callback:
-                progress_callback(0.0)
-            if status_callback:
-                status_callback("Extracting hidden data from image...")
-            
             # Step 1: Extract raw data from image (30% progress)
             raw_payload = self.steg_engine.extract_data(self.steganographic_image_path)
             
             if not raw_payload:
-                raise InvisioVaultError("No hidden data found in image")
+                self.logger.error("No hidden data found in image")
+                return False
             
-            if progress_callback:
-                progress_callback(0.3)
+            self.update_progress(30)
             
             # Step 2: Handle decoy data if enabled (40% progress)
             payload_data = raw_payload
             if self.detect_decoy:
-                if status_callback:
-                    status_callback("Checking for decoy data...")
+                self.update_status("Checking for decoy data...")
                 payload_data = self._handle_decoy_data(payload_data)
             
-            if progress_callback:
-                progress_callback(0.4)
+            self.update_progress(40)
             
             # Step 3: Decrypt data if password provided (60% progress)
             if self.password and self.encryption_key:
-                if status_callback:
-                    status_callback("Decrypting data...")
+                self.update_status("Decrypting data...")
                 
                 try:
-                    payload_data = self.encryption_engine.decrypt_data(payload_data, self.encryption_key)
+                    payload_data = self.encryption_engine.decrypt(payload_data, self.password)
                 except Exception as e:
-                    raise InvisioVaultError(f"Decryption failed. Wrong password or corrupted data: {e}")
+                    self.logger.error(f"Decryption failed: {e}")
+                    return False
             
-            if progress_callback:
-                progress_callback(0.6)
+            self.update_progress(60)
             
             # Step 4: Decompress data (70% progress)
-            if status_callback:
-                status_callback("Decompressing data...")
-            
+            self.update_status("Decompressing data...")
             payload_data = self._decompress_payload(payload_data)
-            
-            if progress_callback:
-                progress_callback(0.7)
+            self.update_progress(70)
             
             # Step 5: Parse and extract files (90% progress)
-            if status_callback:
-                status_callback("Parsing and extracting files...")
-            
+            self.update_status("Parsing and extracting files...")
             self._extract_files_from_payload(payload_data)
-            
-            if progress_callback:
-                progress_callback(0.9)
+            self.update_progress(90)
             
             # Step 6: Finalize and save results (100% progress)
-            if status_callback:
-                status_callback("Finalizing extraction...")
+            self.update_status("Finalizing extraction...")
             
             # Calculate total extracted bytes
             self.total_extracted_bytes = sum(file_info['size'] for file_info in self.extracted_files)
             
-            if progress_callback:
-                progress_callback(1.0)
-            
-            result = {
+            # Store results
+            self.extraction_results = {
                 'success': True,
                 'extracted_files': self.extracted_files,
                 'output_directory': str(self.output_directory),
@@ -216,13 +191,43 @@ class ExtractOperation(BaseOperation):
                 'completed_at': datetime.now().isoformat()
             }
             
-            self.complete()
+            self.update_progress(100)
             self.logger.info(f"Extract operation completed successfully: {len(self.extracted_files)} files extracted")
             
-            return result
+            return True
             
         except Exception as e:
-            self.fail(str(e))
+            self.logger.error(f"Extract operation failed: {e}")
+            self.error_handler.handle_exception(e)
+            return False
+    
+    def run_extraction(self, progress_callback: Optional[Callable[[float], None]] = None,
+                      status_callback: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
+        """Run the extraction operation with callbacks.
+        
+        Args:
+            progress_callback: Callback for progress updates (0.0 to 1.0)
+            status_callback: Callback for status updates
+            
+        Returns:
+            Dictionary containing operation results
+        """
+        try:
+            # Set up callbacks
+            if progress_callback:
+                self.set_progress_callback(lambda p: progress_callback(p / 100.0))
+            if status_callback:
+                self.set_status_callback(status_callback)
+            
+            # Start the operation using the base class method
+            success = self.start()
+            
+            if success:
+                return self.extraction_results
+            else:
+                raise InvisioVaultError(f"Extract operation failed: {self.error_message}")
+            
+        except Exception as e:
             self.logger.error(f"Extract operation failed: {e}")
             self.error_handler.handle_exception(e)
             raise InvisioVaultError(f"Extract operation failed: {e}")
@@ -398,6 +403,9 @@ class ExtractOperation(BaseOperation):
             safe_filename = self._sanitize_filename(file_name)
             
             # Create unique filename if file already exists
+            if self.output_directory is None:
+                raise InvisioVaultError("Output directory not configured")
+                
             output_path = self.output_directory / safe_filename
             counter = 1
             while output_path.exists():
@@ -406,6 +414,8 @@ class ExtractOperation(BaseOperation):
                     new_name = f"{name_parts[0]}_{counter}.{name_parts[1]}"
                 else:
                     new_name = f"{safe_filename}_{counter}"
+                if self.output_directory is None:
+                    raise InvisioVaultError("Output directory not configured")
                 output_path = self.output_directory / new_name
                 counter += 1
             
