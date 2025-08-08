@@ -6,7 +6,7 @@ Image analysis dialog for capacity assessment and steganographic detection.
 import math
 import statistics
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel, 
@@ -24,12 +24,18 @@ from utils.error_handler import ErrorHandler
 from core.steganography_engine import SteganographyEngine
 from core.encryption_engine import EncryptionEngine, SecurityLevel
 
-try:
-    from PIL import Image
+if TYPE_CHECKING:
     import numpy as np
-except ImportError:
-    Image = None
-    np = None
+    from PIL import Image as PILImage
+else:
+    try:
+        from PIL import Image
+        import numpy as np
+        PILImage = Image
+    except ImportError:
+        Image = None
+        np = None
+        PILImage = None
 
 
 class AnalysisWorkerThread(QThread):
@@ -62,7 +68,7 @@ class AnalysisWorkerThread(QThread):
     
     def _analyze_image(self) -> Dict:
         """Perform comprehensive image analysis."""
-        if not Image or not np:
+        if not Image or np is None:
             raise ImportError("PIL and numpy are required for image analysis")
         
         # Load image
@@ -138,8 +144,11 @@ class AnalysisWorkerThread(QThread):
             'suitability': suitability
         }
     
-    def _calculate_statistics(self, img_array: np.ndarray) -> Dict:
+    def _calculate_statistics(self, img_array) -> Dict:
         """Calculate statistical properties of the image."""
+        if np is None:
+            raise ImportError("numpy is required for statistical analysis")
+            
         # Flatten array for overall statistics
         flat = img_array.flatten()
         
@@ -170,8 +179,11 @@ class AnalysisWorkerThread(QThread):
             'entropy': self._calculate_entropy(flat)
         }
     
-    def _calculate_entropy(self, data: np.ndarray) -> float:
+    def _calculate_entropy(self, data) -> float:
         """Calculate Shannon entropy of the data."""
+        if np is None:
+            raise ImportError("numpy is required for entropy calculation")
+            
         # Calculate histogram
         hist, _ = np.histogram(data, bins=256, range=(0, 256))
         
@@ -185,8 +197,11 @@ class AnalysisWorkerThread(QThread):
         entropy = -np.sum(hist * np.log2(hist))
         return float(entropy)
     
-    def _analyze_lsb_patterns(self, img_array: np.ndarray) -> Dict:
+    def _analyze_lsb_patterns(self, img_array) -> Dict:
         """Analyze LSB patterns to detect potential steganographic content."""
+        if np is None:
+            raise ImportError("numpy is required for LSB pattern analysis")
+            
         lsb_stats = []
         
         # Analyze each channel
@@ -235,8 +250,11 @@ class AnalysisWorkerThread(QThread):
             'chi_suspicion': chi_suspicion
         }
     
-    def _assess_quality(self, img_array: np.ndarray) -> Dict:
+    def _assess_quality(self, img_array) -> Dict:
         """Assess image quality metrics."""
+        if np is None:
+            raise ImportError("numpy is required for quality assessment")
+            
         # Calculate noise level (standard deviation of Laplacian)
         gray = np.mean(img_array, axis=2)
         laplacian = np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
@@ -792,46 +810,51 @@ class AnalysisDialog(QDialog):
             # Basic info
             f.write("BASIC INFORMATION\n")
             f.write("-" * 20 + "\n")
-            basic = results['basic_info']
-            f.write(f"File: {Path(basic['file_path']).name}\n")
-            f.write(f"Size: {basic['file_size']:,} bytes\n")
-            f.write(f"Dimensions: {basic['width']} × {basic['height']}\n")
-            f.write(f"Channels: {basic['channels']}\n")
-            f.write(f"Total Pixels: {basic['total_pixels']:,}\n\n")
+            if 'basic_info' in results:
+                basic = results['basic_info']
+                f.write(f"File: {Path(basic['file_path']).name}\n")
+                f.write(f"Size: {basic['file_size']:,} bytes\n")
+                f.write(f"Dimensions: {basic['width']} × {basic['height']}\n")
+                f.write(f"Channels: {basic['channels']}\n")
+                f.write(f"Total Pixels: {basic['total_pixels']:,}\n\n")
             
             # Capacity
             f.write("CAPACITY ANALYSIS\n")
             f.write("-" * 20 + "\n")
-            capacity = results['capacity']
-            f.write(f"LSB Capacity: {capacity['lsb_capacity_bytes']:,} bytes ({capacity['lsb_capacity_mb']:.2f} MB)\n")
-            f.write(f"Capacity Ratio: {capacity['capacity_ratio']:.2f}\n\n")
+            if 'capacity' in results:
+                capacity = results['capacity']
+                f.write(f"LSB Capacity: {capacity['lsb_capacity_bytes']:,} bytes ({capacity['lsb_capacity_mb']:.2f} MB)\n")
+                f.write(f"Capacity Ratio: {capacity['capacity_ratio']:.2f}\n\n")
             
             # Suitability
             f.write("SUITABILITY ASSESSMENT\n")
             f.write("-" * 20 + "\n")
-            suitability = results['suitability']
-            f.write(f"Rating: {suitability['rating']} ({suitability['score']}/100)\n")
-            f.write("Reasons:\n")
-            for reason in suitability['reasons']:
-                f.write(f"  • {reason}\n")
-            f.write("\n")
+            if 'suitability' in results:
+                suitability = results['suitability']
+                f.write(f"Rating: {suitability['rating']} ({suitability['score']}/100)\n")
+                f.write("Reasons:\n")
+                for reason in suitability['reasons']:
+                    f.write(f"  • {reason}\n")
+                f.write("\n")
             
             # Statistics
             f.write("STATISTICAL ANALYSIS\n")
             f.write("-" * 20 + "\n")
-            stats = results['statistics']
-            f.write(f"Entropy: {stats['entropy']:.3f}\n")
-            f.write(f"Overall Mean: {stats['overall']['mean']:.2f}\n")
-            f.write(f"Overall Std Dev: {stats['overall']['std']:.2f}\n\n")
+            if 'statistics' in results:
+                stats = results['statistics']
+                f.write(f"Entropy: {stats['entropy']:.3f}\n")
+                f.write(f"Overall Mean: {stats['overall']['mean']:.2f}\n")
+                f.write(f"Overall Std Dev: {stats['overall']['std']:.2f}\n\n")
             
             # Detection
             f.write("DETECTION ANALYSIS\n")
             f.write("-" * 20 + "\n")
-            lsb = results['lsb_analysis']
-            f.write(f"Average Ones Ratio: {lsb['average_ones_ratio']:.3f}\n")
-            f.write(f"Chi-Square Value: {lsb['average_chi_square']:.2f}\n")
-            f.write(f"Randomness Suspicion: {lsb['randomness_suspicion']}\n")
-            f.write(f"Chi-Square Suspicion: {lsb['chi_suspicion']}\n")
+            if 'lsb_analysis' in results:
+                lsb = results['lsb_analysis']
+                f.write(f"Average Ones Ratio: {lsb['average_ones_ratio']:.3f}\n")
+                f.write(f"Chi-Square Value: {lsb['average_chi_square']:.2f}\n")
+                f.write(f"Randomness Suspicion: {lsb['randomness_suspicion']}\n")
+                f.write(f"Chi-Square Suspicion: {lsb['chi_suspicion']}\n")
     
     def on_analysis_error(self, error_message: str):
         """Handle analysis error."""
