@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QSpinBox, QSlider, QListWidget, QListWidgetItem
 )
 from PySide6.QtCore import Qt, QThread, Signal
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QPixmap
 
 from utils.logger import Logger
 from utils.config_manager import ConfigManager
@@ -219,6 +219,7 @@ class TwoFactorDialog(QDialog):
         self.logger = Logger()
         self.config = ConfigManager()
         self.error_handler = ErrorHandler()
+        self.stego_engine = SteganographyEngine()
         
         # State variables
         self.worker_thread = None
@@ -321,7 +322,7 @@ class TwoFactorDialog(QDialog):
         self.carrier_list.setMaximumHeight(120)
         carrier_buttons_layout = QHBoxLayout()
         
-        self.add_carrier_button = QPushButton("Add Images")
+        self.add_carrier_button = QPushButton("Add Images (PNG, BMP, TIFF)")
         self.remove_carrier_button = QPushButton("Remove Selected")
         self.clear_carriers_button = QPushButton("Clear All")
         
@@ -330,8 +331,17 @@ class TwoFactorDialog(QDialog):
         carrier_buttons_layout.addWidget(self.clear_carriers_button)
         carrier_buttons_layout.addStretch()
         
+        # Image preview for selected carrier
+        self.distribute_image_preview = QLabel()
+        self.distribute_image_preview.setMaximumHeight(150)
+        self.distribute_image_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.distribute_image_preview.setStyleSheet("border: 1px solid #ccc; border-radius: 5px;")
+        self.distribute_image_preview.setText("Select images to see preview")
+        self.distribute_image_preview.hide()
+        
         carrier_layout.addWidget(self.carrier_list)
         carrier_layout.addLayout(carrier_buttons_layout)
+        carrier_layout.addWidget(self.distribute_image_preview)
         layout.addWidget(carrier_group)
         
         # Files to hide
@@ -410,7 +420,7 @@ class TwoFactorDialog(QDialog):
         self.fragment_list.setMaximumHeight(120)
         fragment_buttons_layout = QHBoxLayout()
         
-        self.add_fragment_button = QPushButton("Add Fragments")
+        self.add_fragment_button = QPushButton("Add Fragments (PNG, BMP, TIFF)")
         self.remove_fragment_button = QPushButton("Remove Selected")
         self.clear_fragments_button = QPushButton("Clear All")
         
@@ -419,8 +429,17 @@ class TwoFactorDialog(QDialog):
         fragment_buttons_layout.addWidget(self.clear_fragments_button)
         fragment_buttons_layout.addStretch()
         
+        # Image preview for selected fragment
+        self.reconstruct_image_preview = QLabel()
+        self.reconstruct_image_preview.setMaximumHeight(150)
+        self.reconstruct_image_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.reconstruct_image_preview.setStyleSheet("border: 1px solid #ccc; border-radius: 5px;")
+        self.reconstruct_image_preview.setText("Select fragments to see preview")
+        self.reconstruct_image_preview.hide()
+        
         fragment_layout.addWidget(self.fragment_list)
         fragment_layout.addLayout(fragment_buttons_layout)
+        fragment_layout.addWidget(self.reconstruct_image_preview)
         layout.addWidget(fragment_group)
         
         # Security settings
@@ -461,6 +480,7 @@ class TwoFactorDialog(QDialog):
         self.add_carrier_button.clicked.connect(self.add_carrier_images)
         self.remove_carrier_button.clicked.connect(self.remove_selected_carriers)
         self.clear_carriers_button.clicked.connect(self.clear_carrier_images)
+        self.carrier_list.currentRowChanged.connect(self.on_carrier_selection_changed)
         self.add_files_button.clicked.connect(self.add_files_to_hide)
         self.remove_files_button.clicked.connect(self.remove_selected_files)
         self.clear_files_button.clicked.connect(self.clear_files_to_hide)
@@ -470,6 +490,7 @@ class TwoFactorDialog(QDialog):
         self.add_fragment_button.clicked.connect(self.add_fragment_images)
         self.remove_fragment_button.clicked.connect(self.remove_selected_fragments)
         self.clear_fragments_button.clicked.connect(self.clear_fragment_images)
+        self.fragment_list.currentRowChanged.connect(self.on_fragment_selection_changed)
         self.reconstruct_output_button.clicked.connect(self.select_reconstruct_output)
         
         # Main buttons
@@ -563,6 +584,60 @@ class TwoFactorDialog(QDialog):
         )
         if dir_path:
             self.reconstruct_output_input.setText(dir_path)
+    
+    def on_carrier_selection_changed(self, current_row):
+        """Handle carrier image selection change for preview."""
+        if current_row >= 0 and current_row < len(self.carrier_paths):
+            self.update_distribute_image_preview(self.carrier_paths[current_row])
+        else:
+            self.hide_distribute_image_preview()
+    
+    def on_fragment_selection_changed(self, current_row):
+        """Handle fragment image selection change for preview."""
+        if current_row >= 0 and current_row < len(self.fragment_paths):
+            self.update_reconstruct_image_preview(self.fragment_paths[current_row])
+        else:
+            self.hide_reconstruct_image_preview()
+    
+    def update_distribute_image_preview(self, image_path):
+        """Update the distribute tab image preview."""
+        try:
+            pixmap = QPixmap(image_path)
+            if not pixmap.isNull():
+                scaled_pixmap = pixmap.scaled(200, 150, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                self.distribute_image_preview.setPixmap(scaled_pixmap)
+                self.distribute_image_preview.show()
+            else:
+                self.distribute_image_preview.setText(f"❌ Invalid image: {Path(image_path).name}")
+                self.distribute_image_preview.show()
+        except Exception as e:
+            self.distribute_image_preview.setText(f"❌ Error loading image: {str(e)}")
+            self.distribute_image_preview.show()
+            self.logger.error(f"Error loading carrier image preview: {e}")
+    
+    def update_reconstruct_image_preview(self, image_path):
+        """Update the reconstruct tab image preview."""
+        try:
+            pixmap = QPixmap(image_path)
+            if not pixmap.isNull():
+                scaled_pixmap = pixmap.scaled(200, 150, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                self.reconstruct_image_preview.setPixmap(scaled_pixmap)
+                self.reconstruct_image_preview.show()
+            else:
+                self.reconstruct_image_preview.setText(f"❌ Invalid image: {Path(image_path).name}")
+                self.reconstruct_image_preview.show()
+        except Exception as e:
+            self.reconstruct_image_preview.setText(f"❌ Error loading image: {str(e)}")
+            self.reconstruct_image_preview.show()
+            self.logger.error(f"Error loading fragment image preview: {e}")
+    
+    def hide_distribute_image_preview(self):
+        """Hide the distribute tab image preview."""
+        self.distribute_image_preview.hide()
+    
+    def hide_reconstruct_image_preview(self):
+        """Hide the reconstruct tab image preview."""
+        self.reconstruct_image_preview.hide()
     
     def execute_operation(self):
         """Execute the selected operation."""

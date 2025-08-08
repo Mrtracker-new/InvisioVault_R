@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
     QProgressBar, QComboBox, QMessageBox, QTabWidget, QWidget
 )
 from PySide6.QtCore import Qt, QThread, Signal
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QPixmap
 
 from utils.logger import Logger
 from utils.config_manager import ConfigManager
@@ -209,9 +209,13 @@ class KeyfileDialog(QDialog):
         self.logger = Logger()
         self.config = ConfigManager()
         self.error_handler = ErrorHandler()
+        self.stego_engine = SteganographyEngine()
         
         # State variables
         self.worker_thread = None
+        self.hide_carrier_path = None
+        self.hide_files_paths = []
+        self.extract_stego_path = None
         
         self.init_ui()
         self.connect_signals()
@@ -310,10 +314,18 @@ class KeyfileDialog(QDialog):
         
         self.hide_carrier_label = QLabel("No carrier image selected")
         self.hide_carrier_label.setStyleSheet("padding: 10px; border: 2px dashed #ccc; border-radius: 5px;")
-        self.hide_carrier_button = QPushButton("Select Carrier Image")
+        self.hide_carrier_button = QPushButton("Select Carrier Image (PNG, BMP, TIFF)")
+        
+        # Image preview
+        self.hide_image_preview = QLabel()
+        self.hide_image_preview.setMaximumHeight(150)
+        self.hide_image_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.hide_image_preview.setStyleSheet("border: 1px solid #ccc; border-radius: 5px;")
+        self.hide_image_preview.hide()
         
         carrier_layout.addWidget(self.hide_carrier_label)
         carrier_layout.addWidget(self.hide_carrier_button)
+        carrier_layout.addWidget(self.hide_image_preview)
         layout.addWidget(carrier_group)
         
         # Files to hide
@@ -384,10 +396,18 @@ class KeyfileDialog(QDialog):
         
         self.extract_stego_label = QLabel("No image selected")
         self.extract_stego_label.setStyleSheet("padding: 10px; border: 2px dashed #ccc; border-radius: 5px;")
-        self.extract_stego_button = QPushButton("Select Steganographic Image")
+        self.extract_stego_button = QPushButton("Select Steganographic Image (PNG, BMP, TIFF)")
+        
+        # Image preview for extraction
+        self.extract_image_preview = QLabel()
+        self.extract_image_preview.setMaximumHeight(150)
+        self.extract_image_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.extract_image_preview.setStyleSheet("border: 1px solid #ccc; border-radius: 5px;")
+        self.extract_image_preview.hide()
         
         stego_layout.addWidget(self.extract_stego_label)
         stego_layout.addWidget(self.extract_stego_button)
+        stego_layout.addWidget(self.extract_image_preview)
         layout.addWidget(stego_group)
         
         # Authentication
@@ -513,14 +533,38 @@ class KeyfileDialog(QDialog):
         self.cancel_button.clicked.connect(self.reject)
     
     def select_hide_carrier(self):
-        """Select carrier image for hiding."""
+        """Select carrier image for hiding with capacity analysis and preview."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Select Carrier Image", "",
-            "Image Files (*.png *.bmp *.tiff *.tif);;All Files (*)"
+            "Image Files (*.png *.bmp *.tiff *.tif);;PNG Files (*.png);;BMP Files (*.bmp);;TIFF Files (*.tiff *.tif)"
         )
         if file_path:
-            self.hide_carrier_label.setText(f"Selected: {Path(file_path).name}")
             self.hide_carrier_path = file_path
+            
+            # Analyze image capacity and suitability
+            try:
+                capacity = self.stego_engine.calculate_capacity(Path(file_path))
+                analysis = self.stego_engine.analyze_image_suitability(Path(file_path))
+                
+                capacity_mb = capacity / (1024 * 1024)
+                suitability = analysis.get('suitability_score', 0)
+                
+                self.hide_carrier_label.setText(
+                    f"✅ {Path(file_path).name}\n"
+                    f"📊 Capacity: {capacity_mb:.2f} MB\n"
+                    f"⭐ Suitability: {suitability}/10"
+                )
+                
+                # Show image preview
+                pixmap = QPixmap(file_path)
+                if not pixmap.isNull():
+                    scaled_pixmap = pixmap.scaled(200, 150, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                    self.hide_image_preview.setPixmap(scaled_pixmap)
+                    self.hide_image_preview.show()
+                
+            except Exception as e:
+                self.hide_carrier_label.setText(f"❌ Error analyzing image: {str(e)}")
+                self.logger.error(f"Error analyzing carrier image: {e}")
     
     def select_hide_files(self):
         """Select files to hide."""
@@ -552,14 +596,30 @@ class KeyfileDialog(QDialog):
             self.hide_output_input.setText(file_path)
     
     def select_extract_stego(self):
-        """Select steganographic image for extraction."""
+        """Select steganographic image for extraction with preview."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Select Steganographic Image", "",
-            "Image Files (*.png *.bmp *.tiff *.tif);;All Files (*)"
+            "Image Files (*.png *.bmp *.tiff *.tif);;PNG Files (*.png);;BMP Files (*.bmp);;TIFF Files (*.tiff *.tif)"
         )
         if file_path:
-            self.extract_stego_label.setText(f"Selected: {Path(file_path).name}")
             self.extract_stego_path = file_path
+            
+            # Update label with filename
+            self.extract_stego_label.setText(f"✅ {Path(file_path).name}")
+            
+            # Show image preview
+            try:
+                pixmap = QPixmap(file_path)
+                if not pixmap.isNull():
+                    scaled_pixmap = pixmap.scaled(200, 150, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                    self.extract_image_preview.setPixmap(scaled_pixmap)
+                    self.extract_image_preview.show()
+                else:
+                    self.extract_stego_label.setText(f"❌ Invalid image: {Path(file_path).name}")
+                    
+            except Exception as e:
+                self.extract_stego_label.setText(f"❌ Error loading image: {str(e)}")
+                self.logger.error(f"Error loading steganographic image: {e}")
     
     def select_extract_keyfile(self):
         """Select keyfile for extraction."""
