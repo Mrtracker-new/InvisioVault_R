@@ -44,6 +44,42 @@ settings.ini
 .secret
 secret_*
 
+# Cloud Service Configuration Files
+.aws/
+.azure/
+.gcloud/
+.terraform/
+*.tfvars
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+terraform.tfstate
+terraform.tfstate.backup
+
+# Container and Orchestration Secrets
+docker-compose.override.yml
+.dockerignore
+helm-secrets/
+kubernetes-secrets/
+*.kubeconfig
+
+# CI/CD and Deployment Files
+.github/workflows/secrets.yml
+.gitlab-ci-secrets.yml
+.circleci/config-secrets.yml
+jenkins-secrets/
+.deployment/secrets/
+
+# Modern Authentication Files
+*.oauth
+*.token
+*.refresh
+*.jwt
+authentication.json
+oauth_credentials.json
+service-account-*.json
+client_secret*.json
+
 # Test Data and Sample Files
 test_data/
 sample_data/
@@ -172,9 +208,10 @@ venv.bak/
 *.iml
 *.ipr
 
-# Visual Studio Code
+# Visual Studio Code (exclude all settings to prevent path leaks)
 .vscode/
 *.code-workspace
+*.vscode
 
 # Sublime Text
 *.sublime-workspace
@@ -370,6 +407,63 @@ forensics/
 analysis/
 reports/
 evidence/
+
+# =============================================================================
+# MODERN DEVELOPMENT PATTERNS
+# =============================================================================
+
+# Package manager lock files with potential vulnerabilities
+# (Uncomment if you want to exclude them)
+# package-lock.json
+# yarn.lock
+# Pipfile.lock
+# poetry.lock
+
+# Node.js and JavaScript (if used)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache directories
+.npm/
+.yarn/
+.cache/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+
+# Coverage and profiling data
+.coverage
+.coverage.*
+.profiling/
+profile_output.*
+
+# Machine learning models and data (often large and sensitive)
+*.model
+*.pkl
+*.pickle
+*.joblib
+models/
+checkpoints/
+training_data/
+validation_data/
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+*.swp
+*.tmp
+*~
+
+# System and temporary files
+.DS_Store?
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+[Tt]humbs.db
 
 # =============================================================================
 # END OF GITIGNORE
