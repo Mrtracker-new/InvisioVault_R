@@ -120,7 +120,7 @@ def test_steganography():
     # Test 4: Test with encryption
     print(f"\n6. Testing with encryption...")
     encryption_engine = EncryptionEngine(SecurityLevel.HIGH)
-    password = "testpassword123"
+    password = os.environ.get('TEST_PASSWORD', 'temp_test_pass_123')
     
     encrypted_data = encryption_engine.encrypt_with_metadata(test_data, password)
     stego_path_enc = test_dir / "stego_encrypted.png"
