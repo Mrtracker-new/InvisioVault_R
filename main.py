@@ -3,9 +3,13 @@
 InvisioVault - Advanced Steganography Suite
 Main application entry point
 
-Author: InvisioVault Team
+Author: Rolan (RNR)
 Version: 1.0.0
 License: MIT
+Purpose: Educational project for learning security technologies
+
+DISCLAIMER: This software is developed for educational and research purposes.
+Users are responsible for compliance with local laws and regulations.
 """
 
 import sys
@@ -42,8 +46,8 @@ def setup_application():
     app = QApplication(sys.argv)
     app.setApplicationName("InvisioVault")
     app.setApplicationVersion("1.0.0")
-    app.setOrganizationName("InvisioVault Team")
-    app.setOrganizationDomain("invisiovault.com")
+    app.setOrganizationName("Rolan (RNR) - Educational Project")
+    app.setOrganizationDomain("github.com/Mrtracker-new")
     
     # Set application icon
     icon_path = project_root / "assets" / "icons" / "app.ico"

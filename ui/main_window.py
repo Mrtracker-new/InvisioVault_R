@@ -832,16 +832,19 @@ class MainWindow(QMainWindow):
         <p>Advanced Steganography Suite</p>
         <p>Professional-grade steganography application with AES-256 encryption,<br>
         keyfile authentication, decoy mode, and multi-image distribution.</p>
+        <p><b>Author:</b> Rolan (RNR)</p>
+        <p><b>Purpose:</b> Educational project for learning security technologies</p>
         <p><b>Features:</b></p>
         <ul>
-        <li>LSB (Least Significant Bit) steganography</li>
+        <li>LSB (Least Significant Bit) steganography with ultra-fast extraction</li>
         <li>AES-256 encryption with PBKDF2 key derivation</li>
         <li>Keyfile-based two-factor authentication</li>
         <li>Decoy mode with plausible deniability</li>
         <li>Multi-image data distribution</li>
-        <li>Comprehensive image analysis</li>
+        <li>Comprehensive image analysis and preview</li>
         </ul>
-        <p>© 2024 InvisioVault Team</p>
+        <p><b>Disclaimer:</b> For educational and legitimate privacy purposes only.</p>
+        <p>© 2025 Rolan (RNR). Educational project for learning security technologies.</p>
         """
         
         QMessageBox.about(self, "About InvisioVault", about_text)

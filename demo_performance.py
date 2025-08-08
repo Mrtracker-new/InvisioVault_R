@@ -159,7 +159,7 @@ def demo_ultra_fast_extraction():
             # Create test data
             size_bytes = int(scenario['size_kb'] * 1024)
             test_data = create_realistic_test_data(size_bytes, scenario['file_type'])
-            password = f"UltraFast_Test_{scenario['size_kb']}KB_2024!"
+            password = f"UltraFast_Test_{scenario['size_kb']}KB_2025!"
             
             # Generate seed from password
             seed_hash = hashlib.sha256(password.encode('utf-8')).digest()

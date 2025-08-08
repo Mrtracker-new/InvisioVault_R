@@ -4,7 +4,7 @@ Professional-grade steganography application with advanced security features.
 """
 
 __version__ = "1.0.0"
-__author__ = "InvisioVault Team"
+__author__ = "Rolan (RNR)"
 __license__ = "MIT"
 
 # Import main components for easy access

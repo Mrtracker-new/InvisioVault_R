@@ -4,6 +4,22 @@
 
 InVisioVault is a cutting-edge steganography application that combines the art of hiding data with military-grade encryption and **revolutionary performance optimizations**. Built with Python and PyQt6, it delivers both enterprise-level functionality and exceptional user experience.
 
+## 📚 Educational Purpose
+
+**Important Notice:** This project is developed for **educational and research purposes** by Rolan (RNR) as part of learning advanced cryptography, steganography, and security concepts. The primary goals are:
+
+- 🎓 **Learning Experience**: Exploring the intersection of cryptography, steganography, and software engineering
+- 🔍 **Security Research**: Understanding data hiding techniques and their practical applications
+- 💡 **Innovation**: Experimenting with performance optimizations in steganographic algorithms
+- 🛡️ **Security Awareness**: Promoting understanding of digital privacy and data protection methods
+
+**Disclaimer**: This software is intended for legitimate educational, research, and privacy purposes only. Users are responsible for compliance with local laws and regulations. The author encourages responsible use and does not condone any malicious activities.
+
+## 👨‍💻 Author
+
+**Created by**: Rolan (RNR)  
+**Purpose**: Educational project for learning security technologies and exploring new possibilities in steganography
+
 ## 🚀 Revolutionary Performance
 
 ### ⚡ **Ultra-Fast Extraction** - **10-100x Speed Improvement**
@@ -163,4 +179,4 @@ InVisioVault implements industry-standard cryptographic practices with revolutio
 
 *Now with 10-100x faster extraction - making advanced steganography practical for real-world use!* ⚡
 
-© 2024 InVisioVault. All rights reserved.
+© 2025 Rolan (RNR). Educational project for learning security technologies.

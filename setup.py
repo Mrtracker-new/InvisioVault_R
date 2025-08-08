@@ -19,8 +19,8 @@ if requirements_file.exists():
 setup(
     name="invisiovault",
     version="1.0.0",
-    author="InvisioVault Team",
-    author_email="team@invisiovault.com",
+    author="Rolan (RNR)",
+    author_email="rolan.education@example.com",
     description="Professional-grade steganography application with advanced security features",
     long_description=long_description,
     long_description_content_type="text/markdown",
