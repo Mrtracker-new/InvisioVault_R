@@ -808,6 +808,9 @@ class DecoyDialog(QDialog):
     
     def start_operation(self):
         """Start the worker thread operation."""
+        if self.worker_thread is None:
+            raise ValueError("Worker thread not initialized")
+            
         # Connect worker signals
         self.worker_thread.progress_updated.connect(self.progress_bar.setValue)
         self.worker_thread.status_updated.connect(self.status_label.setText)
