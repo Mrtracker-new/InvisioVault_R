@@ -7,6 +7,7 @@ import os
 import secrets
 import hashlib
 import hmac
+import math
 from typing import Tuple, Optional, Union, List
 from pathlib import Path
 
@@ -212,14 +213,14 @@ class CryptoUtils:
             public_key = private_key.public_key()
             
             # Serialize private key
-            private_pem = private_key.private_key(
+            private_pem = private_key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
                 encryption_algorithm=serialization.NoEncryption()
             )
             
             # Serialize public key
-            public_pem = public_key.public_key(
+            public_pem = public_key.public_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PublicFormat.SubjectPublicKeyInfo
             )
@@ -324,7 +325,8 @@ class CryptoUtils:
         for count in byte_counts:
             if count > 0:
                 probability = count / data_length
-                entropy -= probability * (probability.bit_length() - 1)  # log2(probability)
+                # Calculate log2(probability) using math.log2
+                entropy -= probability * math.log2(probability)
         
         return entropy
     
