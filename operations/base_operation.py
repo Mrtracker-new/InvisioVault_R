@@ -42,6 +42,13 @@ class BaseOperation(ABC):
             operation_type: Type of operation
             operation_id: Unique operation identifier
         """
+        # Initialize utilities first (needed for ID generation)
+        self.logger = Logger()
+        self.error_handler = ErrorHandler()
+        self.file_manager = FileManager()
+        self.crypto_utils = CryptoUtils()
+        
+        # Initialize operation properties
         self.operation_type = OperationType.EXTRACT  # Default, should be overridden by subclasses
         self.operation_id = operation_id or self._generate_operation_id()
         self.status = OperationStatus.PENDING
@@ -51,12 +58,6 @@ class BaseOperation(ABC):
         self.progress = 0
         self.error_message: Optional[str] = None
         self.result_data: Optional[Dict[str, Any]] = None
-        
-        # Initialize utilities
-        self.logger = Logger()
-        self.error_handler = ErrorHandler()
-        self.file_manager = FileManager()
-        self.crypto_utils = CryptoUtils()
         
         # Callbacks
         self.progress_callback: Optional[Callable[[int], None]] = None
