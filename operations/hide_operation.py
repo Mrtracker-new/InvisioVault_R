@@ -15,7 +15,7 @@ from core.file_manager import FileManager
 from utils.file_utils import FileUtils, CompressionType
 from utils.config_manager import ConfigManager
 from utils.logger import Logger
-from utils.error_handler import ErrorHandler, ValidationError, OperationError
+from utils.error_handler import ErrorHandler, UserInputError, InvisioVaultError
 
 
 class HideOperation(BaseOperation):
@@ -87,8 +87,8 @@ class HideOperation(BaseOperation):
             # Generate encryption key if needed
             if self.use_encryption and self.password:
                 salt = self.encryption_engine.generate_salt()
-                self.encryption_key = self.encryption_engine.derive_key_from_password(
-                    self.password, salt, keyfile_path=str(self.keyfile_path) if self.keyfile_path else None
+                self.encryption_key = self.encryption_engine.derive_key(
+                    self.password, salt
                 )
             
             self.logger.info(f"Hide operation configured: {len(self.files_to_hide)} files to hide")
@@ -110,22 +110,22 @@ class HideOperation(BaseOperation):
         try:
             # Validate cover image
             if not self.cover_image_path or not self.cover_image_path.exists():
-                raise ValidationError("Cover image not found", file_path=str(self.cover_image_path))
+                raise UserInputError("Cover image not found")
             
             if not self.file_manager.validate_image_file(self.cover_image_path):
-                raise ValidationError("Invalid cover image format", file_path=str(self.cover_image_path))
+                raise UserInputError("Invalid cover image format")
             
             # Validate files to hide
             if not self.files_to_hide:
-                raise ValidationError("No files specified to hide")
+                raise UserInputError("No files specified to hide")
             
             total_size = 0
             for file_path in self.files_to_hide:
                 if not file_path.exists():
-                    raise ValidationError(f"File to hide not found: {file_path}", file_path=str(file_path))
+                    raise UserInputError(f"File to hide not found: {file_path}")
                 
                 if not self.file_manager.validate_data_file(file_path):
-                    raise ValidationError(f"Invalid file to hide: {file_path}", file_path=str(file_path))
+                    raise UserInputError(f"Invalid file to hide: {file_path}")
                 
                 total_size += file_path.stat().st_size
             
@@ -134,7 +134,7 @@ class HideOperation(BaseOperation):
             estimated_size = self._estimate_payload_size(total_size)
             
             if estimated_size > image_capacity:
-                raise ValidationError(
+                raise UserInputError(
                     f"Files too large for cover image. Need {estimated_size} bytes, "
                     f"but image capacity is {image_capacity} bytes"
                 )
@@ -145,12 +145,12 @@ class HideOperation(BaseOperation):
             
             # Validate encryption settings
             if self.use_encryption and not self.password:
-                raise ValidationError("Password required when encryption is enabled")
+                raise UserInputError("Password required when encryption is enabled")
             
             # Validate keyfile if two-factor is enabled
             if self.two_factor_enabled:
                 if not self.keyfile_path or not self.keyfile_path.exists():
-                    raise ValidationError("Keyfile required when two-factor authentication is enabled")
+                    raise UserInputError("Keyfile required when two-factor authentication is enabled")
             
             self.logger.info("Hide operation inputs validated successfully")
             return True
@@ -199,7 +199,8 @@ class HideOperation(BaseOperation):
             if self.use_encryption and self.encryption_key:
                 if status_callback:
                     status_callback("Encrypting data...")
-                payload_data = self.encryption_engine.encrypt_data(payload_data, self.encryption_key)
+                encrypted_data, salt, iv = self.encryption_engine.encrypt(payload_data, self.password)
+                payload_data = salt + iv + encrypted_data
             
             if progress_callback:
                 progress_callback(0.6)
@@ -270,7 +271,7 @@ class HideOperation(BaseOperation):
             self.fail(str(e))
             self.logger.error(f"Hide operation failed: {e}")
             self.error_handler.handle_exception(e)
-            raise OperationError(f"Hide operation failed: {e}")
+            raise InvisioVaultError(f"Hide operation failed: {e}")
     
     def _prepare_payload_data(self) -> bytes:
         """Prepare payload data from files to hide.
@@ -315,9 +316,13 @@ class HideOperation(BaseOperation):
         try:
             # Add decoy marker and data
             decoy_marker = b'DECOY'
+            if self.decoy_data is None:
+                raise InvisioVaultError("Decoy data is None but decoy is enabled")
             decoy_length = len(self.decoy_data).to_bytes(4, 'big')
             
             # Combine: marker + decoy_length + decoy_data + payload
+            if self.decoy_data is None:
+                raise InvisioVaultError("Decoy data is None")
             return decoy_marker + decoy_length + self.decoy_data + payload_data
             
         except Exception as e:
