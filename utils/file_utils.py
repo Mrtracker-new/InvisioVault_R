@@ -484,14 +484,19 @@ class FileUtils:
     def _create_tar_archive(self, files: List[Union[str, Path]], archive_path: Path, 
                            compression_type: str) -> Path:
         """Create TAR archive."""
-        mode_map = {
-            CompressionType.TAR: 'w',
-            CompressionType.TAR_GZ: 'w:gz',
-            CompressionType.TAR_BZ2: 'w:bz2',
-            CompressionType.TAR_XZ: 'w:xz'
-        }
+        from typing import Literal
         
-        mode = mode_map.get(compression_type, 'w')
+        # Map compression types to proper tarfile modes
+        if compression_type == CompressionType.TAR:
+            mode: Literal['w'] = 'w'
+        elif compression_type == CompressionType.TAR_GZ:
+            mode: Literal['w:gz'] = 'w:gz'
+        elif compression_type == CompressionType.TAR_BZ2:
+            mode: Literal['w:bz2'] = 'w:bz2'
+        elif compression_type == CompressionType.TAR_XZ:
+            mode: Literal['w:xz'] = 'w:xz'
+        else:
+            mode: Literal['w'] = 'w'  # Default to uncompressed
         
         with tarfile.open(archive_path, mode) as tf:
             for file_path in files:
