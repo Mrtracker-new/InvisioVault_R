@@ -13,7 +13,7 @@ from operations.hide_operation import HideOperation
 from operations.extract_operation import ExtractOperation
 from operations.analysis_operation import AnalysisOperation
 from utils.logger import Logger
-from utils.error_handler import ErrorHandler, ValidationError, OperationError
+from utils.error_handler import ErrorHandler, UserInputError, InvisioVaultError
 
 
 class BatchOperationType:
@@ -28,8 +28,9 @@ class BatchOperation(BaseOperation):
     
     def __init__(self, operation_id: Optional[str] = None):
         super().__init__(operation_id)
-        self.logger = Logger()
-        self.error_handler = ErrorHandler()
+        
+        # Remove duplicate initialization (inherited from BaseOperation)
+        # Note: logger, error_handler are inherited from BaseOperation
         
         # Batch configuration
         self.operation_type: str = BatchOperationType.HIDE
@@ -42,6 +43,7 @@ class BatchOperation(BaseOperation):
         self.failed_operations: List[Dict[str, Any]] = []
         self.total_success: int = 0
         self.total_failed: int = 0
+        self.batch_results: Dict[str, Any] = {}
     
     def configure(self, operation_type: str, batch_items: List[Dict[str, Any]], 
                  continue_on_error: bool = True, max_concurrent: int = 1):
@@ -77,12 +79,12 @@ class BatchOperation(BaseOperation):
         """
         try:
             if not self.batch_items:
-                raise ValidationError("No batch items specified")
+                raise UserInputError("No batch items specified", field="batch_items")
             
             if self.operation_type not in [BatchOperationType.HIDE, 
                                          BatchOperationType.EXTRACT, 
                                          BatchOperationType.ANALYSIS]:
-                raise ValidationError(f"Invalid operation type: {self.operation_type}")
+                raise UserInputError(f"Invalid operation type: {self.operation_type}", field="operation_type")
             
             # Validate each batch item based on operation type
             for i, item in enumerate(self.batch_items):
@@ -95,32 +97,19 @@ class BatchOperation(BaseOperation):
             self.logger.error(f"Validation failed: {e}")
             raise
     
-    def execute(self, progress_callback: Optional[Callable[[float], None]] = None,
-               status_callback: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
-        """Execute the batch operation.
+    def execute(self) -> bool:
+        """Execute the batch operation (required by BaseOperation).
         
-        Args:
-            progress_callback: Callback for progress updates
-            status_callback: Callback for status updates
-            
         Returns:
-            Dictionary with batch results
+            True if operation succeeded, False otherwise
         """
         try:
-            self.start()
-            
-            if progress_callback:
-                progress_callback(0.0)
-            if status_callback:
-                status_callback(f"Starting batch {self.operation_type} operation...")
-            
             total_items = len(self.batch_items)
             
             # Process each batch item
             for i, item in enumerate(self.batch_items):
                 try:
-                    if status_callback:
-                        status_callback(f"Processing item {i+1}/{total_items}...")
+                    self.update_status(f"Processing item {i+1}/{total_items}...")
                     
                     # Create and execute operation
                     operation = self._create_operation(item)
@@ -149,14 +138,13 @@ class BatchOperation(BaseOperation):
                     self.logger.error(f"Batch item {i+1} failed: {e}")
                     
                     if not self.continue_on_error:
-                        raise OperationError(f"Batch operation stopped at item {i+1}: {e}")
+                        return False
                 
                 # Update progress
-                if progress_callback:
-                    progress_callback((i + 1) / total_items)
+                self.update_progress(int((i + 1) / total_items * 100))
             
-            # Final results
-            result = {
+            # Store final results
+            self.batch_results = {
                 'success': self.total_failed == 0,
                 'operation_type': self.operation_type,
                 'total_items': total_items,
@@ -169,19 +157,48 @@ class BatchOperation(BaseOperation):
                 'completed_at': datetime.now().isoformat()
             }
             
-            self.complete()
             self.logger.info(
                 f"Batch operation completed: {self.total_success}/{total_items} succeeded, "
                 f"{self.total_failed} failed"
             )
             
-            return result
+            return True
             
         except Exception as e:
-            self.fail(str(e))
             self.logger.error(f"Batch operation failed: {e}")
             self.error_handler.handle_exception(e)
-            raise OperationError(f"Batch operation failed: {e}")
+            return False
+    
+    def run_batch(self, progress_callback: Optional[Callable[[float], None]] = None,
+                 status_callback: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
+        """Run the batch operation with callbacks.
+        
+        Args:
+            progress_callback: Callback for progress updates
+            status_callback: Callback for status updates
+            
+        Returns:
+            Dictionary with batch results
+        """
+        try:
+            # Set up callbacks
+            if progress_callback:
+                self.set_progress_callback(lambda p: progress_callback(p / 100.0))
+            if status_callback:
+                self.set_status_callback(status_callback)
+            
+            # Start the operation using the base class method
+            success = self.start()
+            
+            if success:
+                return self.batch_results
+            else:
+                raise InvisioVaultError(f"Batch operation failed: {self.error_message}")
+            
+        except Exception as e:
+            self.logger.error(f"Batch operation failed: {e}")
+            self.error_handler.handle_exception(e)
+            raise InvisioVaultError(f"Batch operation failed: {e}")
     
     def _validate_batch_item(self, item: Dict[str, Any], index: int):
         """Validate a single batch item.
@@ -197,30 +214,31 @@ class BatchOperation(BaseOperation):
         elif self.operation_type == BatchOperationType.ANALYSIS:
             required_fields = ['image_path']
         else:
-            raise ValidationError(f"Unknown operation type: {self.operation_type}")
+            raise UserInputError(f"Unknown operation type: {self.operation_type}", field="operation_type")
         
         for field in required_fields:
             if field not in item:
-                raise ValidationError(f"Missing required field '{field}' in batch item {index}")
+                raise UserInputError(f"Missing required field '{field}' in batch item {index}", field=field)
         
         # Validate paths exist
         if self.operation_type == BatchOperationType.HIDE:
             if not Path(item['cover_image_path']).exists():
-                raise ValidationError(f"Cover image not found in batch item {index}: {item['cover_image_path']}")
+                raise UserInputError(f"Cover image not found in batch item {index}: {item['cover_image_path']}", field="cover_image_path")
             
             for file_path in item['files_to_hide']:
                 if not Path(file_path).exists():
-                    raise ValidationError(f"File to hide not found in batch item {index}: {file_path}")
+                    raise UserInputError(f"File to hide not found in batch item {index}: {file_path}", field="files_to_hide")
         
         elif self.operation_type == BatchOperationType.EXTRACT:
             if not Path(item['steganographic_image_path']).exists():
-                raise ValidationError(
-                    f"Steganographic image not found in batch item {index}: {item['steganographic_image_path']}"
+                raise UserInputError(
+                    f"Steganographic image not found in batch item {index}: {item['steganographic_image_path']}",
+                    field="steganographic_image_path"
                 )
         
         elif self.operation_type == BatchOperationType.ANALYSIS:
             if not Path(item['image_path']).exists():
-                raise ValidationError(f"Image not found in batch item {index}: {item['image_path']}")
+                raise UserInputError(f"Image not found in batch item {index}: {item['image_path']}", field="image_path")
     
     def _create_operation(self, item: Dict[str, Any]) -> BaseOperation:
         """Create an operation instance based on batch item.
@@ -269,7 +287,7 @@ class BatchOperation(BaseOperation):
             )
         
         else:
-            raise OperationError(f"Unknown operation type: {self.operation_type}")
+            raise InvisioVaultError(f"Unknown operation type: {self.operation_type}")
         
         # Validate the operation
         operation.validate_inputs()
@@ -329,4 +347,4 @@ class BatchOperation(BaseOperation):
         retry_batch.configure(self.operation_type, retry_items, self.continue_on_error)
         retry_batch.validate_inputs()
         
-        return retry_batch.execute(progress_callback, status_callback)
+        return retry_batch.run_batch(progress_callback, status_callback)
