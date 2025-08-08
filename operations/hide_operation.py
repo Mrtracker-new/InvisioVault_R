@@ -196,7 +196,7 @@ class HideOperation(BaseOperation):
                 progress_callback(0.4)
             
             # Step 3: Encrypt data if requested (60% progress)
-            if self.use_encryption and self.encryption_key:
+            if self.use_encryption and self.encryption_key and self.password:
                 if status_callback:
                     status_callback("Encrypting data...")
                 encrypted_data, salt, iv = self.encryption_engine.encrypt(payload_data, self.password)
