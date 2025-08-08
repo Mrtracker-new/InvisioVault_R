@@ -155,7 +155,16 @@ class ExtractOperation(BaseOperation):
                 self.update_status("Decrypting data...")
                 
                 try:
-                    payload_data = self.encryption_engine.decrypt(payload_data, self.password)
+                    # Extract salt, iv, and encrypted data from payload
+                    # Format: [SALT][IV][ENCRYPTED_DATA] (16 + 16 + remaining bytes)
+                    if len(payload_data) < 32:  # 16 bytes salt + 16 bytes iv
+                        raise InvisioVaultError("Payload too small for encrypted data")
+                    
+                    salt = payload_data[:16]
+                    iv = payload_data[16:32]
+                    encrypted_data = payload_data[32:]
+                    
+                    payload_data = self.encryption_engine.decrypt(encrypted_data, self.password, salt, iv)
                 except Exception as e:
                     self.logger.error(f"Decryption failed: {e}")
                     return False
