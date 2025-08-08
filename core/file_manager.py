@@ -468,7 +468,7 @@ class FileManager:
             self.error_handler.handle_exception(e)
             raise
     
-    def get_available_space(self, path: Union[str, Path]) -> Dict[str, int]:
+    def get_available_space(self, path: Union[str, Path]) -> Dict[str, Union[int, float, str]]:
         """Get available disk space.
         
         Args:
@@ -489,9 +489,9 @@ class FileManager:
                 'total': usage.total,
                 'used': usage.used,
                 'free': usage.free,
-                'total_mb': usage.total / 1024 / 1024,
-                'used_mb': usage.used / 1024 / 1024,
-                'free_mb': usage.free / 1024 / 1024
+                'total_mb': round(usage.total / 1024 / 1024, 2),
+                'used_mb': round(usage.used / 1024 / 1024, 2),
+                'free_mb': round(usage.free / 1024 / 1024, 2)
             }
             
         except Exception as e:
