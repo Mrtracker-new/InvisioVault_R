@@ -1,9 +1,381 @@
+# =============================================================================
+# InVisioVault .gitignore - Comprehensive Security-Focused Configuration
+# Author: Rolan (RNR)
+# Purpose: Protect sensitive data and maintain project security
+# =============================================================================
+
+# CRITICAL SECURITY FILES - NEVER COMMIT THESE!
+# =============================================================================
+
+# Keyfiles and Cryptographic Keys
+*.key
+*.keyfile
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cert
+*.der
+*.jks
+*.keystore
+keyfiles/
+keys/
+private_keys/
+certificates/
+
+# Password and Authentication Files
+*.passwd
+*.password
+*.auth
+*.credentials
+passwords.txt
+credentials.txt
+auth.txt
+secrets.txt
+
+# Environment and Configuration with Secrets
+.env
+.env.*
+*.env
+config.ini
+config.cfg
+settings.ini
+.secrets
+.secret
+secret_*
+
+# Test Data and Sample Files
+test_data/
+sample_data/
+test_images/
+sample_images/
+test_files/
+sample_files/
+test_outputs/
+sample_outputs/
+examples/data/
+demo_data/
+
+# Steganographic Files (Input/Output)
+steganographic_images/
+hidden_data/
+encrypted_outputs/
+stego_outputs/
+carrier_images/
+fragments/
+*.stego
+*.hidden
+*.encrypted_img
+
+# User Data Directories
+user_data/
+user_files/
+personal/
+private/
+my_files/
+my_data/
+uploads/
+downloads/
+input/
+output/
+temp/
+tmp/
+
+# Database Files with Potential User Data
+*.db
+*.sqlite
+*.sqlite3
+*.db3
+*.s3db
+*.sl3
+database/
+db/
+
+# =============================================================================
+# PYTHON DEVELOPMENT
+# =============================================================================
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
-build/
-dist/
+*.py[cod]
+*$py.class
 *.pyc
 *.pyo
+*.pyd
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+test-results/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# =============================================================================
+# DEVELOPMENT TOOLS & IDEs
+# =============================================================================
+
+# PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Atom
+.atom/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
+.ropeproject
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# =============================================================================
+# OPERATING SYSTEM FILES
+# =============================================================================
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# APPLICATION-SPECIFIC
+# =============================================================================
+
+# Logs and Runtime Data
+*.log
+*.log.*
+logs/
+log/
+runtime/
+temp_files/
+
+# Compiled executables
 *.exe
 *.app
-*.log
-.env
+*.deb
+*.rpm
+*.dmg
+*.pkg
+*.msi
+
+# Archives (potentially containing sensitive data)
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.gz
+*.bz2
+*.xz
+archives/
+backups/
+
+# Image files (potential carriers or outputs)
+# NOTE: Uncomment if you want to exclude all images
+# *.jpg
+# *.jpeg
+# *.png
+# *.gif
+# *.bmp
+# *.tiff
+# *.tif
+# *.webp
+# *.svg
+# *.ico
+
+# Large files that shouldn't be in repo
+*.iso
+*.img
+*.vmdk
+*.vdi
+*.vhd
+
+# =============================================================================
+# DOCUMENTATION & GENERATED FILES
+# =============================================================================
+
+# Sphinx documentation
+docs/_build/
+docs/build/
+.doctrees/
+
+# Generated documentation
+site/
+_site/
+
+# =============================================================================
+# PERSONAL NOTES & DEVELOPMENT
+# =============================================================================
+
+# Personal notes and TODO files
+TODO.txt
+NOTES.txt
+REMINDERS.txt
+PERSONAL.md
+DRAFT.md
+*.draft
+*.todo
+*.notes
+personal_notes/
+dev_notes/
+scratch/
+sandbox/
+
+# Development scripts and utilities (potentially with hardcoded paths/data)
+dev_scripts/
+utils_local/
+local_tools/
+my_scripts/
+test_scripts/
+
+# =============================================================================
+# SECURITY RESEARCH & TESTING
+# =============================================================================
+
+# Vulnerability research files
+exploits/
+vulns/
+research/
+pocs/
+
+# Pentesting tools output
+nmap_results/
+scan_results/
+recon/
+
+# Captured network data
+*.pcap
+*.pcapng
+*.cap
+traffic/
+network_dumps/
+
+# Forensics and analysis data
+forensics/
+analysis/
+reports/
+evidence/
+
+# =============================================================================
+# END OF GITIGNORE
+# =============================================================================
+
+# Keep this directory structure but ignore contents
+!.gitkeep
+
+# Allow specific exception files if needed (use with caution)
+# !important_file.ext

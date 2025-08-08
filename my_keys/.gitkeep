@@ -1,0 +1,3 @@
+# This file keeps the my_keys/ directory in git while ignoring all contents
+# Use this directory for personal keyfiles and cryptographic materials
+# WARNING: All contents except .gitkeep will be ignored by git
