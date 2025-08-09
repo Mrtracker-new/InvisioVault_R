@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Security Check Script for InVisioVault
+Security Check Script for InvisioVault
 Author: Rolan (RNR)
 Purpose: Automated security verification and sensitive data detection
 """
@@ -110,7 +110,7 @@ def check_git_status() -> Dict[str, List[str]]:
 def main():
     """Main security check function."""
     project_root = Path(__file__).parent.parent
-    print("🔒 InVisioVault Security Check")
+    print("🔒 InvisioVault Security Check")
     print("=" * 50)
     print(f"Scanning: {project_root}")
     print()

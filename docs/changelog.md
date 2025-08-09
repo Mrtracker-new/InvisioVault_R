@@ -1,6 +1,6 @@
 # Version History - Educational Project
 
-## 📚 InVisioVault Educational Development Log
+## 📚 InvisioVault Educational Development Log
 
 **Author**: Rolan (RNR)  
 **Purpose**: Track learning progress and feature development  

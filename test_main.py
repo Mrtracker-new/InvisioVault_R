@@ -29,7 +29,7 @@ def create_test_image(path: Path, width: int = 200, height: int = 200):
 def test_steganography():
     """Test basic steganography functionality."""
     print("=" * 60)
-    print("Testing InVisioVault Steganography Engine")
+    print("Testing InvisioVault Steganography Engine")
     print("=" * 60)
     
     # Create test files

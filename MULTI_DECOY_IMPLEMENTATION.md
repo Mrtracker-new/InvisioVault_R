@@ -6,7 +6,7 @@
 
 ## Overview
 
-The multi-dataset decoy functionality in InVisioVault has been successfully implemented as part of educational research into plausible deniability techniques. This implementation demonstrates advanced steganography concepts where multiple datasets with different passwords and priority levels can be hidden in a single image.
+The multi-dataset decoy functionality in InvisioVault has been successfully implemented as part of educational research into plausible deniability techniques. This implementation demonstrates advanced steganography concepts where multiple datasets with different passwords and priority levels can be hidden in a single image.
 
 ## What Was Fixed
 

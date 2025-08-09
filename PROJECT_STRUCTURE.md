@@ -1,9 +1,9 @@
-# InVisioVault Project Structure
+# InvisioVault Project Structure
 
 ## 🗂️ **Clean & Organized Codebase**
 
 ```
-InVisioVault/
+InvisioVault/
 ├── 📁 core/                     # Core functionality
 │   ├── encryption_engine.py     # AES-256 encryption
 │   ├── steganography_engine.py  # Revolutionary LSB algorithm
@@ -82,6 +82,6 @@ InVisioVault/
 
 ---
 
-*InVisioVault - Educational Project by Rolan (RNR)* 🎓
+*InvisioVault - Educational Project by Rolan (RNR)* 🎓
 
 **Purpose**: Learning advanced cybersecurity, cryptography, and software engineering principles

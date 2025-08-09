@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Security Check Script for InVisioVault
+Security Check Script for InvisioVault
 =====================================
 
 This script scans for potentially sensitive files that might accidentally
@@ -9,7 +9,7 @@ get committed to the repository despite .gitignore rules.
 Usage:
     python scripts/check_sensitive_files.py
 
-Author: Generated for InVisioVault Security
+Author: Generated for InvisioVault Security
 """
 
 import os
@@ -132,7 +132,7 @@ def check_git_tracked_files(root_dir: Path) -> List[str]:
 
 def main():
     """Main function to run security checks."""
-    print("🔒 InVisioVault Security File Scanner")
+    print("🔒 InvisioVault Security File Scanner")
     print("=" * 40)
     
     # Get project root directory

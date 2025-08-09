@@ -1,4 +1,4 @@
-# 🎉 InVisioVault - PROJECT COMPLETE! 
+# 🎉 InvisioVault - PROJECT COMPLETE!
 
 ## 📚 **Educational Project by Rolan (RNR)**
 

@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🕵️‍♂️ InVisioVault
+# 🕵️‍♂️ InvisioVault
 
 ### *The Ultimate Steganography Suite - Hide Your Secrets in Plain Sight*
 
@@ -17,11 +17,11 @@
 
 ---
 
-## 🎯 What is InVisioVault?
+## 🎯 What is InvisioVault?
 
-Imagine being able to hide **any file** - documents, photos, videos, or entire folders - inside a regular image that looks completely normal to anyone who sees it. That's exactly what InVisioVault does!
+Imagine being able to hide **any file** - documents, photos, videos, or entire folders - inside a regular image that looks completely normal to anyone who sees it. That's exactly what InvisioVault does!
 
-**InVisioVault** is a revolutionary steganography application that lets you:
+**InvisioVault** is a revolutionary steganography application that lets you:
 - 🖼️ **Hide files inside images** without anyone knowing they're there
 - 🔐 **Protect your data** with military-grade AES-256 encryption
 - ⚡ **Extract files lightning-fast** - up to 100x faster than traditional methods
@@ -70,7 +70,7 @@ This project was developed as an advanced learning journey into:
 ⏱️ Result: 30+ seconds of waiting
 ```
 
-**InVisioVault's Innovation** ✅
+**InvisioVault's Innovation** ✅
 ```
 ⚡ Read exact file info in ONE pass
 ⚡ Extract data with surgical precision
@@ -78,7 +78,7 @@ This project was developed as an advanced learning journey into:
 ⏱️ Result: Files ready in seconds!
 ```
 
-## ✨ What Makes InVisioVault Special?
+## ✨ What Makes InvisioVault Special?
 
 <table>
 <tr>
@@ -132,9 +132,9 @@ This project was developed as an advanced learning journey into:
 ### ⚡ **Installation (Super Easy!)**
 
 ```bash
-# 1️⃣ Clone or download InVisioVault
-git clone https://github.com/Mrtracker-new/InVisioVault_R.git
-cd InVisioVault_R
+# 1️⃣ Clone or download InvisioVault
+git clone https://github.com/Mrtracker-new/InvisioVault_R.git
+cd InvisioVault_R
 
 # 2️⃣ Install required packages
 pip install -r requirements.txt
@@ -151,7 +151,7 @@ python main.py
 
 #### 🕵️ **MISSION: Hide Files**
 
-1. 🚀 **Launch** InVisioVault
+1. 🚀 **Launch** InvisioVault
 2. 🖼️ **Choose** your cover image
 3. 📁 **Select** files to hide
 4. 🔐 **Set** a strong password
@@ -199,7 +199,7 @@ python main.py
 
 <div align="center">
 
-### 🎬 **See InVisioVault in Action**
+### 🎬 **See InvisioVault in Action**
 
 </div>
 
@@ -212,7 +212,7 @@ python main.py
 ## 📂 Project Structure
 
 ```
-📁 InVisioVault/
+📁 InvisioVault/
 ├── 🚀 main.py                    # Launch the application
 ├── ⚡ demo_performance.py         # See the speed revolution
 ├── 🧪 test_main.py               # Test all features
@@ -266,7 +266,7 @@ graph LR
 </td>
 <td width="50%">
 
-**🚀 InVisioVault Way (Lightning)**
+**🚀 InvisioVault Way (Lightning)**
 ```
 1. ⚡ Read exact size instantly
 2. ⚡ Extract data in one pass
@@ -302,7 +302,7 @@ graph LR
 
 ## 🎉 Ready to Become a Digital Spy?
 
-### **InVisioVault** - *Where Secrets Hide in Plain Sight*
+### **InvisioVault** - *Where Secrets Hide in Plain Sight*
 
 **[⬇️ Download Now](#-quick-start)** • **[📖 Read More Docs](PROJECT_COMPLETE.md)** • **[🚀 See Performance Demo](demo_performance.py)**
 
@@ -314,12 +314,12 @@ graph LR
 
 *Pushing the boundaries of digital privacy and cybersecurity education*
 
-[![Star this repo](https://img.shields.io/github/stars/Mrtracker-new/InVisioVault_R?style=social)](https://github.com/Mrtracker-new/InVisioVault_R)
-[![Forks](https://img.shields.io/github/forks/Mrtracker-new/InVisioVault_R?style=social)](https://github.com/Mrtracker-new/InVisioVault_R/fork)
-[![Issues](https://img.shields.io/github/issues/Mrtracker-new/InVisioVault_R)](https://github.com/Mrtracker-new/InVisioVault_R/issues)
+[![Star this repo](https://img.shields.io/github/stars/Mrtracker-new/InvisioVault_R?style=social)](https://github.com/Mrtracker-new/InvisioVault_R)
+[![Forks](https://img.shields.io/github/forks/Mrtracker-new/InvisioVault_R?style=social)](https://github.com/Mrtracker-new/InvisioVault_R/fork)
+[![Issues](https://img.shields.io/github/issues/Mrtracker-new/InvisioVault_R)](https://github.com/Mrtracker-new/InvisioVault_R/issues)
 
 </div>
 
 ---
 
-<sub>⚠️ **Ethical Use Only**: InVisioVault is designed for educational, research, and legitimate privacy purposes. Please use responsibly and in compliance with all applicable laws and regulations. The author does not endorse or support any malicious activities.</sub>
+<sub>⚠️ **Ethical Use Only**: InvisioVault is designed for educational, research, and legitimate privacy purposes. Please use responsibly and in compliance with all applicable laws and regulations. The author does not endorse or support any malicious activities.</sub>

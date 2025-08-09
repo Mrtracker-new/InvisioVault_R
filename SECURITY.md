@@ -1,4 +1,4 @@
-# 🔒 InVisioVault Security Guidelines
+# 🔒 InvisioVault Security Guidelines
 
 ## Author: Rolan (RNR)
 ## Purpose: Comprehensive security practices for protecting sensitive data
@@ -142,7 +142,7 @@ git log -S "SECRET" --all
 ## 📁 RECOMMENDED DIRECTORY STRUCTURE
 
 ```
-InVisioVault/
+InvisioVault/
 ├── .gitignore          # Comprehensive protection
 ├── SECURITY.md         # This file
 ├── core/               # Core application code

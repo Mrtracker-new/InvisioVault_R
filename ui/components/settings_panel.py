@@ -1,6 +1,6 @@
 """
 Settings Panel
-Comprehensive settings interface for InVisioVault configuration.
+Comprehensive settings interface for InvisioVault configuration.
 """
 
 import os
@@ -42,7 +42,7 @@ class SettingsPanel(QDialog):
         
     def init_ui(self):
         """Initialize the settings panel UI."""
-        self.setWindowTitle("InVisioVault Settings")
+        self.setWindowTitle("InvisioVault Settings")
         self.setWindowIcon(QIcon("assets/icons/settings.png"))
         self.setModal(True)
         self.resize(700, 600)

@@ -1,4 +1,4 @@
-# InVisioVault User Manual
+# InvisioVault User Manual
 
 ## 📚 Educational Project by Rolan (RNR)
 
