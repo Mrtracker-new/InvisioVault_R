@@ -27,7 +27,10 @@ from core.encryption_engine import EncryptionEngine, SecurityLevel
 if TYPE_CHECKING:
     import numpy as np
     from PIL import Image as PILImage
-    import scipy
+    try:
+        import scipy
+    except ImportError:
+        scipy = None
 else:
     try:
         from PIL import Image
