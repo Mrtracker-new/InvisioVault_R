@@ -27,6 +27,7 @@ from core.encryption_engine import EncryptionEngine, SecurityLevel
 if TYPE_CHECKING:
     import numpy as np
     from PIL import Image as PILImage
+    import scipy
 else:
     try:
         from PIL import Image
@@ -36,6 +37,13 @@ else:
         Image = None
         np = None
         PILImage = None
+    
+    try:
+        import scipy
+        import scipy.ndimage
+        import scipy.signal
+    except ImportError:
+        scipy = None
 
 
 class AnalysisWorkerThread(QThread):
@@ -286,13 +294,18 @@ class AnalysisWorkerThread(QThread):
         else:
             # More thorough analysis for balanced/thorough modes
             # Sobel edge detection for sharpness
-            if quality_level == "thorough":
-                from scipy import ndimage
-                sobel_x = ndimage.sobel(gray, axis=1)
-                sobel_y = ndimage.sobel(gray, axis=0)
-                sharpness = float(np.mean(np.sqrt(sobel_x**2 + sobel_y**2)))
+            if quality_level == "thorough" and scipy is not None:
+                try:
+                    sobel_x = scipy.ndimage.sobel(gray, axis=1)
+                    sobel_y = scipy.ndimage.sobel(gray, axis=0)
+                    sharpness = float(np.mean(np.sqrt(sobel_x**2 + sobel_y**2)))
+                except (ImportError, AttributeError):
+                    # Fallback to simple gradient
+                    grad_x = np.abs(np.diff(gray, axis=1))
+                    grad_y = np.abs(np.diff(gray, axis=0))
+                    sharpness = float(np.mean(grad_x) + np.mean(grad_y))
             else:
-                # Simple gradient for balanced mode
+                # Simple gradient for balanced mode or when scipy unavailable
                 grad_x = np.abs(np.diff(gray, axis=1))
                 grad_y = np.abs(np.diff(gray, axis=0))
                 sharpness = float(np.mean(grad_x) + np.mean(grad_y))
@@ -301,9 +314,16 @@ class AnalysisWorkerThread(QThread):
             laplacian_kernel = np.array([[0, -1, 0], [-1, 4, -1], [0, -1, 0]])
             
             # Apply convolution efficiently
-            from scipy import signal
-            filtered = signal.convolve2d(gray, laplacian_kernel, mode='valid')
-            noise_level = float(np.std(filtered))
+            if scipy is not None:
+                try:
+                    filtered = scipy.signal.convolve2d(gray, laplacian_kernel, mode='valid')
+                    noise_level = float(np.std(filtered))
+                except (ImportError, AttributeError):
+                    # Fallback to manual convolution approximation
+                    noise_level = float(np.std(np.abs(np.diff(gray.flatten()))))
+            else:
+                # Fallback to simple noise estimation
+                noise_level = float(np.std(np.abs(np.diff(gray.flatten()))))
         
         return {
             'noise_level': noise_level,
@@ -1387,30 +1407,6 @@ class AnalysisDialog(QDialog):
         
         self.logger.info("Analysis cancelled by user")
     
-    def on_analysis_completed(self, results: Dict):
-        """Handle analysis completion."""
-        self.analysis_results = results
-        
-        # Reset UI state
-        self.progress_bar.setVisible(False)
-        self.analyze_button.setVisible(True)
-        self.analyze_button.setEnabled(True)
-        self.cancel_button.setVisible(False)
-        self.quality_combo.setEnabled(True)
-        self.status_label.setText("Analysis completed successfully!")
-        
-        # Populate results
-        self.populate_results(results)
-        
-        # Show results tabs
-        self.results_tabs.setVisible(True)
-        self.export_button.setEnabled(True)
-        
-        # Log completion with performance info
-        quality = results.get('analysis_quality', 'unknown')
-        basic_info = results.get('basic_info', {})
-        dimensions = f"{basic_info.get('width', 0)}x{basic_info.get('height', 0)}"
-        self.logger.info(f"Analysis completed - Quality: {quality}, Image: {dimensions}")
     
     def on_analysis_error(self, error_message: str):
         """Handle analysis error."""
