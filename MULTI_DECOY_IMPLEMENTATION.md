@@ -1,8 +1,12 @@
-# Multi-Decoy Implementation - Fixed
+# Multi-Decoy Implementation - Educational Research
+
+## 📚 **Educational Project by Rolan (RNR)**
+
+**Purpose**: Research and learning project exploring advanced steganography techniques
 
 ## Overview
 
-The multi-dataset decoy functionality in InvisioVault has been successfully implemented and fixed. Users can now hide multiple datasets with different passwords and priority levels in a single image, providing true plausible deniability.
+The multi-dataset decoy functionality in InVisioVault has been successfully implemented as part of educational research into plausible deniability techniques. This implementation demonstrates advanced steganography concepts where multiple datasets with different passwords and priority levels can be hidden in a single image.
 
 ## What Was Fixed
 
@@ -177,4 +181,13 @@ python test_multi_decoy.py
 - **Operating Systems**: Windows, macOS, Linux
 - **Python Version**: 3.8+
 
-This implementation provides a robust, secure, and user-friendly solution for hiding multiple datasets with plausible deniability in steganographic images.
+This implementation provides an educational demonstration of robust steganographic techniques with plausible deniability, serving as a learning tool for understanding advanced data hiding methods.
+
+---
+
+## 📚 **Educational Purpose**
+
+**Author**: Rolan (RNR)  
+**Intent**: Educational research and learning  
+**Use Case**: Cybersecurity education, steganography research, algorithm study  
+**Disclaimer**: For educational and research purposes only

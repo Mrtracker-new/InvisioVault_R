@@ -502,4 +502,16 @@ tests/
 
 ---
 
-This comprehensive specification provides a complete roadmap for building a professional-grade steganography application with proper architecture, security, and user experience. The modular design ensures maintainability, while the comprehensive feature set addresses both basic and advanced use cases for digital steganography and data security.
+## 📚 Educational Project Information
+
+**Author**: Rolan (RNR)  
+**Purpose**: Educational specification for learning advanced steganography and cryptography concepts  
+**Learning Objectives**: 
+- Understanding modern cryptographic implementations
+- Learning steganography algorithms and techniques
+- Exploring secure software architecture principles
+- Practicing professional development methodologies
+
+**Educational Value**: This comprehensive specification serves as a learning roadmap for building educational steganography applications, focusing on proper architecture, security principles, and user experience design. The modular approach demonstrates professional software engineering practices while exploring both basic and advanced concepts in digital steganography and data security.
+
+**Disclaimer**: This specification is designed for educational and research purposes only. All implementations should follow ethical guidelines and local regulations.

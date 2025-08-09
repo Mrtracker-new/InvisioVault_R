@@ -82,4 +82,6 @@ InVisioVault/
 
 ---
 
-*InVisioVault - Clean code, Revolutionary performance* ⚡
+*InVisioVault - Educational Project by Rolan (RNR)* 🎓
+
+**Purpose**: Learning advanced cybersecurity, cryptography, and software engineering principles
