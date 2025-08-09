@@ -1,17 +1,18 @@
 <div align="center">
 
 # 🕵️‍♂️ InvisioVault
-
-### *The Ultimate Steganography Suite - Hide Your Secrets in Plain Sight*
+### *Advanced Steganography Suite with Revolutionary Performance*
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
-[![License](https://img.shields.io/badge/License-Educational-green.svg)](#)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-1.0.0-green.svg)](#)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#)
 [![Performance](https://img.shields.io/badge/Speed-100x%20Faster-red.svg)](#)
+[![Quality](https://img.shields.io/badge/Code%20Quality-Production%20Ready-brightgreen.svg)](#)
 
-*Transform ordinary images into secure vaults for your most sensitive files*
+*Professional-grade steganography application for secure file hiding with military-grade encryption*
 
-**[🚀 Quick Start](#-quick-start)** • **[✨ Features](#-what-makes-invisiovault-special)** • **[📖 How It Works](#-how-it-works)** • **[🛡️ Security](#-security-first)**
+**[🚀 Quick Start](#-quick-start)** • **[✨ Features](#-advanced-features)** • **[📖 Documentation](#-documentation)** • **[🛡️ Security](#-security-first)** • **[⚡ Performance](#-revolutionary-performance)**
 
 </div>
 
@@ -78,42 +79,43 @@ This project was developed as an advanced learning journey into:
 ⏱️ Result: Files ready in seconds!
 ```
 
-## ✨ What Makes InvisioVault Special?
+## ✨ Advanced Features
 
-<table>
-<tr>
-<td width="50%">
+### 🎯 **Core Steganography**
+- 🖼️ **LSB Steganography**: Advanced Least Significant Bit hiding with randomized positioning
+- 📁 **Multi-Format Support**: PNG, BMP, TIFF (lossless formats) with automatic optimization
+- ⚡ **Revolutionary Speed**: 10-100x faster than traditional steganography tools
+- 📊 **Smart Image Analysis**: Entropy-based capacity calculation and suitability scoring
 
-### 🎨 **Steganography Magic**
-- 🔍 **Invisible Hiding**: Files vanish completely into images
-- 🖼️ **Format Support**: PNG, BMP, TIFF (lossless quality)
-- 🧠 **Smart Analysis**: AI determines best hiding spots
-- 🎯 **Perfect Quality**: Images look exactly the same
+### 🛡️ **Advanced Security**
+- 🔐 **AES-256-CBC Encryption**: Military-grade encryption with PBKDF2 key derivation
+- 🔑 **Multi-Level Security**: Standard (100K), High (500K), Maximum (1M+) iterations
+- 🗝️ **Two-Factor Authentication**: Password + Keyfile system for maximum security
+- 🎲 **Cryptographic Randomization**: Password-seeded randomization for hiding positions
 
-### 🛡️ **Military-Grade Security**
-- 🔐 **AES-256 Encryption**: Same standard used by governments
-- 🗝️ **Advanced Key Derivation**: PBKDF2 with 100K-1M+ iterations
-- 🎲 **Random Positioning**: Impossible to predict where data is hidden
-- ⚡ **Instant Password Check**: Know immediately if password is wrong
+### 👻 **Plausible Deniability Features**
+- 🎭 **Decoy Mode**: Hide two different datasets in one image with different passwords
+- 🏗️ **Multi-Dataset Hiding**: Hide unlimited datasets with independent passwords
+- 📊 **Priority Levels**: 5 security levels from outer (decoy) to inner (real) data
+- 🛡️ **Innocent Cover**: Use harmless files as decoy content for plausible deniability
 
-</td>
-<td width="50%">
+### 🔄 **Advanced Distribution**
+- 📡 **Two-Factor Distribution**: Spread data across 2-8 images with redundancy
+- 📋 **Manifest System**: Automatic reconstruction from partial image sets
+- ✅ **Error Correction**: Built-in redundancy and integrity verification
+- 🔄 **Failure Recovery**: Extract data even with some missing/damaged images
 
-### 🚀 **User Experience**
-- 🎨 **Beautiful Interface**: Modern, clean design
-- 📊 **Real-time Progress**: See exactly what's happening
-- 📝 **Smart Logging**: Track all your operations
-- 💻 **Cross-Platform**: Windows, macOS, Linux ready
+### 🎨 **Professional UI**
+- 🖥️ **Modern PySide6 Interface**: Professional, responsive design
+- 🌓 **Theme Support**: Dark/Light modes with smooth transitions
+- 📊 **Real-Time Progress**: Detailed operation tracking with cancellation support
+- ⚙️ **Advanced Settings**: Comprehensive configuration management
 
-### 🔧 **Advanced Tools**
-- 📊 **Image Analysis**: See how much you can hide
-- 🛡️ **Decoy Protection**: Multiple layers of security
-- 📁 **Batch Processing**: Handle multiple files at once
-- 🔍 **File Detective**: Find hidden data in images
-
-</td>
-</tr>
-</table>
+### 🔧 **Developer Features**
+- 📝 **Comprehensive Logging**: Secure logging with PII redaction
+- 🧪 **Extensive Testing**: Unit tests, integration tests, and performance benchmarks
+- 📚 **Full Documentation**: API reference, user guides, and technical specifications
+- 🛠️ **Modular Architecture**: Clean, extensible codebase with professional standards
 
 ## 🚀 Quick Start
 
@@ -194,6 +196,53 @@ python main.py
 | **📊 Capacity** | Up to 50MB per image | Hide entire document collections |
 | **💾 Memory** | <500MB usage | Runs smoothly on any modern computer |
 | **🌍 Platforms** | Windows, macOS, Linux | Use anywhere, anytime |
+
+## 📚 Documentation
+
+### 📊 **Quick Reference**
+| 📄 **Document** | 📝 **Description** | 🔗 **Link** |
+|-------------|----------------|--------|
+| **User Guide** | Complete usage instructions | [`docs/user_guide.md`](docs/user_guide.md) |
+| **API Reference** | Technical API documentation | [`docs/api_reference.md`](docs/api_reference.md) |
+| **Security Guide** | Security best practices | [`docs/security_notes.md`](docs/security_notes.md) |
+| **Project Architecture** | Technical specifications | [`InvisioVault_Project_Prompt.md`](InvisioVault_Project_Prompt.md) |
+| **Performance Analysis** | Speed optimization details | [`PERFORMANCE_OPTIMIZATION_SUMMARY.md`](PERFORMANCE_OPTIMIZATION_SUMMARY.md) |
+| **Multi-Decoy Implementation** | Advanced decoy features | [`MULTI_DECOY_IMPLEMENTATION.md`](MULTI_DECOY_IMPLEMENTATION.md) |
+
+### 🚀 **Advanced Usage**
+
+#### **Command Line Interface**
+```bash
+# Basic steganography test
+python test_main.py
+
+# Performance benchmarking
+python demo_performance.py
+
+# Run comprehensive test suite
+python -m pytest tests/ -v
+
+# Security validation
+python scripts/security_check.py
+```
+
+#### **Advanced Features**
+```bash
+# Multi-decoy testing
+python test_multi_decoy.py
+
+# Simple decoy testing
+python test_simple_decoy.py
+
+# Final decoy implementation test
+python test_final_decoy.py
+```
+
+### 🛠️ **Development Tools**
+- **Code Formatting**: `black . --line-length 88`
+- **Linting**: `flake8 . --max-line-length=88`
+- **Security Scanning**: `python scripts/check_sensitive_files.py`
+- **Build Executable**: `pyinstaller --windowed --onefile main.py`
 
 ## 🧪 Try It Yourself!
 
