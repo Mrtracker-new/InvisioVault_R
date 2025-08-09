@@ -487,16 +487,17 @@ class FileUtils:
         from typing import Literal
         
         # Map compression types to proper tarfile modes
+        mode: Literal['w', 'w:gz', 'w:bz2', 'w:xz']
         if compression_type == CompressionType.TAR:
-            mode: Literal['w'] = 'w'
+            mode = 'w'
         elif compression_type == CompressionType.TAR_GZ:
-            mode: Literal['w:gz'] = 'w:gz'
+            mode = 'w:gz'
         elif compression_type == CompressionType.TAR_BZ2:
-            mode: Literal['w:bz2'] = 'w:bz2'
+            mode = 'w:bz2'
         elif compression_type == CompressionType.TAR_XZ:
-            mode: Literal['w:xz'] = 'w:xz'
+            mode = 'w:xz'
         else:
-            mode: Literal['w'] = 'w'  # Default to uncompressed
+            mode = 'w'  # Default to uncompressed
         
         with tarfile.open(archive_path, mode) as tf:
             for file_path in files:
