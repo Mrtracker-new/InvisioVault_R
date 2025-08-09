@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QTreeWidgetItem, QSplitter
 )
 from PySide6.QtCore import Qt, QThread, Signal
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QPixmap
 
 from utils.logger import Logger
 from utils.config_manager import ConfigManager
@@ -376,8 +376,17 @@ class DecoyDialog(QDialog):
         self.extract_stego_label.setStyleSheet("padding: 10px; border: 2px dashed #ccc; border-radius: 5px;")
         self.extract_stego_button = QPushButton("Select Steganographic Image")
         
+        # Image preview for extraction
+        self.extract_image_preview = QLabel()
+        self.extract_image_preview.setMaximumHeight(150)
+        self.extract_image_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.extract_image_preview.setStyleSheet("border: 1px solid #ccc; border-radius: 5px;")
+        self.extract_image_preview.setText("Select image to see preview")
+        self.extract_image_preview.hide()
+        
         stego_layout.addWidget(self.extract_stego_label)
         stego_layout.addWidget(self.extract_stego_button)
+        stego_layout.addWidget(self.extract_image_preview)
         layout.addWidget(stego_group)
         
         # Authentication
@@ -638,6 +647,21 @@ class DecoyDialog(QDialog):
         if file_path:
             self.extract_stego_label.setText(f"Selected: {Path(file_path).name}")
             self.extract_stego_path = file_path
+            
+            # Show image preview
+            try:
+                pixmap = QPixmap(file_path)
+                if not pixmap.isNull():
+                    scaled_pixmap = pixmap.scaled(200, 150, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                    self.extract_image_preview.setPixmap(scaled_pixmap)
+                    self.extract_image_preview.show()
+                else:
+                    self.extract_image_preview.setText("Unable to load image preview")
+                    self.extract_image_preview.show()
+            except Exception as e:
+                self.logger.error(f"Failed to load image preview: {e}")
+                self.extract_image_preview.setText("Preview unavailable")
+                self.extract_image_preview.show()
     
     def select_extract_output(self):
         """Select output directory for extraction."""
