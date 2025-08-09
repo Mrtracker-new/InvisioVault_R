@@ -131,8 +131,21 @@ This project was developed as an advanced learning journey into:
 - 🖼️ An image file (PNG, BMP, or TIFF work best)
 - 📄 Files you want to hide
 
-### ⚡ **Installation (Super Easy!)**
+### ⚡ **Installation Options**
 
+#### **Option 1: Pre-built Executable (Easiest)**
+```bash
+# 1️⃣ Download the latest release
+# Visit: https://github.com/Mrtracker-new/InvisioVault_R/releases
+
+# 2️⃣ Download InvisioVault.exe
+# No installation required!
+
+# 3️⃣ Double-click to launch! ✨
+# Works on any Windows computer without Python
+```
+
+#### **Option 2: From Source (Advanced)**
 ```bash
 # 1️⃣ Clone or download InvisioVault
 git clone https://github.com/Mrtracker-new/InvisioVault_R.git
@@ -242,7 +255,42 @@ python test_final_decoy.py
 - **Code Formatting**: `black . --line-length 88`
 - **Linting**: `flake8 . --max-line-length=88`
 - **Security Scanning**: `python scripts/check_sensitive_files.py`
-- **Build Executable**: `pyinstaller --windowed --onefile main.py`
+- **Build Executable**: See [Build Instructions](#-build-executable)
+
+## 🎨 Build Executable
+
+### **💾 Create Standalone Windows Executable**
+
+InvisioVault can be built into a standalone Windows executable that runs without Python installation:
+
+#### **⚡ Quick Build**
+```bash
+# Build single-file executable with icon
+python -m PyInstaller --windowed --onefile --icon="assets\icons\InvisioVault.ico" --name="InvisioVault" --clean main.py
+```
+
+#### **🔧 Build Details**
+- **Output**: `dist/InvisioVault.exe` (~104 MB)
+- **Icon**: Uses custom InvisioVault.ico from assets
+- **Type**: Windowed application (no console)
+- **Dependencies**: All bundled (PySide6, NumPy, Pillow, etc.)
+- **Compatibility**: Windows 10/11, no Python required
+
+#### **📦 What's Included**
+- ✅ Complete InvisioVault application
+- ✅ All Python dependencies bundled
+- ✅ Custom icon and branding
+- ✅ Professional windowed interface
+- ✅ Full steganography and security features
+
+#### **🚀 Distribution Ready**
+```bash
+# The executable is completely self-contained:
+# ✅ No Python installation needed
+# ✅ No additional files required
+# ✅ Works on any Windows computer
+# ✅ Professional appearance with custom icon
+```
 
 ## 🧪 Try It Yourself!
 
