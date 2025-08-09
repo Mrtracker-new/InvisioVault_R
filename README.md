@@ -133,8 +133,8 @@ This project was developed as an advanced learning journey into:
 
 ```bash
 # 1️⃣ Clone or download InVisioVault
-git clone https://github.com/your-username/InVisioVault.git
-cd InVisioVault
+git clone https://github.com/Mrtracker-new/InVisioVault_R.git
+cd InVisioVault_R
 
 # 2️⃣ Install required packages
 pip install -r requirements.txt
@@ -314,7 +314,9 @@ graph LR
 
 *Pushing the boundaries of digital privacy and cybersecurity education*
 
-[![Star this repo](https://img.shields.io/github/stars/username/InVisioVault?style=social)](https://github.com/username/InVisioVault)
+[![Star this repo](https://img.shields.io/github/stars/Mrtracker-new/InVisioVault_R?style=social)](https://github.com/Mrtracker-new/InVisioVault_R)
+[![Forks](https://img.shields.io/github/forks/Mrtracker-new/InVisioVault_R?style=social)](https://github.com/Mrtracker-new/InVisioVault_R/fork)
+[![Issues](https://img.shields.io/github/issues/Mrtracker-new/InVisioVault_R)](https://github.com/Mrtracker-new/InVisioVault_R/issues)
 
 </div>
 
