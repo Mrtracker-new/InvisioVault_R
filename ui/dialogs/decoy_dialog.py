@@ -24,6 +24,7 @@ from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler
 from core.steganography_engine import SteganographyEngine
 from core.encryption_engine import EncryptionEngine, SecurityLevel
+from core.multi_decoy_engine import MultiDecoyEngine
 
 
 class DecoyWorkerThread(QThread):
@@ -39,8 +40,7 @@ class DecoyWorkerThread(QThread):
         self.params = kwargs
         
         # Initialize engines
-        self.stego_engine = SteganographyEngine()
-        self.encryption_engine = EncryptionEngine(SecurityLevel.MAXIMUM)
+        self.multi_decoy_engine = MultiDecoyEngine(SecurityLevel.MAXIMUM)
         self.logger = Logger()
     
     def run(self):
@@ -57,164 +57,55 @@ class DecoyWorkerThread(QThread):
     
     def _execute_hide_operation(self):
         """Execute decoy hide operation with multiple datasets."""
-        carrier_path = self.params['carrier_path']
+        carrier_path = Path(self.params['carrier_path'])
         datasets = self.params['datasets']
-        output_path = self.params['output_path']
+        output_path = Path(self.params['output_path'])
         
-        self.status_updated.emit("Preparing decoy datasets...")
+        self.status_updated.emit("Checking image capacity...")
         self.progress_updated.emit(10)
         
-        # Sort datasets by priority (lower priority = outer layer)
-        sorted_datasets = sorted(datasets, key=lambda x: x['priority'])
+        # Check capacity first
+        capacity = self.multi_decoy_engine.calculate_multi_capacity(carrier_path, len(datasets))
+        self.logger.info(f"Image capacity: {capacity}")
         
-        # Start with the carrier image
-        current_image_data = None
-        with open(carrier_path, 'rb') as f:
-            current_image_data = f.read()
+        if capacity['max_datasets'] < len(datasets):
+            raise Exception(f"Image can only hold {capacity['max_datasets']} datasets, but {len(datasets)} provided")
         
-        total_datasets = len(sorted_datasets)
+        self.status_updated.emit(f"Hiding {len(datasets)} datasets...")
+        self.progress_updated.emit(30)
         
-        # Process each dataset from lowest to highest priority
-        for i, dataset in enumerate(sorted_datasets):
-            self.status_updated.emit(f"Processing dataset {i+1} of {total_datasets}...")
-            progress = 10 + (80 * (i + 1) // total_datasets)
-            self.progress_updated.emit(progress)
-            
-            # Prepare dataset files
-            import tempfile
-            import zipfile
-            
-            with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_file:
-                temp_zip_path = Path(temp_file.name)
-            
-            with zipfile.ZipFile(temp_zip_path, 'w', zipfile.ZIP_DEFLATED) as archive:
-                for file_path in dataset['files']:
-                    archive.write(file_path, Path(file_path).name)
-            
-            with open(temp_zip_path, 'rb') as f:
-                archive_data = f.read()
-            temp_zip_path.unlink()
-            
-            # Encrypt dataset with its password
-            encrypted_data = self.encryption_engine.encrypt_with_metadata(
-                archive_data, dataset['password']
-            )
-            
-            # Create decoy metadata
-            decoy_metadata = {
-                'dataset_id': dataset.get('name', f'Dataset_{i+1}'),
-                'priority': dataset['priority'],
-                'decoy_type': dataset.get('decoy_type', 'standard'),
-                'data_size': len(encrypted_data)
-            }
-            
-            # Combine metadata and encrypted data
-            metadata_json = json.dumps(decoy_metadata).encode('utf-8')
-            combined_data = (
-                len(metadata_json).to_bytes(4, 'big') + 
-                metadata_json + 
-                encrypted_data
-            )
-            
-            # Save current state to temporary file for next iteration
-            temp_image_path = None
-            if i < total_datasets - 1:  # Not the last iteration
-                with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as temp_file:
-                    temp_image_path = Path(temp_file.name)
-                with open(temp_image_path, 'wb') as f:
-                    f.write(current_image_data)
-            else:
-                temp_image_path = Path(output_path)
-            
-            # Hide data in image - use SHA-256 based seed generation
-            import hashlib
-            seed_hash = hashlib.sha256(dataset['password'].encode('utf-8')).digest()
-            seed = int.from_bytes(seed_hash[:4], byteorder='big') % (2**32)
-            success = self.stego_engine.hide_data(
-                carrier_path if i == 0 else temp_image_path,
-                combined_data,
-                temp_image_path if i < total_datasets - 1 else output_path,
-                randomize=True,
-                seed=seed
-            )
-            
-            if not success:
-                raise Exception(f"Failed to hide dataset {i+1}")
-            
-            # Update carrier for next iteration
-            if i < total_datasets - 1:
-                with open(temp_image_path, 'rb') as f:
-                    current_image_data = f.read()
+        # Use MultiDecoyEngine to hide all datasets at once
+        success = self.multi_decoy_engine.hide_multiple_datasets(
+            carrier_path=carrier_path,
+            datasets=datasets,
+            output_path=output_path
+        )
         
-        self.status_updated.emit("Decoy operation completed successfully!")
+        if not success:
+            raise Exception("Failed to hide datasets in image")
+        
+        self.status_updated.emit("Multi-decoy operation completed successfully!")
         self.progress_updated.emit(100)
         self.finished_successfully.emit()
     
     def _execute_extract_operation(self):
         """Execute decoy extract operation."""
-        stego_path = self.params['stego_path']
+        stego_path = Path(self.params['stego_path'])
         password = self.params['password']
-        output_dir = self.params['output_dir']
+        output_dir = Path(self.params['output_dir'])
         
-        self.status_updated.emit("Extracting decoy data...")
+        self.status_updated.emit("Extracting dataset with provided password...")
         self.progress_updated.emit(20)
         
-        # Extract data using the provided password - use SHA-256 based seed generation
-        import hashlib
-        seed_hash = hashlib.sha256(password.encode('utf-8')).digest()
-        seed = int.from_bytes(seed_hash[:4], byteorder='big') % (2**32)
-        combined_data = self.stego_engine.extract_data(
-            stego_path, randomize=True, seed=seed
+        # Use MultiDecoyEngine to extract the dataset
+        metadata = self.multi_decoy_engine.extract_dataset(
+            stego_path=stego_path,
+            password=password,
+            output_dir=output_dir
         )
         
-        if not combined_data:
-            raise Exception("No data found with the provided password")
-        
-        self.status_updated.emit("Processing extracted data...")
-        self.progress_updated.emit(50)
-        
-        # Parse metadata
-        metadata_size = int.from_bytes(combined_data[:4], 'big')
-        metadata_json = combined_data[4:4+metadata_size].decode('utf-8')
-        encrypted_data = combined_data[4+metadata_size:]
-        
-        try:
-            metadata = json.loads(metadata_json)
-        except json.JSONDecodeError:
-            raise Exception("Invalid metadata format")
-        
-        self.status_updated.emit("Decrypting dataset...")
-        self.progress_updated.emit(70)
-        
-        # Decrypt the dataset
-        try:
-            archive_data = self.encryption_engine.decrypt_with_metadata(
-                encrypted_data, password
-            )
-        except Exception:
-            raise Exception("Decryption failed - invalid password")
-        
-        self.status_updated.emit("Extracting files...")
-        self.progress_updated.emit(90)
-        
-        # Create dataset-specific output directory
-        dataset_output_dir = Path(output_dir) / metadata.get('dataset_id', 'decoy_dataset')
-        dataset_output_dir.mkdir(exist_ok=True)
-        
-        # Extract files from archive
-        import tempfile
-        import zipfile
-        
-        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_file:
-            temp_zip_path = Path(temp_file.name)
-        
-        with open(temp_zip_path, 'wb') as f:
-            f.write(archive_data)
-        
-        with zipfile.ZipFile(temp_zip_path, 'r') as archive:
-            archive.extractall(dataset_output_dir)
-        
-        temp_zip_path.unlink()
+        if not metadata:
+            raise Exception("No dataset found with the provided password")
         
         self.status_updated.emit(f"Dataset '{metadata.get('dataset_id', 'Unknown')}' extracted successfully!")
         self.progress_updated.emit(100)
