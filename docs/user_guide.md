@@ -2,7 +2,7 @@
 ### *Complete Guide to Advanced Steganography*
 
 **Version**: 1.0.0  
-**Author**: Rolan (RNR)  
+**Author**: Rolan (RNR) - [rolanlobo901@gmail.com](mailto:rolanlobo901@gmail.com)  
 **Purpose**: Your complete guide to mastering secure file hiding  
 **Last Updated**: August 2025
 

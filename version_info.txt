@@ -23,11 +23,11 @@ VSVersionInfo(
         StringStruct(u'FileDescription', u'InvisioVault - Advanced Steganography Suite'),
         StringStruct(u'FileVersion', u'1.0.0.0'),
         StringStruct(u'InternalName', u'InvisioVault'),
-        StringStruct(u'LegalCopyright', u'Copyright © 2025 Rolan (RNR). Educational License.'),
+        StringStruct(u'LegalCopyright', u'Copyright © 2025 Rolan (RNR). Educational License. Contact: rolanlobo901@gmail.com'),
         StringStruct(u'OriginalFilename', u'InvisioVault.exe'),
         StringStruct(u'ProductName', u'InvisioVault'),
         StringStruct(u'ProductVersion', u'1.0.0'),
-        StringStruct(u'Comments', u'Revolutionary steganography suite with 100x faster extraction and advanced security features. Educational project for cybersecurity learning.')]
+        StringStruct(u'Comments', u'Revolutionary steganography suite with 100x faster extraction and advanced security features. Educational project for cybersecurity learning. Author: Rolan (RNR) - rolanlobo901@gmail.com')]
       )
     ]),
     VarFileInfo([VarStruct(u'Translation', [1033, 1200])])

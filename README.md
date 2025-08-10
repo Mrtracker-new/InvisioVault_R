@@ -384,36 +384,69 @@ python test_final_decoy.py
 
 ### **💾 Create Standalone Windows Executable**
 
-InvisioVault can be built into a standalone Windows executable that runs without Python installation:
+InvisioVault includes a professional build system that creates production-ready Windows executables:
 
-#### **⚡ Quick Build**
+#### **⭐ Professional Build System (Recommended)**
 ```bash
-# Build single-file executable with icon
-python -m PyInstaller --windowed --onefile --icon="assets\icons\InvisioVault.ico" --name="InvisioVault" --clean main.py
+# Advanced Python builder with full validation
+python build_scripts/build_executable.py --clean
+
+# Debug version with console window
+python build_scripts/build_executable.py --clean --debug
+
+# Directory distribution (faster startup)
+python build_scripts/build_executable.py --clean --onedir
+
+# Verbose output for troubleshooting
+python build_scripts/build_executable.py --clean --verbose
 ```
 
-#### **🔧 Build Details**
-- **Output**: `dist/InvisioVault.exe` (~104 MB)
-- **Icon**: Uses custom InvisioVault.ico from assets
-- **Type**: Windowed application (no console)
-- **Dependencies**: All bundled (PySide6, NumPy, Pillow, etc.)
-- **Compatibility**: Windows 10/11, no Python required
+#### **🚀 Quick Build Options**
+```bash
+# Windows batch file (double-click or run from cmd)
+build_scripts\build_exe.bat
 
-#### **📦 What's Included**
-- ✅ Complete InvisioVault application
-- ✅ All Python dependencies bundled
-- ✅ Custom icon and branding
-- ✅ Professional windowed interface
-- ✅ Full steganography and security features
+# PowerShell script (run from PowerShell)
+powershell -ExecutionPolicy Bypass -File build_scripts\build_exe.ps1
+```
+
+#### **📊 Executable Specifications**
+- **📦 Output**: `dist/InvisioVault.exe` (~66-70 MB optimized)
+- **🎨 Icon**: Custom InvisioVault.ico embedded
+- **🖥️ Type**: Professional windowed GUI application
+- **📚 Dependencies**: All bundled (PySide6, NumPy, Pillow, Cryptography)
+- **💻 Compatibility**: Windows 10/11 (x64), no Python installation required
+- **⚡ Compression**: UPX optimized for smaller size
+- **📋 Metadata**: Professional version information embedded
+
+#### **🔧 Build Features**
+- ✅ **Automated Validation**: Dependency checking and file verification
+- ✅ **Professional Metadata**: Company info, version details, copyright
+- ✅ **Error Handling**: Comprehensive build error reporting
+- ✅ **Clean Builds**: Automatic cleanup of previous artifacts
+- ✅ **Size Optimization**: UPX compression and import optimization
+- ✅ **Icon Integration**: Custom application icon in Windows
+
+#### **📁 Build Configuration Files**
+- **`InvisioVault.spec`**: Advanced PyInstaller configuration
+- **`version_info.txt`**: Windows executable metadata
+- **`build_scripts/README.md`**: Complete build documentation
 
 #### **🚀 Distribution Ready**
 ```bash
 # The executable is completely self-contained:
-# ✅ No Python installation needed
-# ✅ No additional files required
-# ✅ Works on any Windows computer
-# ✅ Professional appearance with custom icon
+# ✅ Single file - no installation required
+# ✅ Professional appearance with custom branding
+# ✅ All libraries and dependencies bundled
+# ✅ Runs on any Windows 10/11 computer
+# ✅ Perfect for secure file sharing and distribution
 ```
+
+#### **📖 Build Documentation**
+For complete build instructions, troubleshooting, and advanced options:
+- **[Build Scripts Guide](build_scripts/README.md)** - Comprehensive build documentation
+- **[Build Requirements](build_scripts/README.md#build-requirements)** - System requirements
+- **[Troubleshooting](build_scripts/README.md#troubleshooting)** - Common issues and solutions
 
 ## 🧪 Try It Yourself!
 
@@ -553,7 +586,7 @@ graph LR
 
 ---
 
-## 📞 Support
+## 📞 Support & Contact
 
 <div align="center">
 
@@ -567,6 +600,7 @@ graph LR
 | 🐛 **Bug Reports** | Report issues or bugs | [GitHub Issues](https://github.com/Mrtracker-new/InvisioVault_R/issues) |
 | 💡 **Feature Requests** | Suggest new features | [GitHub Discussions](https://github.com/Mrtracker-new/InvisioVault_R/discussions) |
 | 🎓 **Educational Content** | Learning resources and tutorials | [User Guide](docs/user_guide.md) |
+| 📧 **Direct Contact** | Email the author directly | [rolanlobo901@gmail.com](mailto:rolanlobo901@gmail.com) |
 
 ---
 

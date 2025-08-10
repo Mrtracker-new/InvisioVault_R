@@ -119,3 +119,16 @@ python build_scripts/build_executable.py --clean
 ```
 
 It provides the best combination of features, error handling, and professional output.
+
+---
+
+## 👨‍💻 Author Information
+
+**InvisioVault** is developed by **Rolan (RNR)** as an educational project for advanced steganography and cybersecurity learning.
+
+- **Author**: Rolan (RNR)  
+- **Contact**: [rolanlobo901@gmail.com](mailto:rolanlobo901@gmail.com)
+- **Purpose**: Educational and research project
+- **License**: MIT Educational License
+
+For questions, support, or collaboration opportunities, please reach out via email or through the GitHub repository.
