@@ -1,22 +1,43 @@
 # 📚 InvisioVault API Reference
-### *Complete Technical Documentation*
+### *Complete Technical Documentation for Developers*
 
 **Version**: 1.0.0  
 **Author**: Rolan (RNR)  
-**Purpose**: Comprehensive API documentation for developers and researchers  
-**Last Updated**: January 2025
+**Purpose**: Your complete API guide for building with InvisioVault  
+**Last Updated**: August 2025
 
 ---
 
-## 🎯 Table of Contents
+<div align="center">
 
-1. [**Core Engines**](#-core-engines)
-2. [**UI Components**](#-ui-components)
-3. [**Utilities**](#-utilities)
-4. [**Operations**](#-operations)
-5. [**Configuration**](#-configuration)
-6. [**Error Handling**](#-error-handling)
-7. [**Examples**](#-examples)
+### 🚀 **Build Powerful Steganography Applications**
+
+*Everything you need to integrate InvisioVault into your projects*
+
+</div>
+
+## 🗺️ Quick API Navigation
+
+### 🔧 **Core APIs**
+- [🔍 Core Engines](#-core-engines) • [🎨 UI Components](#-ui-components) • [🔧 Utilities](#-utilities)
+
+### ⚙️ **Operations & Config**
+- [⚡ Operations](#-operations) • [📝 Configuration](#-configuration) • [🚫 Error Handling](#-error-handling)
+
+### 💡 **Examples & Integration**
+- [🚀 Code Examples](#-examples) • [🎆 Quick Start](#quick-start-examples) • [⚠️ Security Warnings](#security-warnings)
+
+---
+
+## 📋 Table of Contents
+
+1. [🔧 **Core Engines**](#-core-engines) - Steganography and encryption APIs
+2. [🎨 **UI Components**](#-ui-components) - Interface building blocks
+3. [🔧 **Utilities**](#-utilities) - Helper functions and tools
+4. [⚡ **Operations**](#-operations) - High-level operation APIs
+5. [📝 **Configuration**](#-configuration) - Settings and preferences
+6. [🚫 **Error Handling**](#-error-handling) - Exception management
+7. [🚀 **Examples**](#-examples) - Practical code examples
 
 ---
 

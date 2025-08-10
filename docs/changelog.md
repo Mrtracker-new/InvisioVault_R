@@ -1,5 +1,5 @@
 # 📋 InvisioVault Changelog
-### *Complete Version History and Development Updates*
+### *Complete Version History & Release Notes*
 
 **Author**: Rolan (RNR)  
 **Project**: InvisioVault - Advanced Steganography Suite  
@@ -7,14 +7,42 @@
 
 ---
 
+<div align="center">
+
+### 🚀 **Project Evolution Timeline**
+
+*From concept to revolutionary steganography suite*
+
+</div>
+
+## 🗺️ Quick Navigation
+
+### 📟 **Current Releases**
+- [v1.0.1 Latest](#-version-101---decoy-integration-enhancement) • [v1.0.0 Production](#-version-100---production-release)
+
+### 🆕 **Feature Highlights** 
+- [🎆 Transparent Decoy Mode](#transparent-decoy-mode-integration) • [⚡ Revolutionary Performance](#revolutionary-performance) • [🛡️ Advanced Security](#advanced-security)
+
+### 📈 **Development Journey**
+- [🏁 Pre-Release History](#-pre-release-development) • [🚀 Future Roadmap](#-future-development) • [📊 Project Stats](#project-statistics)
+
+---
+
 ## 🎯 Version Overview
 
-| Version | Release Date | Status | Major Features |
-|---------|-------------|--------|-----------------|
-| **v1.0.0** | August 2025 | ✅ Current | Revolutionary Performance, Transparent Decoy Mode |
-| **v0.9.0** | July 2025 | 🏁 Complete | Multi-Decoy Implementation, Security Enhancements |
-| **v0.8.0** | June 2025 | 🏁 Complete | Two-Factor Authentication, Advanced UI |
-| **v0.7.0** | May 2025 | 🏁 Complete | Core Engine Optimization, Basic Decoy Mode |
+<div align="center">
+
+### 🏆 **Release Timeline**
+
+</div>
+
+| Version | Release Date | Status | Major Features | Performance |
+|---------|-------------|--------|----------------|-------------|
+| **🆕 v1.0.1** | January 2025 | ✅ **Latest** | Transparent Decoy Integration | Same speed, better security |
+| **🎆 v1.0.0** | August 2025 | ✅ Stable | Revolutionary Performance | 10-100x faster |
+| **v0.9.0** | July 2025 | 🏁 Complete | Multi-Decoy Implementation | Major improvements |
+| **v0.8.0** | June 2025 | 🏁 Complete | Two-Factor Authentication | Security focus |
+| **v0.7.0** | May 2025 | 🏁 Complete | Core Engine Optimization | Foundation built |
 
 ---
 

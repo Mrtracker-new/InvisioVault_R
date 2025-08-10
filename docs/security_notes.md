@@ -1,10 +1,34 @@
-# 🛡️ InvisioVault Security Documentation
-### *Comprehensive Security Guide and Best Practices*
+# 🛡️ InvisioVault Security Guide
+### *Complete Security Documentation for Safe File Hiding*
 
 **Version**: 1.0.0  
 **Author**: Rolan (RNR)  
-**Purpose**: Complete security documentation for users and developers  
-**Last Updated**: January 2025
+**Purpose**: Your essential guide to secure steganography  
+**Last Updated**: August 2025
+
+---
+
+<div align="center">
+
+### 🛡️ **Bank-Level Security at Your Fingertips**
+
+*Military-grade protection for your most sensitive files*
+
+</div>
+
+## 🗺️ Quick Security Navigation
+
+### 🎯 **Security Fundamentals**
+- [🔒 Security Overview](#-security-overview) • [🛡️ Multi-Layer Defense](#multi-layered-security-architecture) • [🎯 Security Goals](#security-goals)
+
+### 🔐 **Encryption & Authentication**
+- [🔒 Cryptographic Implementation](#-cryptographic-implementation) • [🔑 Authentication Systems](#-authentication-systems) • [💾 Memory Security](#-memory-security)
+
+### 🎭 **Advanced Protection**
+- [🆕 Transparent Decoy Mode](#-transparent-decoy-mode-revolutionary-feature) • [🕵️‍♂️ Steganographic Security](#-steganographic-security) • [🚫 Multi-Image Risks](#-multi-image-distribution-security-risks)
+
+### 🚨 **Threat Analysis & Best Practices**
+- [💥 Threat Analysis](#-threat-analysis) • [💡 Best Practices](#-security-best-practices) • [📋 Security Checklist](#-security-checklist)
 
 ---
 
@@ -12,13 +36,19 @@
 
 ### **Multi-Layered Security Architecture**
 
-InvisioVault implements defense-in-depth with multiple security layers:
+<div align="center">
 
-1. **Application Security**: Input validation, error handling
-2. **Cryptographic Security**: AES-256 encryption with PBKDF2
-3. **Authentication Security**: Password + optional keyfile 2FA
-4. **Memory Security**: Secure data handling and cleanup
-5. **Steganographic Security**: Advanced LSB with randomization
+#### 🏯 **Defense in Depth: 5 Security Layers**
+
+</div>
+
+| Layer | Component | Protection Level |
+|-------|-----------|------------------|
+| **5** | 📱 **Application Security** | Input validation, error handling |
+| **4** | 🔐 **Cryptographic Security** | AES-256 encryption with PBKDF2 |
+| **3** | 🔑 **Authentication Security** | Password + optional keyfile 2FA |
+| **2** | 💾 **Memory Security** | Secure data handling and cleanup |
+| **1** | 🖼️ **Steganographic Security** | Advanced LSB with randomization |
 
 ### **Security Goals**
 

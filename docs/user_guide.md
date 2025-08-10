@@ -3,19 +3,48 @@
 
 **Version**: 1.0.0  
 **Author**: Rolan (RNR)  
-**Purpose**: Comprehensive user guide for InvisioVault steganography suite  
+**Purpose**: Your complete guide to mastering secure file hiding  
+**Last Updated**: August 2025
 
 ---
 
-## 🎯 Table of Contents
+<div align="center">
 
-1. [**Getting Started**](#-getting-started)
-2. [**Basic Operations**](#-basic-operations)
-3. [**Advanced Features**](#-advanced-features)
-4. [**Security Features**](#-security-features)
-5. [**Performance Guide**](#-performance-guide)
-6. [**Troubleshooting**](#-troubleshooting)
-7. [**Best Practices**](#-best-practices)
+### 🎓 **Master Digital Privacy in Minutes**
+
+*From beginner to expert - everything you need to know*
+
+</div>
+
+## 🗺️ Quick Navigation
+
+### 🚀 **Getting Started**
+- [📦 Installation](#-getting-started) • [⚙️ System Requirements](#system-requirements) • [🎆 First Launch](#first-launch)
+
+### 🔧 **Basic Operations**  
+- [💼 Hide Files](#hiding-files) • [📂 Extract Files](#extracting-files) • [🔍 Analyze Images](#image-analysis)
+
+### ✨ **Advanced Features**
+- [🎭 Decoy Mode](#-transparent-decoy-mode-revolutionary-security) • [🔐 Two-Factor Auth](#two-factor-authentication) • [🖼️ Multi-Image](#multi-image-distribution)
+
+### 🛡️ **Security & Performance**
+- [🔒 Security](#-security-features) • [⚡ Performance](#-performance-guide) • [🐛 Troubleshooting](#-troubleshooting)
+
+### 💡 **Expert Tips**
+- [✅ Best Practices](#-best-practices) • [🎯 Pro Tips](#pro-tips) • [📞 Support](#-support--resources)
+
+---
+
+## 📋 Table of Contents
+
+1. [🚀 **Getting Started**](#-getting-started) - Installation and setup
+2. [🔧 **Basic Operations**](#-basic-operations) - Hide and extract files
+3. [✨ **Advanced Features**](#-advanced-features) - Power user capabilities
+4. [🛡️ **Security Features**](#-security-features) - Protect your data
+5. [⚡ **Performance Guide**](#-performance-guide) - Optimize for speed
+6. [🐛 **Troubleshooting**](#-troubleshooting) - Solve common issues
+7. [💡 **Best Practices**](#-best-practices) - Expert recommendations
+8. [📞 **Support**](#-support--resources) - Get help and resources
 
 ---
 
@@ -76,40 +105,51 @@ When you first launch InvisioVault:
 
 ### **Hiding Files**
 
-#### **Step-by-Step Guide**
+### **📈 Step-by-Step Guide**
 
-1. **Launch Application**
-   ```bash
-   python main.py
-   ```
+<div align="center">
 
-2. **Select Operation**: Click "Hide Files" or use Ctrl+H
+#### 🎯 **Hide Any File in Just 7 Steps!**
 
-3. **Choose Carrier Image**:
-   - Supported formats: PNG, BMP, TIFF
-   - Recommended: High-resolution images
-   - Avoid: JPEG (lossy compression)
+</div>
 
-4. **Select Files to Hide**:
-   - Single file or multiple files
-   - Any file type supported
-   - Check capacity before proceeding
+| Step | Action | Details |
+|------|--------|----------|
+| **1** | 🚀 **Launch App** | `python main.py` or double-click executable |
+| **2** | 💼 **Click "Hide Files"** | Main menu or press `Ctrl+H` |
+| **3** | 🖼️ **Choose Cover Image** | PNG, BMP, or TIFF (high-resolution recommended) |
+| **4** | 📁 **Select Files to Hide** | Any file type, check capacity indicator |
+| **5** | 🔐 **Set Password** | Strong password (8+ characters) |
+| **6** | ⚙️ **Configure Security** | Choose Standard, High, or Maximum |
+| **7** | ✨ **Click "Hide"** | Automatic dual-layer protection applied! |
 
-5. **Configure Security**:
-   - **Password**: Strong password (8+ characters)
-   - **Security Level**: Standard, High, or Maximum
-   - **Encryption**: AES-256 (automatic)
-   - **🆕 Automatic Decoy Protection**: System creates dual-layer security
+🎉 **Congratulations!** Your files are now hidden with:
+- 🎭 **Decoy layer** (innocent files with auto-generated password)
+- 🛡️ **Real layer** (your actual files with your password)
 
-6. **Advanced Options** (Optional):
-   - Enable keyfile authentication
-   - Configure randomization seed
-   - Set compression level
+### **📊 Image Format Guide**
 
-7. **Execute**: Click "Hide Files" and wait for completion
-   - **🛡️ Enhanced**: Every operation now includes decoy protection
-   - **Dual Layers**: Innocent decoy + your real files
-   - **Same Interface**: No complexity added for users
+| Format | Recommended | Why |
+|--------|-------------|-----|
+| 🟢 **PNG** | ✅ Excellent | Lossless, great capacity |
+| 🟢 **BMP** | ✅ Excellent | Uncompressed, maximum quality |
+| 🟢 **TIFF** | ✅ Excellent | Professional, lossless |
+| 🔴 **JPEG** | ❌ Avoid | Lossy compression destroys hidden data |
+| 🔴 **WEBP** | ❌ Avoid | Compression artifacts |
+
+### **🔧 Advanced Configuration**
+
+<details>
+<summary><strong>⚙️ Optional Advanced Settings</strong></summary>
+
+| Setting | Description | When to Use |
+|---------|-------------|-------------|
+| **Keyfile Auth** | Two-factor authentication | Maximum security needs |
+| **Custom Seed** | Manual randomization control | Reproducible positioning |
+| **Compression** | File compression level | Large files, limited capacity |
+| **Security Level** | Encryption strength | Balance speed vs security |
+
+</details>
 
 #### **Capacity Planning**
 
@@ -122,21 +162,37 @@ When you first launch InvisioVault:
 
 ### **Extracting Files**
 
-#### **Step-by-Step Guide**
+### **📋 Step-by-Step Guide**
 
-1. **Select Operation**: Click "Extract Files" or use Ctrl+E
+<div align="center">
 
-2. **Choose Steganographic Image**: Select the image containing hidden data
+#### 🔑 **Extract Hidden Files in 6 Simple Steps!**
 
-3. **Enter Password**: Provide the correct password used during hiding
+</div>
 
-4. **Authentication** (if enabled): Select keyfile if two-factor is enabled
+| Step | Action | Details |
+|------|--------|----------|
+| **1** | 📂 **Click "Extract Files"** | Main menu or press `Ctrl+E` |
+| **2** | 🖼️ **Choose Image** | Select image with hidden data |
+| **3** | 🔑 **Enter Password** | Your password reveals your dataset |
+| **4** | 🔐 **Keyfile** (if used) | Select keyfile for two-factor auth |
+| **5** | 📁 **Choose Output Folder** | Where to save extracted files |
+| **6** | ⚡ **Click "Extract"** | Lightning-fast extraction! |
 
-5. **Choose Output Directory**: Where to save extracted files
+🎉 **Success!** The system automatically:
+- 🔍 **Finds your dataset** among multiple layers
+- 📝 **Extracts only your files** (not decoy data)
+- ✅ **Verifies integrity** with cryptographic checksums
 
-6. **Execute**: Click "Extract Files"
+### **🤔 What If I Don't Remember My Password?**
 
-7. **Verification**: Check extracted files for integrity
+| Scenario | What Happens | Result |
+|----------|--------------|--------|
+| 🟢 **Correct Password** | Gets your actual files | ✅ Success |
+| 🟡 **Different Password** | May get decoy files | 👀 Shows innocent data |
+| 🔴 **Wrong Password** | Nothing extracted | ❌ No trace of hidden data |
+
+> 💡 **Pro Tip**: Different passwords may reveal different datasets in the same image!
 
 ### **Image Analysis**
 

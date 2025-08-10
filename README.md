@@ -18,15 +18,37 @@
 
 ---
 
+## 📋 Table of Contents
+
+- [🎯 What is InvisioVault?](#-what-is-invisiovault)
+- [🚀 Quick Start](#-quick-start)
+- [✨ Advanced Features](#-advanced-features)
+- [⚡ Revolutionary Performance](#-revolutionary-performance)
+- [🛡️ Security First](#-security-first)
+- [📖 Documentation](#-documentation)
+- [🎨 Build Executable](#-build-executable)
+- [🧪 Try It Yourself](#-try-it-yourself)
+- [📞 Support](#-support)
+- [🎓 Educational Purpose](#-educational--research-purpose)
+
 ## 🎯 What is InvisioVault?
+
+<div align="center">
+
+*Ever wanted to hide files in plain sight?*
+
+</div>
 
 Imagine being able to hide **any file** - documents, photos, videos, or entire folders - inside a regular image that looks completely normal to anyone who sees it. That's exactly what InvisioVault does!
 
 **InvisioVault** is a revolutionary steganography application that lets you:
-- 🖼️ **Hide files inside images** without anyone knowing they're there
-- 🔐 **Protect your data** with military-grade AES-256 encryption
-- ⚡ **Extract files lightning-fast** - up to 100x faster than traditional methods
-- 🛡️ **Keep your privacy** with advanced security features
+
+| Feature | Description | Benefit |
+|---------|-------------|----------|
+| 🖼️ **File Hiding** | Hide files inside images without detection | Complete invisibility |
+| 🔐 **Military Encryption** | AES-256 encryption with PBKDF2 key derivation | Bank-level security |
+| ⚡ **Lightning Speed** | Up to 100x faster than traditional methods | Professional productivity |
+| 🛡️ **Privacy Protection** | Advanced security with plausible deniability | Ultimate peace of mind |
 
 > **Perfect for**: Secure file sharing, data backup, privacy protection, digital forensics education, and cybersecurity research.
 
@@ -286,18 +308,36 @@ python test_decoy_integration.py
 
 ## 📚 Documentation
 
-### 📊 **Quick Reference**
+<div align="center">
+
+### 📖 **Complete Documentation Suite**
+
+*Everything you need to master InvisioVault*
+
+</div>
+
+### 📚 **Essential Guides**
+
+| 📄 **Document** | 📝 **Description** | 🎯 **Audience** | 🔗 **Link** |
+|-------------|----------------|--------------|--------|
+| **📖 User Guide** | Complete step-by-step instructions | All Users | [`docs/user_guide.md`](docs/user_guide.md) |
+| **🔧 API Reference** | Technical API documentation | Developers | [`docs/api_reference.md`](docs/api_reference.md) |
+| **🛡️ Security Guide** | Security best practices | Security-conscious users | [`docs/security_notes.md`](docs/security_notes.md) |
+
+### 🏗️ **Technical Documentation**
+
+| 📄 **Document** | 📝 **Description** | 🎯 **Focus** | 🔗 **Link** |
+|-------------|----------------|------------|--------|
+| **⚡ Performance Analysis** | Speed optimization breakdown | Performance | [`docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md`](docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md) |
+| **🎭 Multi-Decoy Guide** | Advanced decoy features | Security | [`docs/MULTI_DECOY_IMPLEMENTATION.md`](docs/MULTI_DECOY_IMPLEMENTATION.md) |
+| **📂 Project Structure** | Codebase organization | Development | [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) |
+| **🔒 Security Framework** | Advanced security features | Security Architecture | [`docs/SECURITY.md`](docs/SECURITY.md) |
+
+### 📅 **Release Information**
+
 | 📄 **Document** | 📝 **Description** | 🔗 **Link** |
 |-------------|----------------|--------|
-| **User Guide** | Complete usage instructions | [`docs/user_guide.md`](docs/user_guide.md) |
-| **API Reference** | Technical API documentation | [`docs/api_reference.md`](docs/api_reference.md) |
-| **Security Guide** | Security best practices | [`docs/security_notes.md`](docs/security_notes.md) |
-|| **Project Architecture** | Technical specifications | [`docs/InvisioVault_Project_Prompt.md`](docs/InvisioVault_Project_Prompt.md) |
-| **Performance Analysis** | Speed optimization details | [`docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md`](docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md) |
-| **Multi-Decoy Implementation** | Advanced decoy features | [`docs/MULTI_DECOY_IMPLEMENTATION.md`](docs/MULTI_DECOY_IMPLEMENTATION.md) |
-| **Changelog** | Version history and updates | [`docs/changelog.md`](docs/changelog.md) |
-| **Project Structure** | Detailed codebase organization | [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) |
-| **Security Documentation** | Advanced security features | [`docs/SECURITY.md`](docs/SECURITY.md) |
+| **📋 Changelog** | Version history and updates | [`docs/changelog.md`](docs/changelog.md) |
 
 ### 🚀 **Advanced Usage**
 
@@ -513,21 +553,38 @@ graph LR
 
 ---
 
+## 📞 Support
+
 <div align="center">
 
-## 🎉 Ready to Become a Digital Spy?
+### 🤝 **Need Help or Have Questions?**
+
+</div>
+
+| Type | Resource | Link |
+|------|----------|------|
+| 📖 **Documentation** | Complete user guides and API docs | [Documentation](#-documentation) |
+| 🐛 **Bug Reports** | Report issues or bugs | [GitHub Issues](https://github.com/Mrtracker-new/InvisioVault_R/issues) |
+| 💡 **Feature Requests** | Suggest new features | [GitHub Discussions](https://github.com/Mrtracker-new/InvisioVault_R/discussions) |
+| 🎓 **Educational Content** | Learning resources and tutorials | [User Guide](docs/user_guide.md) |
+
+---
+
+<div align="center">
+
+## 🎉 Ready to Become a Digital Privacy Expert?
 
 ### **InvisioVault** - *Where Secrets Hide in Plain Sight*
 
-**[⬇️ Download Now](#-quick-start)** • **[📖 Read More Docs](PROJECT_COMPLETE.md)** • **[🚀 See Performance Demo](demo_performance.py)**
+**[🚀 Get Started Now](#-quick-start)** • **[📖 Read Full Docs](#-documentation)** • **[⚡ See Performance Demo](demo_performance.py)**
 
 ---
 
 *"The best place to hide something is where everyone can see it, but nobody thinks to look."*
 
-**🎓 Educational Project by Rolan (RNR)**
+### 🎓 Educational Project by Rolan (RNR)
 
-*Pushing the boundaries of digital privacy and cybersecurity education*
+*Advancing digital privacy and cybersecurity education through innovative technology*
 
 [![Star this repo](https://img.shields.io/github/stars/Mrtracker-new/InvisioVault_R?style=social)](https://github.com/Mrtracker-new/InvisioVault_R)
 [![Forks](https://img.shields.io/github/forks/Mrtracker-new/InvisioVault_R?style=social)](https://github.com/Mrtracker-new/InvisioVault_R/fork)

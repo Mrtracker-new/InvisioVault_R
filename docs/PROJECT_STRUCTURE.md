@@ -1,5 +1,5 @@
 # 📂 InvisioVault Project Structure
-### *Comprehensive Codebase Organization Guide*
+### *Complete Codebase Architecture & Organization Guide*
 
 **Author**: Rolan (RNR)  
 **Project**: InvisioVault - Advanced Steganography Suite  
@@ -7,9 +7,39 @@
 
 ---
 
+<div align="center">
+
+### 🏗️ **Professional Architecture at its Finest**
+
+*Clean, modular, and educational codebase design*
+
+</div>
+
+## 🗺️ Architecture Navigation
+
+### 🏯 **Structure Overview**
+- [📁 Directory Structure](#-directory-structure) • [🎯 Component Overview](#-component-overview) • [📊 Architecture Principles](#-architecture-principles)
+
+### 🔧 **Core Components**
+- [🔧 Core Engines](#-core-engines-core) • [🎨 User Interface](#-user-interface-ui) • [⚡ Operations Layer](#-operations-layer-operations)
+
+### 📐 **Documentation & Tools**
+- [📊 Code Statistics](#-code-statistics) • [🔄 Data Flow](#-data-flow-architecture) • [📅 Development Info](#-development-guidelines)
+
+---
+
 ## 🏗️ **Clean & Organized Codebase**
 
 InvisioVault follows a modular, professional architecture designed for maintainability, scalability, and educational value. The project is organized into logical components with clear separation of concerns.
+
+### **Key Design Principles**
+
+| Principle | Implementation | Benefit |
+|-----------|----------------|----------|
+| 🔄 **Separation of Concerns** | Each module has single responsibility | Easy to understand and maintain |
+| 📦 **Modular Design** | Clear interfaces between components | Extensible and testable |
+| 🛡️ **Security-First** | Secure coding practices throughout | Robust and trustworthy |
+| 🎓 **Educational Value** | Well-documented with examples | Perfect for learning |
 
 ## 📁 **Directory Structure**
 
