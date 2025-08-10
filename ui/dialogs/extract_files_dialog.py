@@ -21,6 +21,7 @@ from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler
 from core.steganography_engine import SteganographyEngine
 from core.encryption_engine import EncryptionEngine, SecurityLevel
+from core.multi_decoy_engine import MultiDecoyEngine
 
 
 class ExtractWorkerThread(QThread):
@@ -39,15 +40,67 @@ class ExtractWorkerThread(QThread):
         
         # Initialize engines
         self.stego_engine = SteganographyEngine()
+        self.multi_decoy_engine = MultiDecoyEngine(SecurityLevel.MAXIMUM)
         self.logger = Logger()
     
     def run(self):
-        """Execute the extraction operation."""
+        """Execute the extraction operation with transparent decoy mode support."""
         try:
-            self.status_updated.emit("Analyzing steganographic image...")
+            self.status_updated.emit("Analyzing steganographic image for hidden datasets...")
             self.progress_updated.emit(10)
             
-            # Extract encrypted data from the image
+            # First try to extract using multi-decoy engine (new format)
+            self.status_updated.emit("Attempting decoy-protected extraction...")
+            self.progress_updated.emit(30)
+            
+            try:
+                # Try to extract dataset using the provided password
+                metadata = self.multi_decoy_engine.extract_dataset(
+                    stego_path=self.stego_path,
+                    password=self.password,
+                    output_dir=self.output_dir
+                )
+                
+                if metadata:
+                    # Successfully extracted using multi-decoy format
+                    self.status_updated.emit(f"Successfully extracted dataset: {metadata.get('dataset_id', 'UserFiles')}")
+                    self.progress_updated.emit(100)
+                    
+                    # Get list of actually extracted files from metadata
+                    extracted_files = []
+                    if 'extracted_files' in metadata:
+                        # Use the extracted files list from metadata
+                        for file_info in metadata['extracted_files']:
+                            if isinstance(file_info, dict) and 'path' in file_info:
+                                extracted_files.append(Path(file_info['path']))
+                            elif isinstance(file_info, (str, Path)):
+                                extracted_files.append(Path(file_info))
+                    else:
+                        # Fallback: look for files with recent timestamps
+                        import time
+                        current_time = time.time()
+                        for file_path in self.output_dir.iterdir():
+                            if file_path.is_file():
+                                # Only include files modified in the last 10 seconds (recently extracted)
+                                if abs(file_path.stat().st_mtime - current_time) < 10:
+                                    extracted_files.append(file_path)
+                    
+                    if not extracted_files:
+                        # Last fallback: create a representative entry
+                        extracted_files = [self.output_dir / f"dataset_{metadata.get('dataset_id', 'files')}"]            
+                    
+                    self.finished_successfully.emit(extracted_files)
+                    return
+                    
+            except Exception as e:
+                self.logger.debug(f"Multi-decoy extraction failed, trying legacy format: {e}")
+                # Continue to legacy extraction method
+            
+            # Fallback to legacy single-dataset extraction for backward compatibility
+            self.status_updated.emit("Trying legacy extraction format...")
+            self.progress_updated.emit(50)
+            
+            # Extract encrypted data from the image using legacy method
             seed = None
             if self.randomize:
                 # Generate deterministic seed from password for reproducible randomization
@@ -64,8 +117,8 @@ class ExtractWorkerThread(QThread):
             if not encrypted_data:
                 raise Exception("No hidden data found in the image")
             
-            self.status_updated.emit("Decrypting data...")
-            self.progress_updated.emit(40)
+            self.status_updated.emit("Decrypting legacy format data...")
+            self.progress_updated.emit(70)
             
             # Try different security levels for decryption
             archive_data = None
@@ -80,8 +133,8 @@ class ExtractWorkerThread(QThread):
             if not archive_data:
                 raise Exception("Failed to decrypt data - incorrect password or corrupted data")
             
-            self.status_updated.emit("Extracting files...")
-            self.progress_updated.emit(70)
+            self.status_updated.emit("Extracting files from legacy format...")
+            self.progress_updated.emit(85)
             
             # Create temporary file for the archive
             with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_file:
@@ -107,7 +160,7 @@ class ExtractWorkerThread(QThread):
             # Clean up temp file
             temp_zip_path.unlink()
             
-            self.status_updated.emit("Extraction completed successfully!")
+            self.status_updated.emit("Legacy format extraction completed successfully!")
             self.progress_updated.emit(100)
             
             self.finished_successfully.emit(extracted_files)
@@ -155,7 +208,7 @@ class ExtractFilesDialog(QDialog):
         layout.addWidget(title)
         
         # Description
-        desc = QLabel("Select a steganographic image to extract hidden files.")
+        desc = QLabel("Select a steganographic image to extract hidden files. Works with both basic and decoy-protected images.")
         desc.setWordWrap(True)
         desc.setStyleSheet("color: #666; font-size: 12px; margin-bottom: 10px;")
         layout.addWidget(desc)

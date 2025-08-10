@@ -22,6 +22,7 @@ from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler
 from core.steganography_engine import SteganographyEngine
 from core.encryption_engine import EncryptionEngine, SecurityLevel
+from core.multi_decoy_engine import MultiDecoyEngine
 
 
 class HideWorkerThread(QThread):
@@ -43,63 +44,92 @@ class HideWorkerThread(QThread):
         # Initialize engines
         self.stego_engine = SteganographyEngine()
         self.encryption_engine = EncryptionEngine(security_level)
+        self.multi_decoy_engine = MultiDecoyEngine(security_level)
         self.logger = Logger()
     
     def run(self):
-        """Execute the hiding operation."""
+        """Execute the hiding operation with transparent decoy mode."""
         try:
-            self.status_updated.emit("Preparing files...")
+            self.status_updated.emit("Preparing datasets with decoy protection...")
             self.progress_updated.emit(10)
             
-            # Create temporary archive with all files
-            with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_file:
-                temp_zip_path = Path(temp_file.name)
+            # Convert files to path strings for the multi-decoy engine
+            file_paths = [str(f) for f in self.files_to_hide]
             
-            # Create archive containing all files
-            with zipfile.ZipFile(temp_zip_path, 'w', zipfile.ZIP_DEFLATED) as archive:
-                for file_path in self.files_to_hide:
-                    if file_path.exists():
-                        archive.write(file_path, file_path.name)
+            # Create primary dataset (user's real data)
+            primary_dataset = {
+                "name": "UserFiles",
+                "password": self.password,
+                "priority": 5,  # Highest security (innermost layer)
+                "decoy_type": "personal",
+                "files": file_paths
+            }
             
-            self.status_updated.emit("Reading archive data...")
+            self.status_updated.emit("Generating protective decoy data...")
             self.progress_updated.emit(30)
             
-            # Read the archive data
-            with open(temp_zip_path, 'rb') as f:
-                archive_data = f.read()
+            # Generate innocent decoy data automatically
+            import tempfile
+            innocent_files = []
             
-            # Clean up temp file
-            temp_zip_path.unlink()
+            # Create believable innocent files
+            temp_dir = Path(tempfile.mkdtemp())
+            try:
+                # Create innocent readme file
+                readme_path = temp_dir / "README.txt"
+                with open(readme_path, 'w') as f:
+                    f.write("Image Processing Notes\n\n"
+                           "This folder contains image processing results and metadata.\n"
+                           "Generated automatically by imaging software.\n\n"
+                           "File formats: PNG, BMP, TIFF\n"
+                           "Processing date: 2024\n")
+                innocent_files.append(str(readme_path))
+                
+                # Create innocent config file
+                config_path = temp_dir / "config.ini"
+                with open(config_path, 'w') as f:
+                    f.write("[ImageProcessing]\n"
+                           "quality=high\n"
+                           "format=png\n"
+                           "compression=lossless\n\n"
+                           "[Output]\n"
+                           "directory=./processed/\n"
+                           "backup=true\n")
+                innocent_files.append(str(config_path))
+                
+                # Create decoy dataset (innocent outer layer)
+                decoy_dataset = {
+                    "name": "ProcessingData",
+                    "password": f"img_{hash(self.password) % 10000}",  # Derived but different password
+                    "priority": 1,  # Lowest security (outermost layer)
+                    "decoy_type": "innocent",
+                    "files": innocent_files
+                }
+                
+                # Use multi-decoy engine for transparent dual-layer protection
+                datasets = [decoy_dataset, primary_dataset]
+                
+                self.status_updated.emit("Hiding data with decoy protection...")
+                self.progress_updated.emit(60)
+                
+                success = self.multi_decoy_engine.hide_multiple_datasets(
+                    carrier_path=self.carrier_path,
+                    datasets=datasets,
+                    output_path=self.output_path
+                )
+                
+                if not success:
+                    raise Exception("Failed to hide data with decoy protection")
+                
+            finally:
+                # Clean up temporary files
+                import shutil
+                try:
+                    shutil.rmtree(temp_dir)
+                except:
+                    pass  # Ignore cleanup errors
             
-            self.status_updated.emit("Encrypting data...")
-            self.progress_updated.emit(50)
-            
-            # Encrypt the archive data
-            encrypted_data = self.encryption_engine.encrypt_with_metadata(archive_data, self.password)
-            
-            self.status_updated.emit("Hiding data in image...")
-            self.progress_updated.emit(70)
-            
-            # Hide encrypted data in the carrier image
-            seed = None
-            if self.randomize:
-                # Generate deterministic seed from password for reproducible randomization
-                import hashlib
-                seed_hash = hashlib.sha256(self.password.encode('utf-8')).digest()
-                seed = int.from_bytes(seed_hash[:4], byteorder='big') % (2**32)
-            
-            success = self.stego_engine.hide_data(
-                self.carrier_path, 
-                encrypted_data, 
-                self.output_path,
-                randomize=self.randomize,
-                seed=seed
-            )
-            
-            if not success:
-                raise Exception("Failed to hide data in image")
-            
-            self.status_updated.emit("Operation completed successfully!")
+            self.status_updated.emit("Operation completed with decoy protection!")
             self.progress_updated.emit(100)
             
             self.finished_successfully.emit()
@@ -148,7 +178,7 @@ class HideFilesDialog(QDialog):
         layout.addWidget(title)
         
         # Description
-        desc = QLabel("Select files to hide in a carrier image using advanced steganography and encryption.")
+        desc = QLabel("Select files to hide in a carrier image using advanced steganography with automatic decoy protection and AES-256 encryption.")
         desc.setWordWrap(True)
         desc.setStyleSheet("color: #666; font-size: 12px; margin-bottom: 10px;")
         layout.addWidget(desc)

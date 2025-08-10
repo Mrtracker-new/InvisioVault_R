@@ -192,10 +192,18 @@ class MultiDecoyEngine:
                     dataset_output_dir = output_dir / dataset_info['metadata']['dataset_id']
                     dataset_output_dir.mkdir(parents=True, exist_ok=True)
                     
-                    success = self._extract_dataset_files(decrypted_data, dataset_output_dir)
-                    if success:
+                    extracted_files = self._extract_dataset_files(decrypted_data, dataset_output_dir)
+                    if extracted_files:
                         self.logger.info(f"Successfully extracted dataset: {dataset_info['metadata']['dataset_id']}")
-                        return dataset_info['metadata']
+                        
+                        # Add extracted file information to metadata
+                        result_metadata = dataset_info['metadata'].copy()
+                        result_metadata['extracted_files'] = [
+                            {'path': str(file_path), 'name': file_path.name} for file_path in extracted_files
+                        ]
+                        result_metadata['extraction_path'] = str(dataset_output_dir)
+                        
+                        return result_metadata
                         
                 except Exception as decrypt_error:
                     # Failed to decrypt with this password - try next dataset
@@ -366,7 +374,7 @@ class MultiDecoyEngine:
             self.logger.error(f"Error parsing layered payload: {e}")
             return None
     
-    def _extract_dataset_files(self, archive_data: bytes, output_dir: Path) -> bool:
+    def _extract_dataset_files(self, archive_data: bytes, output_dir: Path) -> List[Path]:
         """Extract files from dataset archive.
         
         Args:
@@ -374,8 +382,9 @@ class MultiDecoyEngine:
             output_dir: Directory to extract to
             
         Returns:
-            True if successful, False otherwise
+            List of extracted file paths, empty list on failure
         """
+        extracted_files = []
         try:
             with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_file:
                 temp_zip_path = Path(temp_file.name)
@@ -384,14 +393,19 @@ class MultiDecoyEngine:
                 f.write(archive_data)
             
             with zipfile.ZipFile(temp_zip_path, 'r') as archive:
-                archive.extractall(output_dir)
+                for member in archive.namelist():
+                    # Extract each file and track its path
+                    archive.extract(member, output_dir)
+                    extracted_file_path = output_dir / member
+                    if extracted_file_path.exists():
+                        extracted_files.append(extracted_file_path)
             
             temp_zip_path.unlink()  # Clean up
-            return True
+            return extracted_files
             
         except Exception as e:
             self.logger.error(f"Error extracting dataset files: {e}")
-            return False
+            return []
     
     def _generate_deterministic_seed(self, image_path: Path, payload_data: Optional[bytes]) -> int:
         """Generate a deterministic seed based on image properties.
