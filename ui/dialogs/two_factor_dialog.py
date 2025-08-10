@@ -74,7 +74,8 @@ class TwoFactorWorkerThread(QThread):
         
         with zipfile.ZipFile(temp_zip_path, 'w', zipfile.ZIP_DEFLATED) as archive:
             for file_path in files_to_hide:
-                archive.write(file_path, file_path.name)
+                file_path_obj = Path(file_path)  # Convert string to Path object
+                archive.write(file_path_obj, file_path_obj.name)
         
         with open(temp_zip_path, 'rb') as f:
             archive_data = f.read()
@@ -125,7 +126,7 @@ class TwoFactorWorkerThread(QThread):
             combined_data = len(metadata_str).to_bytes(4, 'big') + metadata_str + fragment
             
             success = self.stego_engine.hide_data(
-                carrier_path, combined_data, output_path,
+                Path(carrier_path), combined_data, output_path,
                 randomize=True, seed=hash(password + str(i)) % (2**32)
             )
             
@@ -154,7 +155,7 @@ class TwoFactorWorkerThread(QThread):
             self.progress_updated.emit(progress)
             
             # Extract combined data
-            combined_data = self.stego_engine.extract_data(fragment_path, randomize=True)
+            combined_data = self.stego_engine.extract_data(Path(fragment_path), randomize=True)
             if not combined_data:
                 raise Exception(f"No data found in fragment {i+1}")
             
