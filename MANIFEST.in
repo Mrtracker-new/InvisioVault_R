@@ -1,0 +1,56 @@
+# MANIFEST.in for InvisioVault - Advanced Steganography Suite
+# This file tells setuptools which files to include in the source distribution
+
+# Include essential project files
+include README.md
+include LICENSE
+include requirements.txt
+include MANIFEST.in
+
+# Include all documentation
+recursive-include docs *.md
+recursive-include docs *.rst
+recursive-include docs *.txt
+
+# Include all assets
+recursive-include assets *
+recursive-include assets/icons *
+recursive-include assets/images *
+recursive-include assets/ui *
+recursive-include assets/demo *
+
+# Include test fixtures but exclude test outputs
+recursive-include tests/fixtures *
+recursive-exclude tests/outputs *
+recursive-exclude tests/__pycache__ *
+
+# Include build scripts
+recursive-include build_scripts *.bat
+recursive-include build_scripts *.ps1
+recursive-include build_scripts *.sh
+
+# Include utility scripts
+recursive-include scripts *.py
+
+# Exclude development and temporary files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude __pycache__
+global-exclude .git*
+global-exclude .DS_Store
+global-exclude *.so
+global-exclude *.egg-info
+global-exclude build
+global-exclude dist
+global-exclude temp
+global-exclude .pytest_cache
+global-exclude .mypy_cache
+global-exclude .coverage
+
+# Exclude personal/sensitive directories
+global-exclude my_keys/*
+global-exclude user_data/*
+global-exclude test_outputs/*
+global-exclude .venv/*
+global-exclude venv/*
