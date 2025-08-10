@@ -231,23 +231,71 @@ When you first launch InvisioVault:
 
 ### **Multi-Image Distribution**
 
+> **⚠️ CRITICAL SECURITY WARNING**: Multi-image distribution splits your data across multiple fragment images. **If ANY fragment is lost, corrupted, or inaccessible, your ENTIRE dataset becomes permanently unrecoverable!**
+
+#### **🚨 Critical Fragment Dependencies**
+
+**UNDERSTAND THESE RISKS BEFORE USING:**
+
+- **🔴 TOTAL DATA LOSS**: Losing even 1 fragment = losing ALL your data
+- **🔴 NO PARTIAL RECOVERY**: Cannot extract partial files from remaining fragments  
+- **🔴 FRAGILE SYSTEM**: All fragments must be available simultaneously
+- **🔴 CHAIN DEPENDENCY**: Each fragment contains essential reconstruction data
+
+**⚠️ Fragment Loss Scenarios:**
+- Hard drive failure containing fragment images
+- Accidental deletion of fragment files
+- File corruption during storage/transfer
+- Forgetting fragment locations after time
+- Network storage becoming inaccessible
+- Cloud storage service termination
+
 #### **Distributing Data Across Images**
 
 1. **Enable Distribution**: Advanced → Multi-Image
-2. **Configuration**:
-   - **Image Count**: 2-8 images
+2. **⚠️ BACKUP PLANNING**: **Create multiple complete sets** of all fragments
+3. **Configuration**:
+   - **Image Count**: 2-8 images (⚠️ MORE = HIGHER RISK)
    - **Redundancy Level**: Error correction strength
    - **Threshold**: Minimum images needed for reconstruction
-3. **Select Carrier Images**: Choose multiple images
-4. **Execute**: Data split across all images
+4. **Select Carrier Images**: Choose multiple images  
+5. **Execute**: Data split across all images
+6. **🔥 IMMEDIATE BACKUP**: Copy ALL fragments to secure locations
 
 #### **Reconstruction Process**
 
 1. **Select "Reconstruct from Multiple Images"**
-2. **Load Images**: Select available images from set
-3. **Automatic Analysis**: System determines completeness
-4. **Reconstruction**: Rebuild data from partial set
+2. **Load Images**: **ALL fragments required** - missing any = failure
+3. **Fragment Verification**: System checks fragment integrity
+4. **Reconstruction**: Rebuild data from complete fragment set
 5. **Verification**: Validate reconstructed data integrity
+
+#### **🛡️ Fragment Security Best Practices**
+
+**MANDATORY SAFETY MEASURES:**
+
+✅ **Multiple Complete Backups**:
+- Store complete fragment sets in 3+ different locations
+- Use different storage mediums (local drive, USB, cloud)
+- Test backup integrity regularly
+
+✅ **Fragment Organization**:
+- Name fragments clearly with sequence numbers
+- Document fragment locations and dependencies  
+- Create fragment inventory lists
+- Use consistent naming conventions
+
+✅ **Access Security**:
+- Each fragment uses the SAME password for reconstruction
+- Secure all fragment locations equally
+- Consider fragment-specific passwords for advanced security
+- Use keyfile authentication for critical fragments
+
+❌ **NEVER DO THIS**:
+- Distribute fragments to unreliable storage
+- Rely on single storage location for any fragment
+- Use multi-image for irreplaceable data without backups
+- Forget to document fragment locations
 
 ---
 

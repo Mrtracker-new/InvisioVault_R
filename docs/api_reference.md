@@ -487,6 +487,100 @@ if success:
     print("Multi-layer datasets hidden successfully!")
 ```
 
+### **⚠️ Multi-Image Distribution Security Warnings**
+
+```python
+from ui.dialogs.two_factor_dialog import TwoFactorWorkerThread
+from pathlib import Path
+
+# CRITICAL WARNING: Multi-image distribution creates fragment dependencies
+# If ANY fragment is lost → TOTAL DATA LOSS occurs
+
+# Example: Fragment distribution (HIGH RISK)
+worker = TwoFactorWorkerThread(
+    "distribute",
+    carrier_paths=[
+        "/secure/location1/fragment1.png",  # ⚠️ CRITICAL: Must remain accessible
+        "/secure/location2/fragment2.png",  # ⚠️ CRITICAL: Must remain accessible  
+        "/secure/location3/fragment3.png"   # ⚠️ CRITICAL: Must remain accessible
+    ],
+    files_to_hide=["/secret/document.pdf"],
+    password="FragmentPassword123",
+    output_dir="/fragments/output"
+)
+
+# MANDATORY BACKUP STRATEGY:
+def create_fragment_backups(fragment_paths):
+    """
+    ⚠️ CRITICAL: Create multiple complete backup sets of ALL fragments.
+    
+    Losing ANY fragment = losing ALL your data permanently!
+    """
+    backup_locations = [
+        "/backup/local/",      # Local backup drive
+        "/backup/cloud/",      # Cloud storage
+        "/backup/external/"    # External USB/drive
+    ]
+    
+    for backup_location in backup_locations:
+        for fragment in fragment_paths:
+            # Copy each fragment to each backup location
+            backup_path = Path(backup_location) / Path(fragment).name
+            shutil.copy2(fragment, backup_path)
+            
+            # Verify backup integrity
+            if not verify_file_integrity(fragment, backup_path):
+                raise Exception(f"Backup verification failed for {fragment}")
+    
+    print("✅ All fragments backed up to multiple secure locations")
+
+# FRAGMENT DEPENDENCY WARNING
+def validate_fragment_availability(fragment_paths):
+    """
+    Verify ALL fragments are accessible before attempting reconstruction.
+    Missing ANY fragment will result in TOTAL DATA LOSS!
+    """
+    missing_fragments = []
+    
+    for fragment in fragment_paths:
+        if not Path(fragment).exists():
+            missing_fragments.append(fragment)
+    
+    if missing_fragments:
+        raise FragmentLossError(
+            f"CRITICAL: Missing fragments detected: {missing_fragments}. "
+            "CANNOT RECOVER DATA! All fragments required for reconstruction."
+        )
+    
+    return True
+
+# Example with safety checks
+try:
+    # 1. Validate all fragments exist
+    fragment_paths = [
+        "/fragments/fragment_01.png",
+        "/fragments/fragment_02.png", 
+        "/fragments/fragment_03.png"
+    ]
+    
+    validate_fragment_availability(fragment_paths)
+    
+    # 2. Create mandatory backups
+    create_fragment_backups(fragment_paths)
+    
+    # 3. Proceed with reconstruction only if all fragments available
+    worker = TwoFactorWorkerThread(
+        "reconstruct",
+        fragment_paths=fragment_paths,
+        password="FragmentPassword123",
+        output_dir="/reconstructed/"
+    )
+    
+except FragmentLossError as e:
+    print(f"🚨 CATASTROPHIC ERROR: {e}")
+    print("🔴 DATA RECOVERY IMPOSSIBLE - PERMANENT DATA LOSS")
+```
+
 ---
 
 **Last Updated**: January 2025  
