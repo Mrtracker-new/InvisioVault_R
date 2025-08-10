@@ -154,8 +154,14 @@ class TwoFactorWorkerThread(QThread):
             progress = 20 + (30 * (i + 1) // len(fragment_paths))
             self.progress_updated.emit(progress)
             
-            # Extract combined data
-            combined_data = self.stego_engine.extract_data(Path(fragment_path), randomize=True)
+            # Extract combined data using the same seed as during distribution
+            # Fragment seed must match the seed used during hide operation
+            fragment_seed = hash(password + str(i)) % (2**32)
+            combined_data = self.stego_engine.extract_data(
+                Path(fragment_path), 
+                randomize=True, 
+                seed=fragment_seed
+            )
             if not combined_data:
                 raise Exception(f"No data found in fragment {i+1}")
             

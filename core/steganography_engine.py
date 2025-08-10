@@ -399,7 +399,8 @@ class SteganographyEngine:
                         return None
                     
                     # INTELLIGENT SIZE VALIDATION - check if size is reasonable
-                    if not (32 <= claimed_data_size <= max_reasonable_size):
+                    # Allow smaller sizes for two-factor authentication fragments
+                    if not (1 <= claimed_data_size <= max_reasonable_size):
                         self.logger.error(f"Unreasonable data size: {claimed_data_size} bytes")
                         return None
                     
