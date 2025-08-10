@@ -93,11 +93,14 @@ This project was developed as an advanced learning journey into:
 - 🗝️ **Two-Factor Authentication**: Password + Keyfile system for maximum security
 - 🎲 **Cryptographic Randomization**: Password-seeded randomization for hiding positions
 
-### 👻 **Plausible Deniability Features**
-- 🎭 **Decoy Mode**: Hide two different datasets in one image with different passwords
+### 👻 **Revolutionary Plausible Deniability** 
+- 🎭 **Transparent Decoy Mode**: Every basic operation automatically includes decoy protection
+- 🛡️ **Seamless Security**: Users get advanced protection without complexity
 - 🏗️ **Multi-Dataset Hiding**: Hide unlimited datasets with independent passwords
 - 📊 **Priority Levels**: 5 security levels from outer (decoy) to inner (real) data
-- 🛡️ **Innocent Cover**: Use harmless files as decoy content for plausible deniability
+- 🔍 **Password-Selective Extraction**: Different passwords reveal different datasets
+- 🎯 **Auto-Generated Decoys**: System creates believable innocent files automatically
+- 💫 **Backward Compatible**: Works with legacy single-layer steganography
 
 ### 🔄 **Advanced Distribution**
 - 📡 **Two-Factor Distribution**: Spread data across 2-8 images with redundancy
@@ -164,27 +167,32 @@ python main.py
 <tr>
 <td width="50%">
 
-#### 🕵️ **MISSION: Hide Files**
+#### 🕵️ **MISSION: Hide Files (Auto-Protected)**
 
 1. 🚀 **Launch** InvisioVault
 2. 🖼️ **Choose** your cover image
 3. 📁 **Select** files to hide
 4. 🔐 **Set** a strong password
-5. ✨ **Click "Hide"** and watch the magic!
+5. ✨ **Click "Hide"** - Automatic decoy protection!
 
-*Your files are now invisible inside the image!* 🎩
+*Your files are now protected by TWO layers:*
+- 🎭 *Decoy layer (innocent files)*
+- 🛡️ *Real layer (your actual files)*
 
 </td>
 <td width="50%">
 
-#### 🔍 **MISSION: Extract Files**
+#### 🔍 **MISSION: Extract Files (Any Password)**
 
 1. 🖼️ **Select** the steganographic image
 2. 🔑 **Enter** your password
 3. 📂 **Choose** where to save files
-4. ⚡ **Click "Extract"** - done in seconds!
+4. ⚡ **Click "Extract"** - Gets YOUR dataset!
 
-*Your hidden files magically reappear!* ✨
+*System automatically finds the right data:*
+- ✅ *Your password = your files*
+- ✅ *Other password = other dataset*
+- ❌ *Wrong password = nothing*
 
 </td>
 </tr>
@@ -209,6 +217,72 @@ python main.py
 | **📊 Capacity** | Up to 50MB per image | Hide entire document collections |
 | **💾 Memory** | <500MB usage | Runs smoothly on any modern computer |
 | **🌍 Platforms** | Windows, macOS, Linux | Use anywhere, anytime |
+
+## 🎭 **NEW: Transparent Decoy Mode Integration**
+
+<div align="center">
+
+### 🛡️ **Revolutionary Security Enhancement**
+
+*Every basic operation now includes enterprise-level plausible deniability*
+
+</div>
+
+**🎉 What's New?**
+
+InvisioVault now automatically protects **every file hiding operation** with advanced decoy mode technology. Users get military-grade plausible deniability without any complexity!
+
+### 🔄 **How It Works Behind the Scenes**
+
+#### **🔒 When You Hide Files (Basic Mode):**
+```
+1. 📁 You select your files and password
+2. 🎭 System automatically creates innocent decoy files
+3. 🛡️ Creates TWO encrypted layers in the same image:
+   • Outer Layer (Decoy): Harmless files with derived password
+   • Inner Layer (Real): Your actual files with your password
+4. 🖼️ Result: One image that looks normal but has dual protection
+```
+
+#### **🔓 When You Extract Files (Basic Mode):**
+```
+1. 🔑 You enter any password
+2. 🔍 System searches all datasets in the image
+3. ✨ Returns the dataset that matches your password:
+   • Your password → Your files
+   • Other password → Other dataset (if exists)
+   • Wrong password → Nothing (no trace of hidden data)
+```
+
+### 🎯 **Real-World Example**
+
+| **👤 User Action** | **🎭 What Happens** | **🛡️ Security Benefit** |
+|-------------------|--------------------|-----------------------|
+| Alice hides documents with password `"Secret123"` | System creates decoy files accessible with `"img_4567"` + Alice's real files with `"Secret123"` | If discovered, Alice can provide decoy password showing only harmless files |
+| Bob tries to extract with password `"Secret123"` | Gets Alice's real documents | Only Alice (or those she trusts) can access real data |
+| Eve tries to extract with wrong password | Gets nothing, no indication data exists | Perfect deniability - looks like a normal image |
+| Authorities demand password | Alice provides `"img_4567"` showing innocent files | Plausible deniability maintained |
+
+### ✨ **Key Benefits**
+
+- **🎭 Automatic Protection**: Every hide operation includes decoy mode
+- **🧠 Zero Learning Curve**: Works exactly like before, but more secure
+- **🔄 Universal Compatibility**: Extract works with any decoy-mode or legacy image
+- **🛡️ Plausible Deniability**: Different passwords reveal different content
+- **⚡ No Performance Impact**: Still lightning-fast extraction
+- **🔒 Independent Security**: Each dataset encrypted separately
+
+### 🧪 **Try It Now!**
+
+```bash
+# Test the new decoy integration
+python test_decoy_integration.py
+
+# Create a decoy-protected image using basic hide dialog
+# Then extract with different passwords to see different datasets!
+```
+
+---
 
 ## 📚 Documentation
 
@@ -246,6 +320,12 @@ python test_multi_decoy.py
 
 # Simple decoy testing
 python test_simple_decoy.py
+
+# Decoy integration testing (NEW!)
+python test_decoy_integration.py
+
+# Extraction message accuracy test
+python test_extraction_msg.py
 
 # Final decoy implementation test
 python test_final_decoy.py
