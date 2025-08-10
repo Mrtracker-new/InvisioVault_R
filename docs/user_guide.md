@@ -99,6 +99,7 @@ When you first launch InvisioVault:
    - **Password**: Strong password (8+ characters)
    - **Security Level**: Standard, High, or Maximum
    - **Encryption**: AES-256 (automatic)
+   - **🆕 Automatic Decoy Protection**: System creates dual-layer security
 
 6. **Advanced Options** (Optional):
    - Enable keyfile authentication
@@ -106,6 +107,9 @@ When you first launch InvisioVault:
    - Set compression level
 
 7. **Execute**: Click "Hide Files" and wait for completion
+   - **🛡️ Enhanced**: Every operation now includes decoy protection
+   - **Dual Layers**: Innocent decoy + your real files
+   - **Same Interface**: No complexity added for users
 
 #### **Capacity Planning**
 
@@ -160,33 +164,47 @@ When you first launch InvisioVault:
 
 ## 🔥 Advanced Features
 
-### **Decoy Mode (Plausible Deniability)**
+### **🆕 Transparent Decoy Mode (Revolutionary Security)**
 
-#### **Single Decoy Mode**
+> **🎉 NEW FEATURE**: Every basic operation now includes automatic decoy protection!
 
-1. **Enable Decoy Mode**: Settings → Security → Decoy Mode
-2. **Configure Decoy Data**:
-   - **Decoy Password**: Different from real password
-   - **Decoy Files**: Innocent, believable files
-   - **Capacity Split**: 30% decoy, 70% real data
-3. **Configure Real Data**:
-   - **Real Password**: Your actual secret password
-   - **Real Files**: Sensitive data to protect
-4. **Execute**: Both datasets hidden in same image
+#### **Automatic Decoy Protection (Basic Mode)**
 
-#### **Multi-Decoy Mode**
+**What Happens Automatically:**
+1. **Hide Files**: System creates TWO datasets in every image:
+   - **🎭 Decoy Layer**: Innocent files (config files, README, etc.)
+   - **🛡️ Real Layer**: Your actual files
+2. **Different Passwords**: Each layer has its own password
+3. **Seamless Operation**: No extra steps or complexity
+4. **Universal Extraction**: Basic extract works with any password
+
+**Security Benefits:**
+- ✅ **Plausible Deniability**: Can show innocent files if discovered
+- ✅ **Zero Learning Curve**: Works like regular steganography
+- ✅ **Backward Compatible**: Still works with old images
+- ✅ **Password Isolation**: Each dataset encrypted independently
+
+#### **Advanced Multi-Decoy Mode**
+
+**For Power Users Who Need More Control:**
 
 1. **Access Multi-Decoy Dialog**: Advanced → Multi-Decoy
-2. **Add Datasets**:
+2. **Add Multiple Datasets**:
    - **Dataset Name**: Identifier for organization
    - **Password**: Unique password per dataset
    - **Priority Level**: Security level (1-5)
    - **Decoy Type**: Standard, Innocent, Personal, Business
 3. **Configure Each Dataset**:
-   - Add files to each dataset
+   - Add specific files to each dataset
    - Set individual security levels
-   - Configure metadata
-4. **Execute**: All datasets hidden independently
+   - Configure custom metadata
+4. **Execute**: All datasets hidden with layered security
+
+**Advanced Benefits:**
+- 🎯 **Unlimited Datasets**: Hide as many as image capacity allows
+- 📊 **Priority Control**: 5 security levels (outer to inner)
+- 🏷️ **Type Categories**: Organize by purpose (innocent, personal, business)
+- 🔍 **Granular Control**: Fine-tune each dataset individually
 
 ### **Two-Factor Authentication**
 

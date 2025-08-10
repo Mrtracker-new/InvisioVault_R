@@ -26,7 +26,8 @@ InvisioVault implements defense-in-depth with multiple security layers:
 - ✅ **Integrity**: Checksums verify data hasn't been modified
 - ✅ **Authentication**: Verify user identity before access
 - ✅ **Stealth**: Hide the existence of secret data
-- ✅ **Deniability**: Plausible explanations for suspicious data
+- ✅ **Deniability**: Automatic decoy protection provides plausible explanations
+- 🆕 **Transparency**: Enhanced security without complexity for users
 
 ---
 
@@ -137,19 +138,52 @@ def clear_sensitive_data(data: bytearray):
 3. **Format Validation**: Ensures lossless compatibility
 4. **Capacity Limits**: Prevents over-embedding
 
-### **Plausible Deniability**
+### **🆕 Transparent Decoy Mode (Revolutionary Feature)**
 
-#### **Decoy Mode**
-- **Dual Datasets**: Real + decoy data in same image
-- **Different Passwords**: Each reveals different content
-- **Capacity Split**: 30% decoy, 70% real (configurable)
-- **Innocent Content**: Believable decoy files
+#### **Automatic Decoy Protection** ⚡ *LIVE NOW*
+- **🎉 NEW**: Every basic operation now includes automatic decoy protection
+- **Dual Datasets**: Real + decoy data created automatically in every image
+- **Different Passwords**: System generates separate passwords for each layer
+- **Zero Complexity**: Users get enhanced security without extra steps
+- **Universal Support**: Works with all basic hide/extract operations
+- **Seamless Extraction**: Basic extract dialog works with any decoy-mode image
 
-#### **Multi-Decoy System**
+#### **Security Architecture**
+```
+Steganographic Image
+├── 🎭 Decoy Layer (Outer)
+│   ├── Password: Auto-generated from user password
+│   ├── Content: Innocent files (config, readme, etc.)
+│   └── Purpose: Plausible deniability
+└── 🛡️ Real Layer (Inner)
+    ├── Password: User's actual password
+    ├── Content: User's actual files
+    └── Purpose: Real data protection
+```
+
+#### **Operational Security Model**
+1. **Password-Selective Access**: Different passwords reveal different datasets
+2. **No Cross-Contamination**: Datasets encrypted independently
+3. **Automatic Generation**: System creates believable decoy content
+4. **Format Agnostic**: Works with new and legacy steganographic images
+5. **Performance Neutral**: No impact on hide/extract speed
+
+#### **Security Benefits**
+- ✅ **Plausible Deniability**: Can show innocent files under coercion
+- ✅ **Transparent Operation**: No learning curve or UI complexity
+- ✅ **Backward Compatible**: Still works with legacy images
+- ✅ **Password Isolation**: Each dataset encrypted independently
+- ✅ **Smart Extraction**: System finds correct dataset automatically
+- ✅ **Coercion Resistance**: Multiple plausible explanations available
+- ✅ **Zero Configuration**: Works automatically without user setup
+
+#### **Advanced Multi-Decoy System**
 - **Unlimited Datasets**: Limited only by image capacity
 - **Priority Levels**: 5 security levels (1=outer, 5=inner)
 - **Independent Passwords**: Each dataset separately encrypted
 - **Metadata Protection**: Dataset info encrypted in payload
+- **Custom Control**: For power users who need granular management
+- **Professional Features**: Business names, dataset categories, priorities
 
 ---
 

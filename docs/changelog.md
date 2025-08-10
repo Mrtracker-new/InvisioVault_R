@@ -8,6 +8,40 @@
 
 ---
 
+## 🏆 Version 1.0.1 - Decoy Integration Enhancement
+**Release Date**: January 10, 2025  
+**Status**: ✅ Live - Revolutionary Security Update
+
+### 🎉 **Major New Feature: Transparent Decoy Mode Integration**
+
+#### ⚡ **What's New**
+- ✨ **Automatic Decoy Protection**: Every basic hide operation now includes dual-layer security
+- 🔄 **Universal Extraction**: Basic extract works with any decoy-mode or legacy image
+- 🧠 **Zero Learning Curve**: Enhanced security without added complexity
+- 🛡️ **Password-Selective Access**: Different passwords reveal different datasets
+- 📱 **Seamless Integration**: Works transparently with existing UI
+
+#### 🔧 **Technical Enhancements**
+- ✅ Enhanced `HideFilesDialog` with automatic decoy generation
+- ✅ Enhanced `ExtractFilesDialog` with multi-format support
+- ✅ Improved `MultiDecoyEngine.extract_dataset()` with detailed metadata
+- ✅ Fixed extraction success messages to show only extracted files
+- ✅ Added comprehensive integration tests
+
+#### 🧪 **New Test Coverage**
+- ✅ `test_decoy_integration.py` - Complete workflow validation
+- ✅ `test_extraction_msg.py` - Success message accuracy testing
+- ✅ Backward compatibility verification
+- ✅ Multi-password extraction scenarios
+
+#### 💡 **User Benefits**
+- 🎭 **Plausible Deniability**: Can provide innocent files if discovered
+- ⚡ **No Performance Impact**: Same speed as before, but more secure
+- 🔒 **Independent Security**: Each dataset encrypted separately
+- 🔄 **Format Agnostic**: Works with all image types and legacy files
+
+---
+
 ## 🏆 Version 1.0.0 - Production Release
 **Release Date**: January 2025  
 **Status**: ✅ Complete - Production Ready

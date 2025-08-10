@@ -122,7 +122,7 @@ class DecoyEngine:
         self.decoy_ratio = 0.3  # 30% capacity for decoy data
 ```
 
-### **MultiDecoyEngine**
+### **🆕 MultiDecoyEngine (Enhanced with Transparent Mode)**
 
 #### **Dataset Configuration**
 ```python
@@ -133,6 +133,114 @@ class DatasetConfig:
     priority: int  # 1-5 (1=outer/least secure, 5=inner/most secure)
     decoy_type: str  # 'standard', 'innocent', 'personal', 'business'
     files: List[Path]
+```
+
+#### **Key Methods**
+
+##### **`hide_multiple_datasets(carrier_path, datasets, output_path)`**
+```python
+def hide_multiple_datasets(self, carrier_path: Path, datasets: List[Dict], 
+                          output_path: Path) -> bool:
+    """
+    🎉 ENHANCED: Core method for multi-decoy steganography.
+    
+    Now integrated with basic operations for transparent dual-layer protection.
+    Creates layered steganographic images with independent encryption.
+    
+    Args:
+        carrier_path: Path to carrier image
+        datasets: List of dataset configurations:
+            [
+                {
+                    'name': 'DatasetName',
+                    'password': 'password123',
+                    'priority': 1,  # 1=outer, 5=inner
+                    'decoy_type': 'innocent',
+                    'files': ['/path/to/file1', '/path/to/file2']
+                }
+            ]
+        output_path: Path for output image
+    
+    Returns:
+        bool: Success status
+        
+    Raises:
+        SteganographyError: Insufficient capacity or operation failure
+        ValueError: Invalid dataset configuration
+    """
+```
+
+##### **`extract_dataset(stego_path, password, output_dir)`**
+```python
+def extract_dataset(self, stego_path: Path, password: str, 
+                   output_dir: Path) -> Dict[str, Any]:
+    """
+    🎉 ENHANCED: Smart extraction that works with any password.
+    
+    Universal extraction method that:
+    - Automatically detects image format (multi-decoy vs legacy)
+    - Tries password against all available datasets
+    - Returns detailed metadata about extracted files
+    
+    Args:
+        stego_path: Path to steganographic image
+        password: Password to try against datasets
+        output_dir: Directory for extracted files
+    
+    Returns:
+        dict: {
+            'dataset_id': str,           # Name/ID of extracted dataset
+            'extraction_path': str,      # Path where files were extracted
+            'extracted_files': List[{
+                'path': str,             # Full path to extracted file
+                'name': str              # Filename only
+            }],
+            'decoy_type': str,           # Type of dataset extracted
+            'priority': int,             # Security priority level
+            'method': str                # 'multi_decoy' or 'legacy'
+        }
+        None if no dataset matches the password
+        
+    Raises:
+        FileNotFoundError: Steganographic image not found
+        SteganographyError: Image format not supported
+    """
+```
+
+##### **`create_automatic_decoy_datasets(user_files, user_password)`** ⚡ *NEW*
+```python
+def create_automatic_decoy_datasets(self, user_files: List[str], 
+                                   user_password: str) -> List[Dict]:
+    """
+    🎉 NEW: Create dual-layer datasets for transparent decoy protection.
+    
+    Called automatically by basic hide operations to create:
+    1. Decoy dataset with innocent files and derived password
+    2. Real dataset with user's files and actual password
+    
+    Args:
+        user_files: List of user's files to hide
+        user_password: User's chosen password
+    
+    Returns:
+        List[Dict]: Two dataset configurations ready for hiding
+        [
+            {  # Decoy dataset (outer layer)
+                'name': 'ProcessingData',
+                'password': 'img_1234',  # Derived from user password
+                'priority': 1,
+                'decoy_type': 'innocent',
+                'files': ['/tmp/readme.txt', '/tmp/config.ini']
+            },
+            {  # Real dataset (inner layer)
+                'name': 'UserFiles',
+                'password': user_password,
+                'priority': 5,
+                'decoy_type': 'personal',
+                'files': user_files
+            }
+        ]
+    """
 ```
 
 ---
@@ -296,7 +404,45 @@ if success:
     print("Data hidden successfully!")
 ```
 
-### **Multi-Decoy Example**
+### **🆕 Transparent Decoy Mode Example**
+
+```python
+from core.multi_decoy_engine import MultiDecoyEngine
+from pathlib import Path
+
+# 🎉 NEW: Transparent decoy mode (automatic dual-layer security)
+engine = MultiDecoyEngine()
+
+# Hide files with automatic decoy protection
+files_to_hide = [Path("secret_document.pdf"), Path("private_photo.jpg")]
+user_password = "MySecurePassword123"
+
+success = engine.hide_with_automatic_decoy(
+    carrier_path=Path("vacation.png"),
+    files=files_to_hide,
+    password=user_password,  # Your files accessible with this password
+    output_path=Path("hidden_image.png")
+)
+
+if success:
+    print("Files hidden with automatic decoy protection!")
+    
+    # Extract with user password (gets real files)
+    result = engine.extract_dataset(
+        stego_path=Path("hidden_image.png"),
+        password=user_password,
+        output_dir=Path("extracted_real")
+    )
+    
+    if result['success']:
+        print(f"Extracted {len(result['files_extracted'])} real files")
+        print(f"Dataset: {result['dataset_name']}")
+        
+    # Note: If someone else uses a different password,
+    # they might get the decoy files instead!
+```
+
+### **Advanced Multi-Decoy Example**
 
 ```python
 from core.multi_decoy_engine import MultiDecoyEngine
@@ -305,23 +451,40 @@ from pathlib import Path
 # Initialize multi-decoy engine
 engine = MultiDecoyEngine()
 
-# Define datasets
+# Define multiple datasets with different priorities
 datasets = [
     {
         "name": "Innocent Photos",
         "password": "vacation2023",
-        "priority": 1,
+        "priority": 1,  # Outer layer (least secure)
         "decoy_type": "innocent",
         "files": ["photo1.jpg", "photo2.jpg"]
+    },
+    {
+        "name": "Work Documents",
+        "password": "work_secure_456",
+        "priority": 3,  # Middle layer
+        "decoy_type": "business", 
+        "files": ["report.pdf", "presentation.pptx"]
+    },
+    {
+        "name": "Personal Files",
+        "password": "ultra_secret_789",
+        "priority": 5,  # Inner layer (most secure)
+        "decoy_type": "personal",
+        "files": ["diary.txt", "private_keys.pem"]
     }
 ]
 
-# Hide datasets
+# Hide all datasets with layered security
 success = engine.hide_multiple_datasets(
     carrier_path=Path("carrier.png"),
     datasets=datasets,
     output_path=Path("multi_hidden.png")
 )
+
+if success:
+    print("Multi-layer datasets hidden successfully!")
 ```
 
 ---
