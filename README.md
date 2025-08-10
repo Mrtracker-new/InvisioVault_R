@@ -292,9 +292,12 @@ python test_decoy_integration.py
 | **User Guide** | Complete usage instructions | [`docs/user_guide.md`](docs/user_guide.md) |
 | **API Reference** | Technical API documentation | [`docs/api_reference.md`](docs/api_reference.md) |
 | **Security Guide** | Security best practices | [`docs/security_notes.md`](docs/security_notes.md) |
-| **Project Architecture** | Technical specifications | [`InvisioVault_Project_Prompt.md`](InvisioVault_Project_Prompt.md) |
-| **Performance Analysis** | Speed optimization details | [`PERFORMANCE_OPTIMIZATION_SUMMARY.md`](PERFORMANCE_OPTIMIZATION_SUMMARY.md) |
-| **Multi-Decoy Implementation** | Advanced decoy features | [`MULTI_DECOY_IMPLEMENTATION.md`](MULTI_DECOY_IMPLEMENTATION.md) |
+|| **Project Architecture** | Technical specifications | [`docs/InvisioVault_Project_Prompt.md`](docs/InvisioVault_Project_Prompt.md) |
+| **Performance Analysis** | Speed optimization details | [`docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md`](docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md) |
+| **Multi-Decoy Implementation** | Advanced decoy features | [`docs/MULTI_DECOY_IMPLEMENTATION.md`](docs/MULTI_DECOY_IMPLEMENTATION.md) |
+| **Changelog** | Version history and updates | [`docs/changelog.md`](docs/changelog.md) |
+| **Project Structure** | Detailed codebase organization | [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) |
+| **Security Documentation** | Advanced security features | [`docs/SECURITY.md`](docs/SECURITY.md) |
 
 ### 🚀 **Advanced Usage**
 
@@ -391,14 +394,49 @@ python -m PyInstaller --windowed --onefile --icon="assets\icons\InvisioVault.ico
 ```
 📁 InvisioVault/
 ├── 🚀 main.py                    # Launch the application
-├── ⚡ demo_performance.py         # See the speed revolution
-├── 🧪 test_main.py               # Test all features
-├── 📊 PERFORMANCE_SUMMARY.md     # Deep dive into optimizations
-├── 📖 PROJECT_COMPLETE.md        # Complete documentation
-├── 🎨 ui/                        # Beautiful user interface
-├── 🔧 core/                      # Steganography magic
-├── 🛡️ security/                  # Encryption & security
-└── 📚 tests/                     # Quality assurance
+├── 📋 requirements.txt           # Python dependencies
+├── ⚙️ setup.py                   # Package configuration
+├── 📁 assets/                    # Application assets
+│   ├── 🎨 icons/                 # Application icons
+│   ├── 🖼️ images/                # Logos and branding
+│   ├── 🎭 ui/                    # UI-specific graphics
+│   └── 📚 demo/                  # Demo and example files
+├── 📁 build_scripts/             # Build automation
+├── 🔧 core/                      # Steganography engines
+│   ├── steganography_engine.py   # Revolutionary LSB algorithm
+│   ├── encryption_engine.py      # AES-256 encryption
+│   ├── multi_decoy_engine.py     # Multi-layer security
+│   ├── two_factor_engine.py      # 2FA authentication
+│   └── decoy_engine.py           # Plausible deniability
+├── 📚 docs/                      # Complete documentation
+│   ├── user_guide.md             # User manual
+│   ├── api_reference.md          # Developer API docs
+│   ├── security_notes.md         # Security best practices
+│   ├── changelog.md              # Version history
+│   └── PROJECT_STRUCTURE.md      # Architecture details
+├── 🗂️ my_keys/                   # Keyfile storage
+├── ⚡ operations/                 # Core operations
+│   ├── hide_operation.py         # File hiding logic
+│   ├── extract_operation.py      # File extraction logic
+│   ├── analysis_operation.py     # Image analysis
+│   └── batch_operation.py        # Batch processing
+├── 🛠️ scripts/                   # Utility scripts
+│   ├── security_check.py         # Security validation
+│   └── check_sensitive_files.py  # File scanning
+├── 🧪 tests/                     # Quality assurance
+│   ├── test_steganography.py     # Core algorithm tests
+│   ├── test_encryption.py        # Security tests
+│   └── test_ui_components.py     # Interface tests
+├── 🎨 ui/                        # Professional interface
+│   ├── main_window.py            # Main application window
+│   ├── dialogs/                  # User dialogs
+│   ├── components/               # Reusable UI components
+│   └── themes/                   # Dark/Light themes
+└── 🔧 utils/                     # Utility modules
+    ├── config_manager.py         # Configuration handling
+    ├── logger.py                 # Secure logging
+    ├── file_utils.py             # File operations
+    └── error_handler.py          # Error management
 ```
 
 ## 🧠 How It Works

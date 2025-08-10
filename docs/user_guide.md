@@ -535,10 +535,13 @@ less ~/.invisiovault/logs/invisiovault.log
 
 ### **Additional Resources**
 
-- **API Documentation**: [`docs/api_reference.md`](api_reference.md)
-- **Security Guide**: [`docs/security_notes.md`](security_notes.md)
-- **Performance Analysis**: [`../PERFORMANCE_OPTIMIZATION_SUMMARY.md`](../PERFORMANCE_OPTIMIZATION_SUMMARY.md)
-- **Project Architecture**: [`../InvisioVault_Project_Prompt.md`](../InvisioVault_Project_Prompt.md)
+- **API Documentation**: [`api_reference.md`](api_reference.md)
+- **Security Guide**: [`security_notes.md`](security_notes.md)
+- **Performance Analysis**: [`PERFORMANCE_OPTIMIZATION_SUMMARY.md`](PERFORMANCE_OPTIMIZATION_SUMMARY.md)
+- **Project Architecture**: [`InvisioVault_Project_Prompt.md`](InvisioVault_Project_Prompt.md)
+- **Project Structure**: [`PROJECT_STRUCTURE.md`](PROJECT_STRUCTURE.md)
+- **Security Documentation**: [`SECURITY.md`](SECURITY.md)
+- **Changelog**: [`changelog.md`](changelog.md)
 
 ### **Educational Resources**
 
