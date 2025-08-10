@@ -92,6 +92,12 @@ sample_outputs/
 examples/data/
 demo_data/
 
+# Extracted test outputs and directories
+extracted_*/
+test_*.py
+!tests/test_*.py
+demo_*.py
+
 # Steganographic Files (Input/Output)
 steganographic_images/
 hidden_data/
