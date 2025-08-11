@@ -29,7 +29,7 @@ class ExtractWorkerThread(QThread):
     """Worker thread for file extraction operations."""
     progress_updated = Signal(int)
     status_updated = Signal(str)
-    finished_successfully = Signal(list)  # List of extracted file paths
+    finished_successfully = Signal(list, dict)  # List of extracted file paths and extraction info
     error_occurred = Signal(str)
     
     def __init__(self, stego_path, password, output_dir, randomize):
@@ -52,7 +52,7 @@ class ExtractWorkerThread(QThread):
             self.progress_updated.emit(10)
             
             # First try to extract using multi-decoy engine (new format)
-            self.status_updated.emit("Attempting decoy-protected extraction...")
+            self.status_updated.emit("Attempting advanced format extraction...")
             self.progress_updated.emit(30)
             
             try:
@@ -91,7 +91,13 @@ class ExtractWorkerThread(QThread):
                         # Last fallback: create a representative entry
                         extracted_files = [self.output_dir / f"dataset_{metadata.get('dataset_id', 'files')}"]            
                     
-                    self.finished_successfully.emit(extracted_files)
+                    # Multi-decoy extraction info
+                    multi_decoy_info = {
+                        'extraction_method': 'multi_decoy',
+                        'format': 'decoy_protected',
+                        'dataset_id': metadata.get('dataset_id', 'Unknown')
+                    }
+                    self.finished_successfully.emit(extracted_files, multi_decoy_info)
                     return
                     
             except Exception as e:
@@ -109,13 +115,22 @@ class ExtractWorkerThread(QThread):
                 seed = int(hashlib.sha256(self.password.encode()).hexdigest()[:8], 16)
             
             # Since we know this is likely a fallback image, try regular extraction first for speed
-            encrypted_data = self.enhanced_engine.extract_data_enhanced(
+            encrypted_data, extraction_info = self.enhanced_engine.extract_data_enhanced(
                 stego_path=self.stego_path,
                 password=self.password,
                 randomize=self.randomize,
                 seed=seed,
                 use_anti_detection=False  # Try regular extraction first (faster)
             )
+            
+            # Log extraction details
+            if extraction_info:
+                method = extraction_info.get('successful_method', 'unknown')
+                data_size = extraction_info.get('data_size', 0)
+                compatibility = extraction_info.get('compatibility_note', '')
+                self.logger.info(f"First extraction attempt - Method: {method}, Size: {data_size} bytes")
+                if compatibility:
+                    self.logger.info(f"Compatibility note: {compatibility}")
             
             if not encrypted_data:
                 # If regular extraction failed, try anti-detection (slower)
@@ -133,13 +148,22 @@ class ExtractWorkerThread(QThread):
                     
                     def extract_with_timeout():
                         try:
-                            result[0] = self.enhanced_engine.extract_data_enhanced(
+                            data, info = self.enhanced_engine.extract_data_enhanced(
                                 stego_path=self.stego_path,
                                 password=self.password,
                                 randomize=self.randomize,
                                 seed=seed,
                                 use_anti_detection=True  # Try anti-detection
                             )
+                            result[0] = data
+                            # Log anti-detection extraction details
+                            if info:
+                                method = info.get('successful_method', 'unknown')
+                                data_size = info.get('data_size', 0) if data else 0
+                                compatibility = info.get('compatibility_note', '')
+                                self.logger.info(f"Anti-detection extraction - Method: {method}, Size: {data_size} bytes")
+                                if compatibility:
+                                    self.logger.info(f"Compatibility note: {compatibility}")
                         except Exception as e:
                             exception[0] = e
                     
@@ -210,7 +234,9 @@ class ExtractWorkerThread(QThread):
             self.status_updated.emit("Extraction completed successfully!")
             self.progress_updated.emit(100)
             
-            self.finished_successfully.emit(extracted_files)
+            # Pass extraction info if we have it
+            final_info = extraction_info if extraction_info else {}
+            self.finished_successfully.emit(extracted_files, final_info)
             
         except Exception as e:
             self.logger.error(f"Extract operation failed: {e}")
@@ -454,16 +480,53 @@ class ExtractFilesDialog(QDialog):
         except Exception as e:
             self.on_error(str(e))
     
-    def on_success(self, extracted_files):
+    def on_success(self, extracted_files, extraction_info=None):
         """Handle successful completion."""
         files_text = "\n".join([f"• {Path(f).name}" for f in extracted_files])
+        
+        # Create base message
+        message = f"Successfully extracted {len(extracted_files)} file(s):\n\n{files_text}\n\n"
+        
+        # Security-conscious extraction info display
+        if extraction_info:
+            method = extraction_info.get('successful_method', extraction_info.get('extraction_method', 'unknown'))
+            data_size = extraction_info.get('data_size', 0)
+            compatibility_note = extraction_info.get('compatibility_note', '')
+            
+            # SECURITY: Don't reveal decoy protection details in UI
+            # This prevents attackers from learning about decoy systems under coercion
+            if method == 'multi_decoy':
+                # Show generic success message for decoy-protected files
+                # Log the real method details but don't display them
+                self.logger.info(f"Multi-decoy extraction successful - dataset: {extraction_info.get('dataset_id', 'Unknown')}")
+                # Just show basic extraction success
+                pass  # No additional details shown to user
+            else:
+                # For non-decoy methods, show limited technical details
+                # This helps with troubleshooting without revealing security architecture
+                
+                # Only show compatibility notes for fallback scenarios (helpful for user understanding)
+                if compatibility_note and ('FALLBACK' in compatibility_note.upper() or 'WARNING' in compatibility_note.upper()):
+                    # Clean up the note to remove technical method details
+                    if 'anti-detection' in compatibility_note.lower():
+                        simplified_note = "Note: Used standard extraction method as a fallback."
+                    elif 'randomized' in compatibility_note.lower() and 'sequential' in compatibility_note.lower():
+                        simplified_note = "Note: Image was created with basic sequential method."
+                    else:
+                        simplified_note = "Note: Used alternative extraction approach."
+                    
+                    message += f"\n💡 {simplified_note}\n"
+                
+                # Show data size only for non-sensitive extractions
+                if data_size > 0 and method != 'multi_decoy':
+                    message += f"\n📊 Data Size: {data_size:,} bytes\n"
+        
+        message += f"\nFiles saved to: {self.output_directory}"
         
         QMessageBox.information(
             self,
             "Success! 🎉",
-            f"Successfully extracted {len(extracted_files)} file(s):\n\n"
-            f"{files_text}\n\n"
-            f"Files saved to: {self.output_directory}"
+            message
         )
         self.accept()
     

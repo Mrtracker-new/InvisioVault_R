@@ -130,7 +130,7 @@ class EnhancedSteganographyEngine(SteganographyEngine):
     
     def extract_data_enhanced(self, stego_path, password: Optional[str] = None, 
                              randomize: bool = True, seed: Optional[int] = None,
-                             use_anti_detection: Optional[bool] = None) -> Optional[bytes]:
+                             use_anti_detection: Optional[bool] = None) -> Tuple[Optional[bytes], Dict[str, Any]]:
         """
         Enhanced extract data method with anti-detection awareness.
         
@@ -142,7 +142,7 @@ class EnhancedSteganographyEngine(SteganographyEngine):
             use_anti_detection: Try anti-detection extraction first
             
         Returns:
-            Extracted data or None
+            Tuple of (extracted_data, extraction_info) where extraction_info contains details about which method worked
         """
         
         # Use instance setting if not overridden
@@ -153,6 +153,19 @@ class EnhancedSteganographyEngine(SteganographyEngine):
         if password and seed is None:
             seed = int(hashlib.sha256(password.encode()).hexdigest()[:8], 16)
         
+        # Initialize extraction info with user's chosen settings
+        extraction_info = {
+            'user_settings': {
+                'anti_detection': use_anti_detection,
+                'randomize_lsb': randomize,
+                'password_used': bool(password)
+            },
+            'methods_tried': [],
+            'successful_method': None,
+            'compatibility_note': None,
+            'data_size': 0
+        }
+        
         try:
             # Convert to Path object
             if isinstance(stego_path, str):
@@ -160,45 +173,119 @@ class EnhancedSteganographyEngine(SteganographyEngine):
             
             # Try anti-detection extraction first if enabled
             if use_anti_detection:
-                self.logger.info("Attempting anti-detection extraction")
+                self.logger.info("🛡️ Attempting anti-detection extraction modes")
                 
-                # If randomize is also enabled, try hybrid extraction first
+                # Method 1: Hybrid anti-detection + randomized extraction
                 if randomize:
-                    self.logger.info("Trying hybrid anti-detection + randomized extraction")
+                    self.logger.info("🔄 Method 1: Trying hybrid anti-detection + randomized extraction")
+                    extraction_info['methods_tried'].append('hybrid_anti_detection_randomized')
+                    
                     result = self._hybrid_anti_detection_extract(
                         stego_path=stego_path,
                         password=password,
                         seed=seed
                     )
                     if result:
-                        self.logger.info(f"Hybrid extraction successful: {len(result)} bytes")
-                        return result
+                        extraction_info['successful_method'] = 'hybrid_anti_detection_randomized'
+                        extraction_info['data_size'] = len(result)
+                        extraction_info['compatibility_note'] = (
+                            "Extracted using hybrid method (randomized LSB with anti-detection compatibility). "
+                            "This works with images hidden using either pure anti-detection or hybrid modes."
+                        )
+                        self.logger.info(f"✅ Hybrid extraction successful: {len(result)} bytes")
+                        return result, extraction_info
                     else:
-                        self.logger.info("Hybrid extraction failed, trying pure anti-detection")
+                        self.logger.info("❌ Hybrid extraction failed, trying pure anti-detection")
                 
-                # Try pure anti-detection extraction
+                # Method 2: Pure anti-detection extraction
+                self.logger.info("🔄 Method 2: Trying pure anti-detection extraction")
+                extraction_info['methods_tried'].append('pure_anti_detection')
+                
                 result = self.anti_detection_engine.enhanced_extract_data(
                     stego_path=stego_path,
                     password=password
                 )
                 
                 if result:
-                    self.logger.info(f"Anti-detection extraction successful: {len(result)} bytes")
-                    return result
+                    extraction_info['successful_method'] = 'pure_anti_detection'
+                    extraction_info['data_size'] = len(result)
+                    extraction_info['compatibility_note'] = (
+                        "Extracted using pure anti-detection method. "
+                        "This indicates the image was hidden with advanced anti-detection techniques."
+                    )
+                    self.logger.info(f"✅ Pure anti-detection extraction successful: {len(result)} bytes")
+                    return result, extraction_info
                 else:
-                    self.logger.info("Anti-detection extraction failed, trying standard method")
+                    self.logger.info("❌ Pure anti-detection extraction failed")
             
-            # Fallback to original extraction method
-            self.logger.info("Using original high-performance extraction")
-            return self.extract_data(
+            # Method 3: Standard randomized extraction (fallback)
+            if randomize:
+                self.logger.info("🔄 Method 3: Trying standard randomized extraction (fallback)")
+                extraction_info['methods_tried'].append('standard_randomized')
+                
+                result = self.extract_data(
+                    stego_path=stego_path,
+                    randomize=True,
+                    seed=seed
+                )
+                
+                if result:
+                    extraction_info['successful_method'] = 'standard_randomized'
+                    extraction_info['data_size'] = len(result)
+                    
+                    if use_anti_detection:
+                        extraction_info['compatibility_note'] = (
+                            "⚠️ EXTRACTED USING FALLBACK METHOD: The image appears to be hidden with standard randomized LSB, "
+                            "not anti-detection mode. Your anti-detection extraction settings didn't match the hiding method, "
+                            "but the system successfully fell back to standard randomized extraction."
+                        )
+                    else:
+                        extraction_info['compatibility_note'] = (
+                            "Extracted using standard randomized LSB method. "
+                            "This matches your extraction settings."
+                        )
+                    
+                    self.logger.info(f"✅ Standard randomized extraction successful: {len(result)} bytes")
+                    return result, extraction_info
+                else:
+                    self.logger.info("❌ Standard randomized extraction failed")
+            
+            # Method 4: Sequential extraction (final fallback)
+            self.logger.info("🔄 Method 4: Trying sequential extraction (final fallback)")
+            extraction_info['methods_tried'].append('sequential')
+            
+            result = self.extract_data(
                 stego_path=stego_path,
-                randomize=randomize,
-                seed=seed
+                randomize=False,
+                seed=None
             )
+            
+            if result:
+                extraction_info['successful_method'] = 'sequential'
+                extraction_info['data_size'] = len(result)
+                extraction_info['compatibility_note'] = (
+                    "⚠️ EXTRACTED USING BASIC SEQUENTIAL METHOD: The image was hidden with basic sequential LSB hiding. "
+                    "Your extraction settings (anti-detection/randomization) were more advanced than the hiding method used."
+                )
+                self.logger.info(f"✅ Sequential extraction successful: {len(result)} bytes")
+                return result, extraction_info
+            else:
+                self.logger.error("❌ All extraction methods failed")
+            
+            # All methods failed
+            extraction_info['successful_method'] = None
+            extraction_info['compatibility_note'] = (
+                "❌ EXTRACTION FAILED: None of the extraction methods worked. "
+                "This could indicate: wrong password, corrupted image, or no hidden data present."
+            )
+            
+            return None, extraction_info
             
         except Exception as e:
             self.logger.error(f"Enhanced extraction failed: {e}")
-            return None
+            extraction_info['successful_method'] = None
+            extraction_info['compatibility_note'] = f"❌ EXTRACTION ERROR: {str(e)}"
+            return None, extraction_info
     
     def create_undetectable_stego(self, carrier_path: Path, data: bytes, 
                                  output_path: Path, password: str,
