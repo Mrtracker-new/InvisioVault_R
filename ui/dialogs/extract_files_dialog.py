@@ -20,6 +20,7 @@ from utils.logger import Logger
 from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler
 from core.steganography_engine import SteganographyEngine
+from core.enhanced_steganography_engine import EnhancedSteganographyEngine
 from core.encryption_engine import EncryptionEngine, SecurityLevel
 from core.multi_decoy_engine import MultiDecoyEngine
 
@@ -40,6 +41,7 @@ class ExtractWorkerThread(QThread):
         
         # Initialize engines
         self.stego_engine = SteganographyEngine()
+        self.enhanced_engine = EnhancedSteganographyEngine(use_anti_detection=True)
         self.multi_decoy_engine = MultiDecoyEngine(SecurityLevel.MAXIMUM)
         self.logger = Logger()
     
@@ -96,44 +98,88 @@ class ExtractWorkerThread(QThread):
                 self.logger.debug(f"Multi-decoy extraction failed, trying legacy format: {e}")
                 # Continue to legacy extraction method
             
-            # Fallback to legacy single-dataset extraction for backward compatibility
-            self.status_updated.emit("Trying legacy extraction format...")
+            # Try enhanced steganography extraction (supports both anti-detection and regular modes)
+            self.status_updated.emit("Trying enhanced steganography extraction...")
             self.progress_updated.emit(50)
             
-            # Extract encrypted data from the image using legacy method
+            # Generate seed from password if randomization is enabled
             seed = None
             if self.randomize:
-                # Generate deterministic seed from password for reproducible randomization
                 import hashlib
-                seed_hash = hashlib.sha256(self.password.encode('utf-8')).digest()
-                seed = int.from_bytes(seed_hash[:4], byteorder='big') % (2**32)
+                seed = int(hashlib.sha256(self.password.encode()).hexdigest()[:8], 16)
             
-            encrypted_data = self.stego_engine.extract_data(
-                self.stego_path,
+            # Since we know this is likely a fallback image, try regular extraction first for speed
+            encrypted_data = self.enhanced_engine.extract_data_enhanced(
+                stego_path=self.stego_path,
+                password=self.password,
                 randomize=self.randomize,
-                seed=seed
+                seed=seed,
+                use_anti_detection=False  # Try regular extraction first (faster)
             )
+            
+            if not encrypted_data:
+                # If regular extraction failed, try anti-detection (slower)
+                self.status_updated.emit("Trying anti-detection extraction...")
+                self.progress_updated.emit(60)
+                
+                try:
+                    # Set a reasonable timeout to avoid hanging
+                    import threading
+                    import time
+                    
+                    result = [None]
+                    exception = [None]
+                    
+                    def extract_with_timeout():
+                        try:
+                            result[0] = self.enhanced_engine.extract_data_enhanced(
+                                stego_path=self.stego_path,
+                                password=self.password,
+                                randomize=self.randomize,
+                                seed=seed,
+                                use_anti_detection=True  # Try anti-detection
+                            )
+                        except Exception as e:
+                            exception[0] = e
+                    
+                    thread = threading.Thread(target=extract_with_timeout)
+                    thread.start()
+                    thread.join(timeout=30)  # 30 second timeout
+                    
+                    if thread.is_alive():
+                        self.logger.warning("Anti-detection extraction timed out after 30 seconds")
+                        encrypted_data = None
+                    else:
+                        encrypted_data = result[0]
+                        if exception[0]:
+                            raise exception[0]
+                            
+                except Exception as e:
+                    self.logger.debug(f"Anti-detection extraction failed: {e}")
+                    encrypted_data = None
             
             if not encrypted_data:
                 raise Exception("No hidden data found in the image")
             
-            self.status_updated.emit("Decrypting legacy format data...")
+            self.status_updated.emit("Decrypting extracted data...")
             self.progress_updated.emit(70)
             
             # Try different security levels for decryption
             archive_data = None
-            for security_level in [SecurityLevel.HIGH, SecurityLevel.STANDARD, SecurityLevel.MAXIMUM]:
+            for security_level in [SecurityLevel.MAXIMUM, SecurityLevel.HIGH, SecurityLevel.STANDARD]:
                 try:
                     encryption_engine = EncryptionEngine(security_level)
                     archive_data = encryption_engine.decrypt_with_metadata(encrypted_data, self.password)
+                    self.logger.info(f"Successfully decrypted with {security_level} security level")
                     break
-                except Exception:
+                except Exception as e:
+                    self.logger.debug(f"Decryption failed with {security_level}: {e}")
                     continue
             
             if not archive_data:
                 raise Exception("Failed to decrypt data - incorrect password or corrupted data")
             
-            self.status_updated.emit("Extracting files from legacy format...")
+            self.status_updated.emit("Extracting files from archive...")
             self.progress_updated.emit(85)
             
             # Create temporary file for the archive
@@ -160,7 +206,7 @@ class ExtractWorkerThread(QThread):
             # Clean up temp file
             temp_zip_path.unlink()
             
-            self.status_updated.emit("Legacy format extraction completed successfully!")
+            self.status_updated.emit("Extraction completed successfully!")
             self.progress_updated.emit(100)
             
             self.finished_successfully.emit(extracted_files)

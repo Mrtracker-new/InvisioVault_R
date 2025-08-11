@@ -168,7 +168,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(title)
         
         # Description
-        desc = QLabel("Hide and extract files using LSB steganography with AES-256 encryption.")
+        desc = QLabel("Hide and extract files using enhanced LSB steganography with AES-256 encryption and advanced anti-detection features.")
         desc.setWordWrap(True)
         desc.setStyleSheet("color: #666; font-size: 14px;")
         layout.addWidget(desc)
@@ -229,6 +229,8 @@ class MainWindow(QMainWindow):
         
         features = [
             "• AES-256 encryption with PBKDF2 key derivation",
+            "• Advanced anti-detection steganography algorithms",
+            "• Real-time steganalysis resistance testing",
             "• Support for PNG, BMP, and TIFF images",
             "• Randomized LSB positioning for enhanced security",
             "• Image capacity analysis and validation",
@@ -762,10 +764,10 @@ class MainWindow(QMainWindow):
             self.logger.debug(f"Switched to operation: {operation_key}")
     
     def show_hide_dialog(self):
-        """Show the file hiding dialog."""
+        """Show the enhanced file hiding dialog with anti-detection capabilities."""
         try:
-            from ui.dialogs.hide_files_dialog import HideFilesDialog
-            dialog = HideFilesDialog(self)
+            from ui.dialogs.enhanced_hide_files_dialog import EnhancedHideFilesDialog
+            dialog = EnhancedHideFilesDialog(self)
             dialog.exec()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to open hide files dialog:\n{str(e)}")
