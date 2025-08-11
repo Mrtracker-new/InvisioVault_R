@@ -646,7 +646,7 @@ class AntiDetectionEngine:
         
         # Calculate high-frequency noise
         laplacian = cv2.Laplacian(gray, cv2.CV_64F)
-        noise_variance = float(np.var(laplacian))
+        noise_variance = float(np.var(np.asarray(laplacian, dtype=np.float64)))
         
         # Normalize to 0-1 scale (lower values indicate more artificial patterns)
         normalized_noise = min(noise_variance / 1000.0, 1.0)
