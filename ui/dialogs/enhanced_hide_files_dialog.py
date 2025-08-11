@@ -122,9 +122,14 @@ class EnhancedHideWorkerThread(QThread):
                         'capacity' in error_msg.lower() or 
                         'secure' in error_msg.lower() or 
                         'risk level' in error_msg.lower() or
-                        'target risk' in error_msg.lower()
+                        'target risk' in error_msg.lower() or
+                        'constraint' in error_msg.lower()
                     ):
-                        self.status_updated.emit("Anti-detection failed due to constraints. Falling back to randomized LSB...")
+                        # Extract detailed constraint information
+                        constraint_details = result.get('constraint_details', [])
+                        detailed_reason = "\n".join(constraint_details) if constraint_details else "Target risk level could not be achieved"
+                        
+                        self.status_updated.emit(f"Anti-detection failed: {detailed_reason}. Falling back to randomized LSB...")
                         
                         # Use randomized LSB as fallback
                         # Generate seed from password for randomization
@@ -154,7 +159,9 @@ class EnhancedHideWorkerThread(QThread):
                                 'anti_detection_used': False,
                                 'randomized_lsb': True,
                                 'fallback_used': True,
-                                'fallback_reason': 'Anti-detection constraints not met'
+                                'fallback_reason': 'Anti-detection constraints not met',
+                                'constraint_details': constraint_details,
+                                'anti_detection_error': error_msg
                             }
                             
                             self.finished.emit(final_result)
@@ -906,6 +913,13 @@ Average Detection Risk: {overall_assessment.get('average_detection_risk', 0):.3f
             if result.get('fallback_used', False):
                 message += f"\n🔄 Fallback Used: {result.get('fallback_reason', 'Unknown reason')}"
                 message += "\n⚠️ Note: Anti-detection failed, but data was successfully hidden using randomized LSB"
+                
+                # Show detailed constraint failure reasons
+                constraint_details = result.get('constraint_details', [])
+                if constraint_details:
+                    message += "\n\n🔍 WHY ANTI-DETECTION FAILED:"
+                    for constraint in constraint_details:
+                        message += f"\n• {constraint}"
         
         message += f"\n💾 Saved to: {result['output_path']}"
         

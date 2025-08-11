@@ -9,7 +9,7 @@ import struct
 import hashlib
 import secrets
 import numpy as np
-from typing import Tuple, Optional, Dict, Any
+from typing import Tuple, Optional, Dict, Any, List
 from pathlib import Path
 from PIL import Image
 try:
@@ -272,14 +272,26 @@ class EnhancedSteganographyEngine(SteganographyEngine):
                     except:
                         pass
         
-        # All attempts failed
+        # All attempts failed - provide detailed constraint information
         self.logger.error(f"Failed to create undetectable stego after {max_attempts} attempts")
+        
+        # Analyze why constraints weren't met
+        constraint_details = self._analyze_constraint_failures(
+            carrier_path, data, target_risk_level, risk_analysis
+        )
+        
+        detailed_error = f"Could not achieve target risk level '{target_risk_level}' after {max_attempts} attempts.\n\n"
+        detailed_error += "Constraint failures:\n"
+        for constraint in constraint_details:
+            detailed_error += f"• {constraint}\n"
+        
         return {
             'success': False,
             'attempts': max_attempts,
             'risk_level': risk_analysis.get('risk_level', 'HIGH'),
             'risk_score': risk_analysis.get('overall_risk_score', 1.0),
-            'error': 'Could not achieve target risk level'
+            'error': detailed_error.strip(),
+            'constraint_details': constraint_details
         }
     
     def analyze_carrier_suitability(self, image_path: Path) -> Dict[str, Any]:
@@ -591,6 +603,103 @@ class EnhancedSteganographyEngine(SteganographyEngine):
         except Exception as e:
             self.logger.error(f"Light anti-detection filtering failed: {e}")
             return img_array
+    
+    def _analyze_constraint_failures(self, carrier_path: Path, data: bytes, 
+                                   target_risk_level: str, risk_analysis: Dict[str, Any]) -> List[str]:
+        """
+        Analyze why anti-detection constraints were not met and provide specific feedback.
+        
+        Args:
+            carrier_path: Path to carrier image
+            data: Data that failed to hide
+            target_risk_level: Target risk level that couldn't be achieved
+            risk_analysis: Latest risk analysis results
+            
+        Returns:
+            List of specific constraint failure reasons
+        """
+        constraints = []
+        
+        try:
+            # 1. Risk level constraint
+            current_risk = risk_analysis.get('risk_level', 'HIGH')
+            current_score = risk_analysis.get('overall_risk_score', 1.0)
+            
+            risk_thresholds = {
+                'LOW': 0.3,
+                'MEDIUM': 0.6,
+                'HIGH': 1.0
+            }
+            
+            target_threshold = risk_thresholds.get(target_risk_level, 0.3)
+            
+            if current_score > target_threshold:
+                constraints.append(
+                    f"Risk score {current_score:.3f} exceeds target threshold {target_threshold:.3f} for '{target_risk_level}' security level"
+                )
+            
+            # 2. Specific detectability issues
+            lsb_evenness = risk_analysis.get('lsb_histogram_evenness', 0)
+            if lsb_evenness > 0.1:
+                constraints.append(
+                    f"LSB distribution too uneven ({lsb_evenness:.3f}) - detectable by StegExpose-like tools"
+                )
+            
+            chi_square_risk = risk_analysis.get('chi_square_risk', 0)
+            if chi_square_risk > 0.3:
+                constraints.append(
+                    f"Chi-square test risk too high ({chi_square_risk:.3f}) - fails statistical randomness tests"
+                )
+            
+            histogram_anomalies = risk_analysis.get('histogram_anomalies', 0)
+            if histogram_anomalies > 0.4:
+                constraints.append(
+                    f"Histogram anomalies detected ({histogram_anomalies:.3f}) - suspicious pixel distributions"
+                )
+            
+            noise_pattern_risk = risk_analysis.get('noise_pattern_risk', 0)
+            if noise_pattern_risk > 0.6:
+                constraints.append(
+                    f"Artificial noise patterns detected ({noise_pattern_risk:.3f}) - appears non-natural"
+                )
+            
+            # 3. Carrier image limitations
+            try:
+                carrier_analysis = self.analyze_carrier_suitability(carrier_path)
+                complexity_score = carrier_analysis.get('complexity_score', 0)
+                secure_capacity = carrier_analysis.get('secure_capacity_bytes', 0)
+                
+                if complexity_score < 0.4:
+                    constraints.append(
+                        f"Carrier image has low complexity ({complexity_score:.3f}) - too many smooth areas for secure hiding"
+                    )
+                
+                data_ratio = len(data) / secure_capacity if secure_capacity > 0 else 1
+                if data_ratio > 0.7:
+                    constraints.append(
+                        f"Data uses {data_ratio*100:.1f}% of secure capacity - exceeds safe limit for undetectable hiding"
+                    )
+                    
+            except Exception as e:
+                constraints.append(f"Unable to analyze carrier limitations: {str(e)}")
+            
+            # 4. Provide recommendations if no specific constraints found
+            if not constraints:
+                constraints.append(
+                    "Anti-detection algorithms unable to achieve target security level with current image and data combination"
+                )
+                constraints.append(
+                    "Try: different carrier image, smaller data size, or lower security target"
+                )
+            
+            return constraints
+            
+        except Exception as e:
+            self.logger.error(f"Constraint analysis failed: {e}")
+            return [
+                f"Unable to analyze constraint failures: {str(e)}",
+                "General recommendation: try a different carrier image or reduce data size"
+            ]
 
 
 def enhance_existing_engine(original_engine: SteganographyEngine) -> EnhancedSteganographyEngine:
