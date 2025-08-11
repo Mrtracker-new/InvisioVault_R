@@ -780,6 +780,10 @@ class EnhancedHideFilesDialog(QDialog):
         self.progress_bar.setValue(0)
         
         # Start worker thread
+        # Assert that paths are not None after validation
+        assert self.carrier_image_path is not None, "Carrier image path must be set"
+        assert self.output_path is not None, "Output path must be set"
+        
         self.worker_thread = EnhancedHideWorkerThread(
             carrier_path=self.carrier_image_path,
             files_to_hide=self.files_to_hide,
