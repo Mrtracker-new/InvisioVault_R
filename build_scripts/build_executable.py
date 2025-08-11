@@ -206,11 +206,13 @@ class InvisioVaultBuilder:
         # Try to get version info (Windows only)
         if sys.platform == "win32":
             try:
-                import win32api
+                import win32api  # type: ignore # Optional dependency for Windows version info
                 info = win32api.GetFileVersionInfo(str(exe_path), "\\")
                 print("✅ Version information embedded successfully")
-            except:
-                print("⚠️ Could not verify version information")
+            except ImportError:
+                print("⚠️ win32api not available - install pywin32 for version info validation")
+            except Exception as e:
+                print(f"⚠️ Could not verify version information: {e}")
                 
         print("✅ Executable validation completed")
         return True
