@@ -2,7 +2,7 @@
 
 ### *Advanced Methods to Evade Steganalysis Tools*
 
-**Author**: Enhanced by your request  
+**Author**: Rolan (RNR)
 **Purpose**: Make InVisioVault steganographic images undetectable by common analysis tools  
 **Target Tools**: StegExpose, zsteg, StegSeek, StegSecret, OpenStego, and others
 
