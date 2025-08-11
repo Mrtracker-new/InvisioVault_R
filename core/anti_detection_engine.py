@@ -36,7 +36,7 @@ class AntiDetectionEngine:
         self.multi_channel_distribution = True  # Distribute across channels
         
     def enhanced_hide_data(self, carrier_path: Path, data: bytes, output_path: Path, 
-                          password: str = None, use_anti_detection: bool = True) -> bool:
+                          password: Optional[str] = None, use_anti_detection: bool = True) -> bool:
         """
         Hide data using advanced anti-detection techniques.
         
@@ -101,7 +101,7 @@ class AntiDetectionEngine:
             self.logger.error(f"Enhanced hiding failed: {e}")
             return False
     
-    def enhanced_extract_data(self, stego_path: Path, password: str = None) -> Optional[bytes]:
+    def enhanced_extract_data(self, stego_path: Path, password: Optional[str] = None) -> Optional[bytes]:
         """
         Extract data using enhanced anti-detection aware methods.
         
@@ -198,7 +198,7 @@ class AntiDetectionEngine:
         return capacity_map
     
     def _get_secure_positions(self, img_array: np.ndarray, bits_needed: int, 
-                             password: str, capacity_map: np.ndarray) -> List[Tuple[int, int, int]]:
+                             password: Optional[str], capacity_map: np.ndarray) -> List[Tuple[int, int, int]]:
         """Get secure positions for hiding based on capacity map and password."""
         
         height, width, channels = img_array.shape
@@ -241,7 +241,7 @@ class AntiDetectionEngine:
         selected_indices = np.random.choice(len(safe_positions), bits_needed, replace=False)
         return [safe_positions[i] for i in selected_indices]
     
-    def _create_enhanced_payload(self, data: bytes, password: str = None) -> bytes:
+    def _create_enhanced_payload(self, data: bytes, password: Optional[str] = None) -> bytes:
         """Create enhanced payload with anti-detection features."""
         
         # Add decoy header that looks like JPEG comment
@@ -274,7 +274,7 @@ class AntiDetectionEngine:
         return payload
     
     def _enhanced_lsb_hiding(self, img_array: np.ndarray, payload: bytes, 
-                           positions: List[Tuple[int, int, int]], password: str) -> np.ndarray:
+                           positions: List[Tuple[int, int, int]], password: Optional[str]) -> np.ndarray:
         """Enhanced LSB hiding with anti-detection techniques."""
         
         modified_array = img_array.copy()
@@ -304,7 +304,7 @@ class AntiDetectionEngine:
         return modified_array
     
     def _anti_detection_lsb_modify(self, original_value: int, bit: int, 
-                                  position: int, password: str) -> int:
+                                  position: int, password: Optional[str]) -> int:
         """Modify LSB with anti-detection techniques."""
         
         # Standard LSB modification
@@ -331,8 +331,8 @@ class AntiDetectionEngine:
         
         for channel in range(3):  # RGB channels
             # Calculate histograms
-            orig_hist, bins = np.histogram(original[:,:,channel].flatten(), 256, [0,256])
-            mod_hist, _ = np.histogram(modified[:,:,channel].flatten(), 256, [0,256])
+            orig_hist, bins = np.histogram(original[:,:,channel].flatten(), 256, (0, 256))
+            mod_hist, _ = np.histogram(modified[:,:,channel].flatten(), 256, (0, 256))
             
             # Calculate cumulative distribution functions
             orig_cdf = orig_hist.cumsum()
@@ -414,7 +414,7 @@ class AntiDetectionEngine:
             # Default to PNG
             img.save(output_path, 'PNG', optimize=True)
     
-    def _enhanced_extraction_search(self, img_array: np.ndarray, password: str, 
+    def _enhanced_extraction_search(self, img_array: np.ndarray, password: Optional[str], 
                                    capacity_map: np.ndarray) -> Optional[bytes]:
         """Enhanced extraction with anti-detection awareness."""
         
@@ -536,148 +536,6 @@ class AntiDetectionEngine:
             self.logger.error(f"Image validation failed: {e}")
             return False
     
-    def analyze_detectability_risk(self, stego_path: Path) -> Dict[str, Any]:
-        """Analyze detectability risk of a steganographic image."""
-        try:
-            with Image.open(stego_path) as img:
-                if img.mode != 'RGB':
-                    img = img.convert('RGB')
-                
-                img_array = np.array(img)
-                
-                # Calculate various risk factors
-                lsb_evenness = self._calculate_lsb_evenness(img_array)
-                chi_square_risk = self._simulate_chi_square_test(img_array)
-                histogram_anomalies = self._detect_histogram_anomalies(img_array)
-                noise_risk = self._analyze_noise_patterns(img_array)
-                
-                # Calculate overall risk score
-                overall_risk_score = (lsb_evenness + chi_square_risk + histogram_anomalies + noise_risk) / 4
-                
-                # Determine risk level
-                if overall_risk_score < 0.3:
-                    risk_level = "LOW"
-                elif overall_risk_score < 0.6:
-                    risk_level = "MEDIUM"
-                else:
-                    risk_level = "HIGH"
-                
-                return {
-                    'overall_risk_score': overall_risk_score,
-                    'risk_level': risk_level,
-                    'lsb_evenness': lsb_evenness,
-                    'chi_square_risk': chi_square_risk,
-                    'histogram_anomalies': histogram_anomalies,
-                    'noise_risk': noise_risk
-                }
-                
-        except Exception as e:
-            self.logger.error(f"Risk analysis failed: {e}")
-            return {'error': str(e)}
-    
-    def _calculate_lsb_evenness(self, img_array: np.ndarray) -> float:
-        """Calculate LSB evenness - higher values indicate more artificial patterns."""
-        try:
-            # Analyze LSB distribution across all channels
-            lsb_bits = img_array & 1
-            total_bits = img_array.size
-            ones_count = np.sum(lsb_bits)
-            
-            # Perfect randomness would be 50/50 distribution
-            expected_ones = total_bits / 2
-            deviation = abs(ones_count - expected_ones) / expected_ones
-            
-            return min(deviation, 1.0)
-            
-        except Exception:
-            return 0.5  # Medium risk if calculation fails
-    
-    def _simulate_chi_square_test(self, img_array: np.ndarray) -> float:
-        """Simulate chi-square test for randomness detection."""
-        try:
-            # Analyze pairs of pixels for artificial patterns
-            flat_array = img_array.flatten()
-            
-            # Count adjacent pixel pair frequencies
-            pair_counts = {}
-            for i in range(0, len(flat_array) - 1, 2):
-                pair = (flat_array[i] & 1, flat_array[i + 1] & 1)
-                pair_counts[pair] = pair_counts.get(pair, 0) + 1
-            
-            # Calculate chi-square statistic
-            total_pairs = len(flat_array) // 2
-            expected_freq = total_pairs / 4  # 4 possible pairs: (0,0), (0,1), (1,0), (1,1)
-            
-            chi_square = 0
-            for pair in [(0, 0), (0, 1), (1, 0), (1, 1)]:
-                observed = pair_counts.get(pair, 0)
-                chi_square += (observed - expected_freq) ** 2 / expected_freq
-            
-            # Normalize to 0-1 range (chi-square of 7.815 is critical value for p=0.05)
-            return min(chi_square / 7.815, 1.0)
-            
-        except Exception:
-            return 0.5  # Medium risk if calculation fails
-    
-    def _detect_histogram_anomalies(self, img_array: np.ndarray) -> float:
-        """Detect histogram anomalies that might indicate steganography."""
-        try:
-            anomaly_scores = []
-            
-            for channel in range(3):  # RGB channels
-                channel_data = img_array[:, :, channel].flatten()
-                
-                # Calculate histogram
-                hist, _ = np.histogram(channel_data, bins=256, range=(0, 256))
-                
-                # Look for unusual patterns in consecutive bins
-                differences = np.abs(np.diff(hist))
-                max_diff = np.max(differences)
-                mean_diff = np.mean(differences)
-                
-                # Normalize anomaly score
-                if mean_diff > 0:
-                    anomaly_score = min(max_diff / (mean_diff * 10), 1.0)
-                else:
-                    anomaly_score = 0.5
-                
-                anomaly_scores.append(anomaly_score)
-            
-            return np.mean(anomaly_scores)
-            
-        except Exception:
-            return 0.5  # Medium risk if calculation fails
-    
-    def _analyze_noise_patterns(self, img_array: np.ndarray) -> float:
-        """Analyze noise patterns for artificial signatures."""
-        try:
-            # Convert to grayscale for noise analysis
-            if len(img_array.shape) == 3:
-                gray = np.mean(img_array, axis=2)
-            else:
-                gray = img_array
-            
-            # Calculate local variance to detect artificial patterns
-            kernel_size = 3
-            kernel = np.ones((kernel_size, kernel_size)) / (kernel_size ** 2)
-            
-            # Calculate local mean
-            local_mean = np.zeros_like(gray)
-            for i in range(gray.shape[0] - kernel_size + 1):
-                for j in range(gray.shape[1] - kernel_size + 1):
-                    local_mean[i:i+kernel_size, j:j+kernel_size] += (
-                        gray[i:i+kernel_size, j:j+kernel_size] * kernel
-                    )
-            
-            # Calculate variance
-            variance = np.var(gray - local_mean)
-            
-            # Normalize to 0-1 range
-            # Higher variance might indicate more natural noise
-            return max(0, min(1 - variance / 100, 1.0))
-            
-        except Exception:
-            return 0.5  # Medium risk if calculation fails
     
     def analyze_detectability_risk(self, stego_path: Path) -> Dict[str, Any]:
         """Analyze the detectability risk of a steganographic image."""
@@ -770,15 +628,15 @@ class AntiDetectionEngine:
         anomaly_score = 0.0
         
         for channel in range(img_array.shape[2]):
-            hist, _ = np.histogram(img_array[:, :, channel], bins=256, range=[0, 256])
+            hist, _ = np.histogram(img_array[:, :, channel], bins=256, range=(0, 256))
             
             # Look for unusual patterns in histogram
             # 1. Check for artificial peaks/valleys
             smoothed = np.convolve(hist, np.ones(5)/5, mode='same')
             differences = np.abs(hist - smoothed)
-            anomaly_score += np.mean(differences) / 10000.0  # Normalize
+            anomaly_score += float(np.mean(differences)) / 10000.0  # Normalize
         
-        return min(anomaly_score, 1.0)
+        return float(min(anomaly_score, 1.0))
     
     def _analyze_noise_patterns(self, img_array: np.ndarray) -> float:
         """Analyze noise patterns for steganographic artifacts."""
@@ -788,7 +646,7 @@ class AntiDetectionEngine:
         
         # Calculate high-frequency noise
         laplacian = cv2.Laplacian(gray, cv2.CV_64F)
-        noise_variance = np.var(laplacian)
+        noise_variance = float(np.var(laplacian))
         
         # Normalize to 0-1 scale (lower values indicate more artificial patterns)
         normalized_noise = min(noise_variance / 1000.0, 1.0)

@@ -43,8 +43,8 @@ class EnhancedSteganographyEngine(SteganographyEngine):
         self.logger.info(f"Enhanced Steganography Engine initialized (anti-detection: {use_anti_detection})")
     
     def hide_data_enhanced(self, carrier_path, data: bytes, output_path, 
-                          password: str = None, randomize: bool = True, 
-                          seed: Optional[int] = None, use_anti_detection: bool = None) -> bool:
+                          password: Optional[str] = None, randomize: bool = True, 
+                          seed: Optional[int] = None, use_anti_detection: Optional[bool] = None) -> bool:
         """
         Enhanced hide data method with anti-detection capabilities.
         
@@ -128,9 +128,9 @@ class EnhancedSteganographyEngine(SteganographyEngine):
             self.error_handler.handle_exception(e)
             return False
     
-    def extract_data_enhanced(self, stego_path, password: str = None, 
+    def extract_data_enhanced(self, stego_path, password: Optional[str] = None, 
                              randomize: bool = True, seed: Optional[int] = None,
-                             use_anti_detection: bool = None) -> Optional[bytes]:
+                             use_anti_detection: Optional[bool] = None) -> Optional[bytes]:
         """
         Enhanced extract data method with anti-detection awareness.
         
@@ -487,7 +487,7 @@ class EnhancedSteganographyEngine(SteganographyEngine):
             return {'error': str(e)}
     
     def _hybrid_anti_detection_hide(self, carrier_path: Path, data: bytes, 
-                                   output_path: Path, password: str, seed: Optional[int]) -> bool:
+                                   output_path: Path, password: Optional[str], seed: Optional[int]) -> bool:
         """
         Hybrid method combining anti-detection with randomized LSB positioning.
         
@@ -529,7 +529,7 @@ class EnhancedSteganographyEngine(SteganographyEngine):
             self.logger.error(f"Hybrid anti-detection hiding failed: {e}")
             return False
     
-    def _hybrid_anti_detection_extract(self, stego_path: Path, password: str, 
+    def _hybrid_anti_detection_extract(self, stego_path: Path, password: Optional[str], 
                                       seed: Optional[int]) -> Optional[bytes]:
         """
         Hybrid extraction method for images created with hybrid anti-detection.
