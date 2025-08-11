@@ -98,7 +98,7 @@ def comparison_test():
             )
             if success:
                 # Run steganalysis on standard image
-                analysis = enhanced_engine_with_anti.test_against_steganalysis(standard_output)
+                analysis = enhanced_engine_with_anti.test_against_steganalysis(Path(standard_output))
                 overall = analysis.get('overall_assessment', {})
                 config_results['standard'] = {
                     'success': True,
@@ -124,7 +124,7 @@ def comparison_test():
                 password=test_password, use_anti_detection=False
             )
             if success:
-                analysis = enhanced_engine_with_anti.test_against_steganalysis(enhanced_no_anti_output)
+                analysis = enhanced_engine_with_anti.test_against_steganalysis(Path(enhanced_no_anti_output))
                 overall = analysis.get('overall_assessment', {})
                 config_results['enhanced_no_anti'] = {
                     'success': True,
@@ -150,7 +150,7 @@ def comparison_test():
                 password=test_password, use_anti_detection=True
             )
             if success:
-                analysis = enhanced_engine_with_anti.test_against_steganalysis(enhanced_with_anti_output)
+                analysis = enhanced_engine_with_anti.test_against_steganalysis(Path(enhanced_with_anti_output))
                 overall = analysis.get('overall_assessment', {})
                 config_results['enhanced_with_anti'] = {
                     'success': True,
