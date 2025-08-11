@@ -29,6 +29,8 @@ if TYPE_CHECKING:
     from PIL import Image as PILImage
     try:
         import scipy
+        import scipy.ndimage  # type: ignore
+        import scipy.signal   # type: ignore
     except ImportError:
         scipy = None
 else:
@@ -42,7 +44,7 @@ else:
         PILImage = None
     
     try:
-        import scipy
+        import scipy  # type: ignore # Optional dependency for advanced analysis
         import scipy.ndimage
         import scipy.signal
     except ImportError:
