@@ -126,9 +126,10 @@ class ExtractWorkerThread(QThread):
                     # Set a reasonable timeout to avoid hanging
                     import threading
                     import time
+                    from typing import List, Optional
                     
-                    result = [None]
-                    exception = [None]
+                    result: List[Optional[bytes]] = [None]
+                    exception: List[Optional[Exception]] = [None]
                     
                     def extract_with_timeout():
                         try:
