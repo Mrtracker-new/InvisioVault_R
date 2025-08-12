@@ -314,31 +314,32 @@ class SecureSteganographyEngine:
     def _secure_extraction_search(self, img_array: np.ndarray, password: str) -> Optional[bytes]:
         """Search for hidden data using secure methods."""
         
-        # Try different payload sizes
-        # Start with common compressed file sizes
-        candidates = [
-            # Small files (few KB)
-            50, 100, 200, 500, 1024, 2048, 4096, 8192,
-            # Medium files (10s of KB)
-            16384, 32768, 65536, 131072, 262144,
-            # Large files (100s of KB to MB)
-            524288, 1048576, 2097152, 5242880, 10485760
-        ]
-        
         max_possible_size = img_array.size // 8
-        valid_candidates = [size for size in candidates if size <= max_possible_size]
         
-        # Add some intermediate sizes
-        for size in range(100, min(10000, max_possible_size), 100):
-            if size not in valid_candidates:
-                valid_candidates.append(size)
+        # Create comprehensive candidate list
+        candidates = set()
         
-        valid_candidates.sort()
+        # 1. Add very small sizes (for short messages)
+        candidates.update(range(36, 101, 1))  # Header is 36 bytes, so start there
+        
+        # 2. Add small to medium sizes with finer granularity
+        candidates.update(range(100, 1000, 10))  # Every 10 bytes from 100-1000
+        candidates.update(range(1000, 10000, 100))  # Every 100 bytes from 1K-10K
+        
+        # 3. Add larger common sizes
+        large_sizes = [16384, 32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 5242880, 10485760]
+        candidates.update(large_sizes)
+        
+        # 4. Filter by maximum possible size and sort
+        valid_candidates = sorted([size for size in candidates if size <= max_possible_size])
+        
+        self.logger.debug(f"Trying {len(valid_candidates)} candidate sizes from {min(valid_candidates)} to {max(valid_candidates)} bytes")
         
         for candidate_size in valid_candidates:
             try:
                 result = self._try_extract_size(img_array, candidate_size, password)
                 if result:
+                    self.logger.debug(f"Successful extraction at size {candidate_size} bytes")
                     return result
             except Exception as e:
                 self.logger.debug(f"Extraction attempt for size {candidate_size} failed: {e}")
@@ -365,26 +366,35 @@ class SecureSteganographyEngine:
             # Convert to bytes
             extracted_bytes = np.packbits(extracted_bits).tobytes()[:payload_size]
             
-            # Try to parse as secure payload
-            return self._parse_secure_payload(extracted_bytes, password)
+            # Try to parse as secure payload WITH carrier array for statistical masking reversal
+            return self._parse_secure_payload(extracted_bytes, password, img_array)
             
         except Exception:
             return None
     
-    def _parse_secure_payload(self, payload: bytes, password: str) -> Optional[bytes]:
-        """Parse secure payload and verify integrity."""
+    def _parse_secure_payload(self, payload: bytes, password: str, 
+                             carrier_array: np.ndarray = None) -> Optional[bytes]:
+        """Parse secure payload and verify integrity, with statistical masking reversal."""
         
         try:
+            # FIRST: Try to reverse statistical masking if carrier is available
+            processed_payload = payload
+            if carrier_array is not None:
+                processed_payload = self._reverse_statistical_masking(payload, carrier_array, password)
+                if processed_payload is None:
+                    # Fall back to original payload if reversal fails
+                    processed_payload = payload
+            
             # Derive decryption key
             salt = self._derive_salt(password, b"payload_salt")
             key = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 100000, 32)
             
             # Expected header size: 16 (header_key) + 8 (orig_size) + 8 (comp_size) + 4 (checksum) = 36 bytes
-            if len(payload) < 36:
+            if len(processed_payload) < 36:
                 return None
             
             # Decrypt header
-            encrypted_header = payload[:36]
+            encrypted_header = processed_payload[:36]
             header_data = self._xor_encrypt(encrypted_header, key[:36])
             
             # Parse header
@@ -399,11 +409,11 @@ class SecureSteganographyEngine:
                 return None
             
             # Check if compressed size makes sense
-            if comp_size > len(payload) - 36 or comp_size == 0:
+            if comp_size > len(processed_payload) - 36 or comp_size == 0:
                 return None
             
             # Extract encrypted compressed data
-            encrypted_data = payload[36:36 + comp_size]
+            encrypted_data = processed_payload[36:36 + comp_size]
             
             # Decrypt compressed data
             compressed_data = self._xor_encrypt(encrypted_data, key)
@@ -435,6 +445,9 @@ class SecureSteganographyEngine:
         
         This makes the embedded data statistically indistinguishable from natural image noise
         by pre-masking with a PRG seeded from carrier pixel values and managing entropy.
+        
+        SIMPLIFIED VERSION: Only apply carrier noise masking (reversible with XOR)
+        Skip entropy adjustment and dummy bytes for now to ensure perfect reversibility.
         """
         try:
             # 1. Generate carrier-derived PRG seed
@@ -443,17 +456,14 @@ class SecureSteganographyEngine:
             # 2. Create PRG for statistical masking
             prg = np.random.default_rng(carrier_seed)
             
-            # 3. Pre-mask payload to look like image noise
+            # 3. Pre-mask payload to look like image noise (ONLY THIS STEP - it's fully reversible)
             masked_payload = self._pre_mask_with_carrier_noise(payload, prg, carrier_array)
             
-            # 4. Adjust entropy to plausible range (5.5-7.0 bits/byte)
-            entropy_adjusted = self._adjust_entropy_range(masked_payload, prg)
+            # Skip entropy adjustment and dummy bytes for now to ensure extraction works
+            # These can be re-added once the basic mechanism is working
             
-            # 5. Insert dummy bytes that resemble valid color data
-            final_payload = self._insert_color_dummy_bytes(entropy_adjusted, carrier_array, prg)
-            
-            self.logger.debug(f"Statistical masking applied: {len(payload)} -> {len(final_payload)} bytes")
-            return final_payload
+            self.logger.debug(f"Statistical masking applied: {len(payload)} -> {len(masked_payload)} bytes")
+            return masked_payload
             
         except Exception as e:
             self.logger.warning(f"Statistical masking failed: {e}, using original payload")
@@ -659,6 +669,39 @@ class SecureSteganographyEngine:
                 'mean_ch2': np.mean(carrier_array),
                 'std_ch2': np.std(carrier_array),
             }
+    
+    def _reverse_statistical_masking(self, masked_payload: bytes, carrier_array: np.ndarray, password: str) -> Optional[bytes]:
+        """
+        Reverse the statistical masking to recover the original payload.
+        
+        SIMPLIFIED VERSION: Only reverse carrier noise masking (simple XOR)
+        This matches the simplified _apply_statistical_masking that only does noise masking.
+        """
+        try:
+            # Recreate the same PRG used during masking
+            carrier_seed = self._generate_carrier_prg_seed(carrier_array, password)
+            prg = np.random.default_rng(carrier_seed)
+            
+            # Generate the same mask as during hiding
+            noise_stats = self._analyze_carrier_noise(carrier_array)
+            mask_length = len(masked_payload)
+            
+            if noise_stats['has_high_frequency']:
+                mask = prg.normal(noise_stats['mean'], noise_stats['std'], mask_length)
+            else:
+                mask = prg.uniform(noise_stats['min'], noise_stats['max'], mask_length)
+            
+            mask_bytes = (np.clip(mask, 0, 255).astype(np.uint8) % 256).tobytes()
+            
+            # Reverse XOR (XOR is its own inverse)
+            original_payload = bytes(a ^ b for a, b in zip(masked_payload, mask_bytes[:len(masked_payload)]))
+            
+            self.logger.debug(f"Statistical masking reversed: {len(masked_payload)} -> {len(original_payload)} bytes")
+            return original_payload
+            
+        except Exception as e:
+            self.logger.debug(f"Statistical masking reversal failed: {e}")
+            return None
     
     def _calculate_entropy(self, data) -> float:
         """
