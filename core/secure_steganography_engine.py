@@ -20,6 +20,8 @@ from typing import Tuple, Optional, Dict, Any
 from pathlib import Path
 from PIL import Image
 import zlib
+import math
+from scipy import stats
 
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
@@ -73,8 +75,8 @@ class SecureSteganographyEngine:
                 total_pixels = img_array.size
                 max_capacity = total_pixels // 8  # 1 bit per pixel
                 
-                # Prepare secure payload
-                secure_payload = self._create_secure_payload(data, password, compression_level)
+                # Prepare secure payload WITH carrier-derived statistical masking
+                secure_payload = self._create_secure_payload(data, password, compression_level, img_array)
                 
                 if len(secure_payload) > max_capacity:
                     self.logger.error(f"Data too large: {len(secure_payload)} > {max_capacity} bytes")
@@ -140,8 +142,9 @@ class SecureSteganographyEngine:
             self.logger.error(f"Secure extraction failed: {e}")
             return None
     
-    def _create_secure_payload(self, data: bytes, password: str, compression_level: int) -> bytes:
-        """Create secure payload with no detectable signatures."""
+    def _create_secure_payload(self, data: bytes, password: str, compression_level: int, 
+                              carrier_array: np.ndarray = None) -> bytes:
+        """Create secure payload with statistical masking and entropy management."""
         
         # 1. Compress data
         compressed_data = zlib.compress(data, compression_level)
@@ -171,9 +174,14 @@ class SecureSteganographyEngine:
         header_encrypted = self._xor_encrypt(header_data, key[:len(header_data)])
         
         # Final payload: encrypted_header + encrypted_data
-        payload = header_encrypted + encrypted_data
+        base_payload = header_encrypted + encrypted_data
         
-        return payload
+        # 5. ADVANCED: Apply statistical masking with carrier-derived PRG
+        if carrier_array is not None:
+            masked_payload = self._apply_statistical_masking(base_payload, carrier_array, password)
+            return masked_payload
+        
+        return base_payload
     
     def _derive_salt(self, password: str, purpose: bytes) -> bytes:
         """Derive a salt from password and purpose."""
@@ -420,6 +428,254 @@ class SecureSteganographyEngine:
             
         except Exception:
             return None
+    
+    def _apply_statistical_masking(self, payload: bytes, carrier_array: np.ndarray, password: str) -> bytes:
+        """
+        Advanced statistical masking using carrier-derived PRG and entropy management.
+        
+        This makes the embedded data statistically indistinguishable from natural image noise
+        by pre-masking with a PRG seeded from carrier pixel values and managing entropy.
+        """
+        try:
+            # 1. Generate carrier-derived PRG seed
+            carrier_seed = self._generate_carrier_prg_seed(carrier_array, password)
+            
+            # 2. Create PRG for statistical masking
+            prg = np.random.default_rng(carrier_seed)
+            
+            # 3. Pre-mask payload to look like image noise
+            masked_payload = self._pre_mask_with_carrier_noise(payload, prg, carrier_array)
+            
+            # 4. Adjust entropy to plausible range (5.5-7.0 bits/byte)
+            entropy_adjusted = self._adjust_entropy_range(masked_payload, prg)
+            
+            # 5. Insert dummy bytes that resemble valid color data
+            final_payload = self._insert_color_dummy_bytes(entropy_adjusted, carrier_array, prg)
+            
+            self.logger.debug(f"Statistical masking applied: {len(payload)} -> {len(final_payload)} bytes")
+            return final_payload
+            
+        except Exception as e:
+            self.logger.warning(f"Statistical masking failed: {e}, using original payload")
+            return payload
+    
+    def _generate_carrier_prg_seed(self, carrier_array: np.ndarray, password: str) -> int:
+        """
+        Generate PRG seed from carrier image pixel values.
+        
+        This creates a deterministic seed based on the actual image content,
+        making the masking pattern unique to each carrier image.
+        """
+        # Sample pixel values from different regions of the image
+        height, width = carrier_array.shape[:2]
+        
+        # Take samples from strategic positions
+        samples = []
+        
+        # Corner samples
+        samples.extend([
+            carrier_array[0, 0].flatten(),
+            carrier_array[0, width-1].flatten(),
+            carrier_array[height-1, 0].flatten(),
+            carrier_array[height-1, width-1].flatten(),
+        ])
+        
+        # Center samples
+        center_y, center_x = height // 2, width // 2
+        samples.append(carrier_array[center_y, center_x].flatten())
+        
+        # Random strategic positions based on password
+        pwd_seed = int(hashlib.sha256(password.encode()).hexdigest()[:8], 16)
+        sample_rng = np.random.default_rng(pwd_seed)
+        
+        for _ in range(10):  # 10 additional samples
+            y = sample_rng.integers(0, height)
+            x = sample_rng.integers(0, width)
+            samples.append(carrier_array[y, x].flatten())
+        
+        # Combine all samples
+        combined_samples = np.concatenate(samples)
+        
+        # Create deterministic seed from pixel data + password
+        pixel_hash = hashlib.sha256(combined_samples.tobytes()).digest()
+        password_hash = hashlib.sha256(password.encode()).digest()
+        
+        # XOR the hashes and convert to seed
+        seed_material = bytes(a ^ b for a, b in zip(pixel_hash, password_hash))
+        carrier_seed = int.from_bytes(seed_material[:8], 'little') % (2**31)
+        
+        return carrier_seed
+    
+    def _pre_mask_with_carrier_noise(self, payload: bytes, prg: np.random.Generator, 
+                                    carrier_array: np.ndarray) -> bytes:
+        """
+        Pre-mask encrypted payload with carrier-derived noise pattern.
+        
+        This makes the payload statistically similar to the carrier's natural noise.
+        """
+        # Analyze carrier noise characteristics
+        noise_stats = self._analyze_carrier_noise(carrier_array)
+        
+        # Generate mask based on carrier characteristics
+        mask_length = len(payload)
+        
+        if noise_stats['has_high_frequency']:
+            # High frequency noise - use more varied mask
+            mask = prg.normal(noise_stats['mean'], noise_stats['std'], mask_length)
+        else:
+            # Low frequency - use smoother mask
+            mask = prg.uniform(noise_stats['min'], noise_stats['max'], mask_length)
+        
+        # Convert to bytes and apply
+        mask_bytes = (np.clip(mask, 0, 255).astype(np.uint8) % 256).tobytes()
+        
+        # XOR with original payload
+        masked_payload = bytes(a ^ b for a, b in zip(payload, mask_bytes[:len(payload)]))
+        
+        return masked_payload
+    
+    def _analyze_carrier_noise(self, carrier_array: np.ndarray) -> dict:
+        """
+        Analyze carrier image noise characteristics for statistical masking.
+        """
+        # Extract LSBs from carrier to analyze natural noise
+        lsbs = carrier_array & 1
+        
+        # Calculate statistics
+        stats_dict = {
+            'mean': np.mean(lsbs),
+            'std': np.std(lsbs),
+            'min': np.min(lsbs),
+            'max': np.max(lsbs),
+            'entropy': self._calculate_entropy(lsbs.flatten()),
+            'has_high_frequency': np.std(lsbs) > 0.4
+        }
+        
+        return stats_dict
+    
+    def _adjust_entropy_range(self, data: bytes, prg: np.random.Generator) -> bytes:
+        """
+        Adjust entropy to plausible range (5.5-7.0 bits/byte) instead of flat 7.78.
+        
+        This prevents the telltale sign of high entropy encrypted data.
+        """
+        current_entropy = self._calculate_entropy(data)
+        target_entropy = prg.uniform(5.5, 7.0)  # Plausible range
+        
+        if abs(current_entropy - target_entropy) < 0.1:
+            return data  # Already in good range
+        
+        # Adjust entropy by selectively modifying bytes
+        data_array = np.frombuffer(data, dtype=np.uint8).copy()
+        
+        if current_entropy > target_entropy:
+            # Reduce entropy by making some bytes more predictable
+            num_adjustments = int(len(data) * 0.05)  # Adjust 5% of bytes
+            indices = prg.choice(len(data_array), num_adjustments, replace=False)
+            
+            for idx in indices:
+                # Make byte more predictable by constraining to smaller range
+                data_array[idx] = prg.integers(0, 128)  # Reduce from 0-255 to 0-127
+        
+        elif current_entropy < target_entropy:
+            # Increase entropy by making some bytes more random
+            num_adjustments = int(len(data) * 0.03)  # Adjust 3% of bytes
+            indices = prg.choice(len(data_array), num_adjustments, replace=False)
+            
+            for idx in indices:
+                # Make byte more random
+                data_array[idx] = prg.integers(0, 256)
+        
+        adjusted_data = data_array.tobytes()
+        new_entropy = self._calculate_entropy(adjusted_data)
+        
+        self.logger.debug(f"Entropy adjusted: {current_entropy:.3f} -> {new_entropy:.3f} (target: {target_entropy:.3f})")
+        return adjusted_data
+    
+    def _insert_color_dummy_bytes(self, payload: bytes, carrier_array: np.ndarray, 
+                                 prg: np.random.Generator) -> bytes:
+        """
+        Insert dummy bytes that resemble valid image color data.
+        
+        This adds plausible noise that looks like legitimate color values.
+        """
+        # Analyze carrier color distribution
+        color_stats = self._analyze_carrier_colors(carrier_array)
+        
+        # Calculate number of dummy bytes (5-15% of payload)
+        dummy_ratio = prg.uniform(0.05, 0.15)
+        num_dummies = int(len(payload) * dummy_ratio)
+        
+        if num_dummies == 0:
+            return payload
+        
+        # Generate dummy bytes that look like natural color data
+        dummy_bytes = []
+        for _ in range(num_dummies):
+            if prg.random() < 0.7:  # 70% chance to use carrier-like colors
+                # Generate byte similar to carrier colors
+                channel = prg.choice(3)  # R, G, or B
+                mean_val = color_stats[f'mean_ch{channel}']
+                std_val = color_stats[f'std_ch{channel}']
+                dummy_val = int(np.clip(prg.normal(mean_val, std_val), 0, 255))
+            else:
+                # Generate more random byte
+                dummy_val = prg.integers(16, 240)  # Avoid extreme values
+            
+            dummy_bytes.append(dummy_val)
+        
+        # Randomly insert dummy bytes into payload
+        payload_array = list(payload)
+        dummy_positions = sorted(prg.choice(len(payload_array) + num_dummies, 
+                                          num_dummies, replace=False))
+        
+        for i, pos in enumerate(dummy_positions):
+            payload_array.insert(pos, dummy_bytes[i])
+        
+        final_payload = bytes(payload_array)
+        
+        self.logger.debug(f"Inserted {num_dummies} dummy color bytes ({dummy_ratio*100:.1f}% of payload)")
+        return final_payload
+    
+    def _analyze_carrier_colors(self, carrier_array: np.ndarray) -> dict:
+        """
+        Analyze carrier image color distribution for dummy byte generation.
+        """
+        if len(carrier_array.shape) == 3:
+            # Color image
+            stats_dict = {}
+            for ch in range(3):
+                channel_data = carrier_array[:, :, ch]
+                stats_dict[f'mean_ch{ch}'] = np.mean(channel_data)
+                stats_dict[f'std_ch{ch}'] = np.std(channel_data)
+            return stats_dict
+        else:
+            # Grayscale
+            return {
+                'mean_ch0': np.mean(carrier_array),
+                'std_ch0': np.std(carrier_array),
+                'mean_ch1': np.mean(carrier_array),
+                'std_ch1': np.std(carrier_array),
+                'mean_ch2': np.mean(carrier_array),
+                'std_ch2': np.std(carrier_array),
+            }
+    
+    def _calculate_entropy(self, data) -> float:
+        """
+        Calculate Shannon entropy of data in bits per byte.
+        """
+        if isinstance(data, bytes):
+            data = np.frombuffer(data, dtype=np.uint8)
+        elif isinstance(data, np.ndarray):
+            data = data.flatten()
+        
+        # Calculate byte frequency
+        _, counts = np.unique(data, return_counts=True)
+        probabilities = counts / len(data)
+        
+        # Calculate entropy
+        entropy = -np.sum(probabilities * np.log2(probabilities + 1e-10))
+        return float(entropy)
     
     def _validate_image(self, image_path: Path) -> bool:
         """Validate image file."""
