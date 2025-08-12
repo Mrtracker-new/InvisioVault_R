@@ -15,6 +15,7 @@ from PIL import Image, ImageStat
 
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
+from core.secure_steganography_engine import SecureSteganographyEngine
 
 
 class SteganographyEngine:
@@ -24,9 +25,18 @@ class SteganographyEngine:
     MAGIC_HEADER = b'INVV'  # InvisioVault magic bytes
     VERSION = b'\x01\x00'  # Version 1.0
     
-    def __init__(self):
+    def __init__(self, use_secure_mode: bool = True):
         self.logger = Logger()
         self.error_handler = ErrorHandler()
+        self.use_secure_mode = use_secure_mode
+        
+        # Initialize secure engine if enabled
+        if use_secure_mode:
+            self.secure_engine = SecureSteganographyEngine()
+            self.logger.info("Steganography engine initialized in secure mode (undetectable)")
+        else:
+            self.secure_engine = None
+            self.logger.info("Steganography engine initialized in legacy mode")
     
     def validate_image_format(self, image_path) -> bool:
         """Validate that image format is suitable for lossless steganography."""
@@ -154,9 +164,85 @@ class SteganographyEngine:
         
         return recommendations
     
+    def hide_data_with_password(self, carrier_path, data: bytes, output_path, 
+                               password: str, use_secure_mode: bool = None) -> bool:
+        """
+        Hide data with password-based security (recommended method).
+        
+        Args:
+            carrier_path: Path to carrier image
+            data: Data to hide
+            output_path: Output path
+            password: Password for encryption and randomization
+            use_secure_mode: Override default secure mode setting
+        
+        Returns:
+            Success status
+        """
+        # Use instance setting if not overridden
+        if use_secure_mode is None:
+            use_secure_mode = self.use_secure_mode
+        
+        if use_secure_mode and self.secure_engine:
+            # Use secure engine (undetectable)
+            return self.secure_engine.hide_data_secure(
+                carrier_path=carrier_path,
+                data=data,
+                output_path=output_path,
+                password=password
+            )
+        else:
+            # Use legacy engine with randomization
+            seed = int(hashlib.sha256(password.encode()).hexdigest()[:8], 16)
+            return self.hide_data(
+                carrier_path=carrier_path,
+                data=data,
+                output_path=output_path,
+                randomize=True,
+                seed=seed
+            )
+    
+    def extract_data_with_password(self, stego_path, password: str, 
+                                  use_secure_mode: bool = None) -> Optional[bytes]:
+        """
+        Extract data with password-based security (recommended method).
+        
+        Args:
+            stego_path: Path to steganographic image
+            password: Password for decryption and position derivation
+            use_secure_mode: Try secure extraction first
+        
+        Returns:
+            Extracted data or None
+        """
+        # Use instance setting if not overridden
+        if use_secure_mode is None:
+            use_secure_mode = self.use_secure_mode
+        
+        if use_secure_mode and self.secure_engine:
+            # Try secure extraction first
+            result = self.secure_engine.extract_data_secure(
+                stego_path=stego_path,
+                password=password
+            )
+            
+            if result:
+                return result
+            
+            # Fall back to legacy extraction if secure fails
+            self.logger.info("Secure extraction failed, trying legacy method")
+        
+        # Use legacy extraction with randomization
+        seed = int(hashlib.sha256(password.encode()).hexdigest()[:8], 16)
+        return self.extract_data(
+            stego_path=stego_path,
+            randomize=True,
+            seed=seed
+        )
+    
     def hide_data(self, carrier_path, data: bytes, output_path, 
                   randomize: bool = False, seed: Optional[int] = None) -> bool:
-        """Hide data in carrier image using LSB technique."""
+        """Hide data in carrier image using LSB technique (legacy method)."""
         try:
             # Convert string paths to Path objects if needed
             if isinstance(carrier_path, str):

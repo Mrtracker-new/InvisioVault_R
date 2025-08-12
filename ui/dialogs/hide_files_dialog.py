@@ -106,20 +106,21 @@ class HideWorkerThread(QThread):
                     "files": innocent_files
                 }
                 
-                # Use multi-decoy engine for transparent dual-layer protection
-                datasets = [decoy_dataset, primary_dataset]
-                
-                self.status_updated.emit("Hiding data with decoy protection...")
+                # Use secure steganography engine for maximum security
+                self.status_updated.emit("Hiding data with secure steganography...")
                 self.progress_updated.emit(60)
                 
-                success = self.multi_decoy_engine.hide_multiple_datasets(
+                # Use password-based secure hiding (no detectable signatures)
+                success = self.stego_engine.hide_data_with_password(
                     carrier_path=self.carrier_path,
-                    datasets=datasets,
-                    output_path=self.output_path
+                    data=self._create_file_archive(file_paths),
+                    output_path=self.output_path,
+                    password=self.password,
+                    use_secure_mode=True  # Force secure mode
                 )
                 
                 if not success:
-                    raise Exception("Failed to hide data with decoy protection")
+                    raise Exception("Failed to hide data with secure protection")
                 
             finally:
                 # Clean up temporary files
@@ -137,6 +138,34 @@ class HideWorkerThread(QThread):
         except Exception as e:
             self.logger.error(f"Hide operation failed: {e}")
             self.error_occurred.emit(str(e))
+    
+    def _create_file_archive(self, file_paths: List[str]) -> bytes:
+        """Create a ZIP archive from the files to be hidden."""
+        try:
+            import io
+            
+            # Create in-memory ZIP archive
+            zip_buffer = io.BytesIO()
+            
+            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                for file_path in file_paths:
+                    file_path = Path(file_path)
+                    
+                    if file_path.exists():
+                        # Add file to archive
+                        zip_file.write(file_path, file_path.name)
+                    else:
+                        self.logger.warning(f"File not found: {file_path}")
+            
+            # Return the archive data
+            zip_data = zip_buffer.getvalue()
+            self.logger.info(f"Created ZIP archive: {len(zip_data)} bytes")
+            
+            return zip_data
+            
+        except Exception as e:
+            self.logger.error(f"Failed to create file archive: {e}")
+            raise
 
 
 class HideFilesDialog(QDialog):
