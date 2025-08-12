@@ -25,6 +25,38 @@ from core.encryption_engine import EncryptionEngine, SecurityLevel
 from core.multi_decoy_engine import MultiDecoyEngine
 
 
+class ImageAnalysisWorker(QThread):
+    """Worker thread for analyzing carrier image without blocking UI."""
+    analysis_completed = Signal(dict)  # Analysis results
+    analysis_failed = Signal(str)  # Error message
+    
+    def __init__(self, image_path, stego_engine):
+        super().__init__()
+        self.image_path = Path(image_path)
+        self.stego_engine = stego_engine
+    
+    def run(self):
+        """Analyze image in background thread."""
+        try:
+            # Calculate capacity and analyze suitability
+            capacity = self.stego_engine.calculate_capacity(self.image_path)
+            analysis = self.stego_engine.analyze_image_suitability(self.image_path)
+            
+            # Prepare results
+            results = {
+                'capacity': capacity,
+                'capacity_mb': capacity / (1024 * 1024),
+                'suitability': analysis.get('suitability_score', 0),
+                'analysis': analysis,
+                'filename': self.image_path.name
+            }
+            
+            self.analysis_completed.emit(results)
+            
+        except Exception as e:
+            self.analysis_failed.emit(str(e))
+
+
 class HideWorkerThread(QThread):
     """Worker thread for file hiding operations."""
     progress_updated = Signal(int)
@@ -188,6 +220,11 @@ class HideFilesDialog(QDialog):
         self.files_to_hide = []
         self.output_path = None
         self.worker_thread = None
+        self.analysis_worker = None
+        
+        # Loading animation
+        self.loading_timer = QTimer()
+        self.loading_dots = 0
         
         self.init_ui()
         self.connect_signals()
@@ -352,7 +389,7 @@ class HideFilesDialog(QDialog):
         self.password_input.textChanged.connect(self.check_ready_state)
     
     def select_carrier_image(self):
-        """Select carrier image file."""
+        """Select carrier image file with smooth async analysis."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Carrier Image",
@@ -363,30 +400,26 @@ class HideFilesDialog(QDialog):
         if file_path:
             self.carrier_image_path = file_path
             
-            # Analyze image capacity
-            try:
-                capacity = self.stego_engine.calculate_capacity(Path(file_path))
-                analysis = self.stego_engine.analyze_image_suitability(Path(file_path))
-                
-                capacity_mb = capacity / (1024 * 1024)
-                suitability = analysis.get('suitability_score', 0)
-                
-                self.carrier_label.setText(
-                    f"✅ {Path(file_path).name}\n"
-                    f"📊 Capacity: {capacity_mb:.2f} MB\n"
-                    f"⭐ Suitability: {suitability}/10"
-                )
-                
-                # Show image preview
-                pixmap = QPixmap(file_path)
-                if not pixmap.isNull():
-                    scaled_pixmap = pixmap.scaled(200, 150, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                    self.image_preview.setPixmap(scaled_pixmap)
-                    self.image_preview.show()
-                
-            except Exception as e:
-                self.carrier_label.setText(f"❌ Error analyzing image: {str(e)}")
+            # Show immediate feedback with loading animation
+            self.carrier_label.setText(
+                f"🔄 Analyzing {Path(file_path).name}...\n"
+                f"⏳ Calculating capacity and suitability..."
+            )
             
+            # Show image preview immediately (fast operation)
+            self._show_image_preview(file_path)
+            
+            # Disable carrier button during analysis
+            self.carrier_button.setEnabled(False)
+            self.carrier_button.setText("Analyzing Image...")
+            
+            # Start loading animation
+            self._start_loading_animation()
+            
+            # Start async image analysis
+            self._start_image_analysis(file_path)
+            
+            # Check ready state (will be False during analysis)
             self.check_ready_state()
     
     def select_files(self):
@@ -439,11 +472,14 @@ class HideFilesDialog(QDialog):
     def check_ready_state(self):
         """Check if all requirements are met to enable hide button."""
         password_ok = len(self.password_input.text().strip()) >= 6
+        analysis_complete = not (self.analysis_worker and self.analysis_worker.isRunning())
+        
         ready = bool(
             self.carrier_image_path and 
             self.files_to_hide and 
             self.output_path and
-            password_ok
+            password_ok and
+            analysis_complete  # Don't allow hiding while analyzing
         )
         self.hide_button.setEnabled(ready)
     
@@ -507,10 +543,115 @@ class HideFilesDialog(QDialog):
         self.progress_group.hide()
         self.hide_button.setEnabled(True)
     
+    def _show_image_preview(self, file_path: str):
+        """Show image preview immediately (fast operation)."""
+        try:
+            pixmap = QPixmap(file_path)
+            if not pixmap.isNull():
+                scaled_pixmap = pixmap.scaled(
+                    200, 150, 
+                    Qt.AspectRatioMode.KeepAspectRatio, 
+                    Qt.TransformationMode.SmoothTransformation
+                )
+                self.image_preview.setPixmap(scaled_pixmap)
+                self.image_preview.show()
+        except Exception as e:
+            self.logger.debug(f"Failed to show image preview: {e}")
+    
+    def _start_loading_animation(self):
+        """Start loading dots animation."""
+        self.loading_dots = 0
+        self.loading_timer.timeout.connect(self._update_loading_animation)
+        self.loading_timer.start(500)  # Update every 500ms
+    
+    def _update_loading_animation(self):
+        """Update loading animation dots."""
+        if self.carrier_image_path and self.analysis_worker and self.analysis_worker.isRunning():
+            dots = "." * ((self.loading_dots % 3) + 1)
+            filename = Path(self.carrier_image_path).name
+            self.carrier_label.setText(
+                f"🔄 Analyzing {filename}{dots}\n"
+                f"⏳ Calculating capacity and suitability{dots}"
+            )
+            self.loading_dots += 1
+    
+    def _stop_loading_animation(self):
+        """Stop loading animation."""
+        if self.loading_timer.isActive():
+            self.loading_timer.stop()
+            self.loading_timer.timeout.disconnect()
+    
+    def _start_image_analysis(self, file_path: str):
+        """Start async image analysis."""
+        # Clean up any existing analysis worker
+        if self.analysis_worker and self.analysis_worker.isRunning():
+            self.analysis_worker.terminate()
+            self.analysis_worker.wait()
+        
+        # Create and start new analysis worker
+        self.analysis_worker = ImageAnalysisWorker(file_path, self.stego_engine)
+        self.analysis_worker.analysis_completed.connect(self._on_analysis_completed)
+        self.analysis_worker.analysis_failed.connect(self._on_analysis_failed)
+        self.analysis_worker.start()
+    
+    def _on_analysis_completed(self, results: dict):
+        """Handle completed image analysis."""
+        try:
+            # Stop loading animation
+            self._stop_loading_animation()
+            
+            # Update UI with results
+            self.carrier_label.setText(
+                f"✅ {results['filename']}\n"
+                f"📊 Capacity: {results['capacity_mb']:.2f} MB\n"
+                f"⭐ Suitability: {results['suitability']}/10"
+            )
+            
+            # Re-enable carrier button
+            self.carrier_button.setEnabled(True)
+            self.carrier_button.setText("Select Carrier Image (PNG, BMP, TIFF)")
+            
+            # Check ready state
+            self.check_ready_state()
+            
+            self.logger.info(f"Image analysis completed: {results['capacity_mb']:.2f} MB capacity")
+            
+        except Exception as e:
+            self.logger.error(f"Error handling analysis results: {e}")
+            self._on_analysis_failed(str(e))
+    
+    def _on_analysis_failed(self, error_message: str):
+        """Handle failed image analysis."""
+        # Stop loading animation
+        self._stop_loading_animation()
+        
+        # Show error
+        filename = Path(self.carrier_image_path).name if self.carrier_image_path else "image"
+        self.carrier_label.setText(f"❌ Error analyzing {filename}:\n{error_message}")
+        
+        # Re-enable carrier button
+        self.carrier_button.setEnabled(True)
+        self.carrier_button.setText("Select Carrier Image (PNG, BMP, TIFF)")
+        
+        # Clear carrier path so ready state fails
+        self.carrier_image_path = None
+        self.check_ready_state()
+        
+        self.logger.error(f"Image analysis failed: {error_message}")
+    
     def cancel_operation(self):
         """Cancel the current operation."""
+        # Cancel any running analysis
+        if self.analysis_worker and self.analysis_worker.isRunning():
+            self.analysis_worker.terminate()
+            self.analysis_worker.wait()
+        
+        # Cancel any hiding operation
         if self.worker_thread and self.worker_thread.isRunning():
             self.worker_thread.terminate()
             self.worker_thread.wait()
+        
+        # Stop loading animation
+        self._stop_loading_animation()
         
         self.reject()
