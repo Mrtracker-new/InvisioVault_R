@@ -15,6 +15,7 @@ import os
 import struct
 import hashlib
 import secrets
+import time
 import numpy as np
 from typing import Tuple, Optional, Dict, Any
 from pathlib import Path
@@ -446,8 +447,7 @@ class SecureSteganographyEngine:
         This makes the embedded data statistically indistinguishable from natural image noise
         by pre-masking with a PRG seeded from carrier pixel values and managing entropy.
         
-        SIMPLIFIED VERSION: Only apply carrier noise masking (reversible with XOR)
-        Skip entropy adjustment and dummy bytes for now to ensure perfect reversibility.
+        FULL IMPLEMENTATION: Includes metadata-based reversible entropy adjustment and dummy bytes.
         """
         try:
             # 1. Generate carrier-derived PRG seed
@@ -456,18 +456,31 @@ class SecureSteganographyEngine:
             # 2. Create PRG for statistical masking
             prg = np.random.default_rng(carrier_seed)
             
-            # 3. Pre-mask payload to look like image noise (ONLY THIS STEP - it's fully reversible)
+            # 3. Pre-mask payload to look like image noise
             masked_payload = self._pre_mask_with_carrier_noise(payload, prg, carrier_array)
             
-            # Skip entropy adjustment and dummy bytes for now to ensure extraction works
-            # These can be re-added once the basic mechanism is working
+            # 4. Apply entropy adjustment with metadata tracking
+            entropy_adjusted, entropy_metadata = self._adjust_entropy_range_reversible(masked_payload, prg)
             
-            self.logger.debug(f"Statistical masking applied: {len(payload)} -> {len(masked_payload)} bytes")
-            return masked_payload
+            # 5. Insert dummy bytes with position tracking
+            final_payload, dummy_metadata = self._insert_color_dummy_bytes_reversible(entropy_adjusted, carrier_array, prg)
+            
+            # 6. Create masking metadata for reversal
+            masking_metadata = self._create_masking_metadata(entropy_metadata, dummy_metadata, len(payload))
+            
+            # 7. Prepend metadata to payload (encrypted with same key)
+            metadata_bytes = self._serialize_masking_metadata(masking_metadata, password)
+            complete_payload = metadata_bytes + final_payload
+            
+            self.logger.debug(f"Full statistical masking applied: {len(payload)} -> {len(complete_payload)} bytes")
+            self.logger.debug(f"Masking breakdown: original({len(payload)}) + metadata({len(metadata_bytes)}) + masked_data({len(final_payload)})")
+            
+            return complete_payload
             
         except Exception as e:
-            self.logger.warning(f"Statistical masking failed: {e}, using original payload")
-            return payload
+            self.logger.warning(f"Statistical masking failed: {e}, falling back to simple masking")
+            # Fallback to simple masking for compatibility
+            return self._apply_simple_statistical_masking(payload, carrier_array, password)
     
     def _generate_carrier_prg_seed(self, carrier_array: np.ndarray, password: str) -> int:
         """
@@ -674,15 +687,300 @@ class SecureSteganographyEngine:
         """
         Reverse the statistical masking to recover the original payload.
         
-        SIMPLIFIED VERSION: Only reverse carrier noise masking (simple XOR)
-        This matches the simplified _apply_statistical_masking that only does noise masking.
+        This method first tries full statistical masking reversal (with metadata),
+        then falls back to simple reversal for compatibility.
         """
         try:
-            # Recreate the same PRG used during masking
+            # First, try full statistical masking reversal with metadata
+            full_result = self._reverse_full_statistical_masking(masked_payload, carrier_array, password)
+            if full_result is not None:
+                return full_result
+            
+            # Fallback to simple reversal
+            simple_result = self._reverse_simple_statistical_masking(masked_payload, carrier_array, password)
+            return simple_result
+            
+        except Exception as e:
+            self.logger.debug(f"Statistical masking reversal failed: {e}")
+            return None
+    
+    def _apply_simple_statistical_masking(self, payload: bytes, carrier_array: np.ndarray, password: str) -> bytes:
+        """
+        Fallback simple statistical masking (for compatibility).
+        Only applies carrier noise masking without metadata.
+        """
+        try:
+            carrier_seed = self._generate_carrier_prg_seed(carrier_array, password)
+            prg = np.random.default_rng(carrier_seed)
+            return self._pre_mask_with_carrier_noise(payload, prg, carrier_array)
+        except Exception as e:
+            self.logger.warning(f"Simple statistical masking failed: {e}")
+            return payload
+    
+    def _adjust_entropy_range_reversible(self, data: bytes, prg: np.random.Generator) -> Tuple[bytes, Dict]:
+        """
+        Adjust entropy to plausible range with metadata for reversal.
+        
+        Returns:
+            Tuple of (adjusted_data, metadata_dict)
+        """
+        current_entropy = self._calculate_entropy(data)
+        target_entropy = prg.uniform(5.5, 7.0)
+        
+        metadata = {
+            'original_entropy': current_entropy,
+            'target_entropy': target_entropy,
+            'adjustments': []
+        }
+        
+        if abs(current_entropy - target_entropy) < 0.1:
+            return data, metadata
+        
+        data_array = np.frombuffer(data, dtype=np.uint8).copy()
+        
+        if current_entropy > target_entropy:
+            # Reduce entropy
+            num_adjustments = int(len(data) * 0.05)
+            indices = prg.choice(len(data_array), num_adjustments, replace=False)
+            
+            for idx in indices:
+                original_value = data_array[idx]
+                new_value = prg.integers(0, 128)
+                data_array[idx] = new_value
+                metadata['adjustments'].append((int(idx), int(original_value), int(new_value)))
+        
+        elif current_entropy < target_entropy:
+            # Increase entropy
+            num_adjustments = int(len(data) * 0.03)
+            indices = prg.choice(len(data_array), num_adjustments, replace=False)
+            
+            for idx in indices:
+                original_value = data_array[idx]
+                new_value = prg.integers(0, 256)
+                data_array[idx] = new_value
+                metadata['adjustments'].append((int(idx), int(original_value), int(new_value)))
+        
+        adjusted_data = data_array.tobytes()
+        new_entropy = self._calculate_entropy(adjusted_data)
+        metadata['final_entropy'] = new_entropy
+        
+        self.logger.debug(f"Entropy adjusted with metadata: {current_entropy:.3f} -> {new_entropy:.3f}")
+        return adjusted_data, metadata
+    
+    def _insert_color_dummy_bytes_reversible(self, payload: bytes, carrier_array: np.ndarray, 
+                                           prg: np.random.Generator) -> Tuple[bytes, Dict]:
+        """
+        Insert dummy bytes with position tracking for reversal.
+        
+        Returns:
+            Tuple of (payload_with_dummies, metadata_dict)
+        """
+        color_stats = self._analyze_carrier_colors(carrier_array)
+        
+        # Calculate dummy parameters
+        dummy_ratio = prg.uniform(0.05, 0.15)
+        num_dummies = int(len(payload) * dummy_ratio)
+        
+        metadata = {
+            'dummy_ratio': dummy_ratio,
+            'num_dummies': num_dummies,
+            'dummy_positions': [],
+            'dummy_values': [],
+            'original_length': len(payload)
+        }
+        
+        if num_dummies == 0:
+            return payload, metadata
+        
+        # Generate dummy bytes
+        dummy_bytes = []
+        for _ in range(num_dummies):
+            if prg.random() < 0.7:
+                channel = prg.choice(3)
+                mean_val = color_stats[f'mean_ch{channel}']
+                std_val = color_stats[f'std_ch{channel}']
+                dummy_val = int(np.clip(prg.normal(mean_val, std_val), 0, 255))
+            else:
+                dummy_val = prg.integers(16, 240)
+            dummy_bytes.append(dummy_val)
+        
+        # Insert dummy bytes and track positions
+        payload_array = list(payload)
+        dummy_positions = sorted(prg.choice(len(payload_array) + num_dummies, 
+                                          num_dummies, replace=False))
+        
+        for i, pos in enumerate(dummy_positions):
+            payload_array.insert(pos, dummy_bytes[i])
+            metadata['dummy_positions'].append(int(pos))
+            metadata['dummy_values'].append(int(dummy_bytes[i]))
+        
+        final_payload = bytes(payload_array)
+        
+        self.logger.debug(f"Inserted {num_dummies} dummy bytes with position tracking")
+        return final_payload, metadata
+    
+    def _create_masking_metadata(self, entropy_metadata: Dict, dummy_metadata: Dict, original_size: int) -> Dict:
+        """
+        Combine all masking metadata into a single structure.
+        """
+        return {
+            'version': 1,  # For future compatibility
+            'original_size': original_size,
+            'entropy_metadata': entropy_metadata,
+            'dummy_metadata': dummy_metadata,
+            'timestamp': int(time.time()) if 'time' in globals() else 0
+        }
+    
+    def _serialize_masking_metadata(self, metadata: Dict, password: str) -> bytes:
+        """
+        Serialize and encrypt masking metadata.
+        
+        Format: [2 bytes: metadata_length] [metadata_length bytes: encrypted_metadata]
+        """
+        import json
+        
+        # Serialize metadata to JSON
+        metadata_json = json.dumps(metadata, separators=(',', ':'))
+        metadata_bytes = metadata_json.encode('utf-8')
+        
+        # Compress metadata
+        compressed_metadata = zlib.compress(metadata_bytes, 9)
+        
+        # Encrypt metadata
+        metadata_key = self._derive_salt(password, b"metadata_key")
+        encrypted_metadata = self._xor_encrypt(compressed_metadata, metadata_key)
+        
+        # Prepend length (2 bytes = max 65535 bytes metadata)
+        if len(encrypted_metadata) > 65535:
+            raise ValueError("Metadata too large")
+        
+        length_bytes = struct.pack('<H', len(encrypted_metadata))
+        return length_bytes + encrypted_metadata
+    
+    def _deserialize_masking_metadata(self, metadata_bytes: bytes, password: str) -> Optional[Dict]:
+        """
+        Decrypt and deserialize masking metadata.
+        """
+        import json
+        
+        try:
+            if len(metadata_bytes) < 2:
+                return None
+            
+            # Extract length and encrypted metadata
+            metadata_length = struct.unpack('<H', metadata_bytes[:2])[0]
+            if len(metadata_bytes) < 2 + metadata_length:
+                return None
+            
+            encrypted_metadata = metadata_bytes[2:2 + metadata_length]
+            
+            # Decrypt metadata
+            metadata_key = self._derive_salt(password, b"metadata_key")
+            compressed_metadata = self._xor_encrypt(encrypted_metadata, metadata_key)
+            
+            # Decompress metadata
+            metadata_bytes = zlib.decompress(compressed_metadata)
+            metadata_json = metadata_bytes.decode('utf-8')
+            
+            # Parse JSON
+            metadata = json.loads(metadata_json)
+            return metadata
+        
+        except Exception as e:
+            self.logger.debug(f"Failed to deserialize metadata: {e}")
+            return None
+    
+    def _reverse_entropy_adjustments(self, data: bytes, entropy_metadata: Dict) -> bytes:
+        """
+        Reverse entropy adjustments using stored metadata.
+        """
+        if not entropy_metadata.get('adjustments'):
+            return data
+        
+        data_array = np.frombuffer(data, dtype=np.uint8).copy()
+        
+        # Reverse adjustments in reverse order
+        for idx, original_value, adjusted_value in reversed(entropy_metadata['adjustments']):
+            if idx < len(data_array) and data_array[idx] == adjusted_value:
+                data_array[idx] = original_value
+        
+        return data_array.tobytes()
+    
+    def _remove_dummy_bytes(self, payload: bytes, dummy_metadata: Dict) -> bytes:
+        """
+        Remove dummy bytes using stored position metadata.
+        """
+        if not dummy_metadata.get('dummy_positions'):
+            return payload
+        
+        payload_list = list(payload)
+        
+        # Remove dummy bytes in reverse order to maintain indices
+        for pos in reversed(sorted(dummy_metadata['dummy_positions'])):
+            if pos < len(payload_list):
+                payload_list.pop(pos)
+        
+        return bytes(payload_list)
+    
+    def _reverse_full_statistical_masking(self, masked_payload: bytes, carrier_array: np.ndarray, password: str) -> Optional[bytes]:
+        """
+        Reverse full statistical masking using embedded metadata.
+        """
+        try:
+            # 1. Extract and deserialize metadata
+            metadata = self._deserialize_masking_metadata(masked_payload, password)
+            if metadata is None:
+                self.logger.debug("No valid metadata found, trying simple reversal")
+                return self._reverse_simple_statistical_masking(masked_payload, carrier_array, password)
+            
+            # 2. Extract payload after metadata
+            metadata_length = struct.unpack('<H', masked_payload[:2])[0]
+            payload_after_metadata = masked_payload[2 + metadata_length:]
+            
+            # 3. Remove dummy bytes
+            dummy_metadata = metadata.get('dummy_metadata', {})
+            payload_without_dummies = self._remove_dummy_bytes(payload_after_metadata, dummy_metadata)
+            
+            # 4. Reverse entropy adjustments
+            entropy_metadata = metadata.get('entropy_metadata', {})
+            payload_entropy_reversed = self._reverse_entropy_adjustments(payload_without_dummies, entropy_metadata)
+            
+            # 5. Reverse carrier noise masking
             carrier_seed = self._generate_carrier_prg_seed(carrier_array, password)
             prg = np.random.default_rng(carrier_seed)
             
-            # Generate the same mask as during hiding
+            noise_stats = self._analyze_carrier_noise(carrier_array)
+            mask_length = len(payload_entropy_reversed)
+            
+            if noise_stats['has_high_frequency']:
+                mask = prg.normal(noise_stats['mean'], noise_stats['std'], mask_length)
+            else:
+                mask = prg.uniform(noise_stats['min'], noise_stats['max'], mask_length)
+            
+            mask_bytes = (np.clip(mask, 0, 255).astype(np.uint8) % 256).tobytes()
+            original_payload = bytes(a ^ b for a, b in zip(payload_entropy_reversed, mask_bytes[:len(payload_entropy_reversed)]))
+            
+            # 6. Verify original size matches
+            expected_size = metadata.get('original_size')
+            if expected_size and len(original_payload) != expected_size:
+                self.logger.warning(f"Size mismatch after reversal: {len(original_payload)} != {expected_size}")
+                return None
+            
+            self.logger.debug(f"Full statistical masking reversed successfully: {len(masked_payload)} -> {len(original_payload)} bytes")
+            return original_payload
+            
+        except Exception as e:
+            self.logger.debug(f"Full statistical masking reversal failed: {e}")
+            return None
+    
+    def _reverse_simple_statistical_masking(self, masked_payload: bytes, carrier_array: np.ndarray, password: str) -> Optional[bytes]:
+        """
+        Reverse simple statistical masking (carrier noise only).
+        """
+        try:
+            carrier_seed = self._generate_carrier_prg_seed(carrier_array, password)
+            prg = np.random.default_rng(carrier_seed)
+            
             noise_stats = self._analyze_carrier_noise(carrier_array)
             mask_length = len(masked_payload)
             
@@ -692,15 +990,13 @@ class SecureSteganographyEngine:
                 mask = prg.uniform(noise_stats['min'], noise_stats['max'], mask_length)
             
             mask_bytes = (np.clip(mask, 0, 255).astype(np.uint8) % 256).tobytes()
-            
-            # Reverse XOR (XOR is its own inverse)
             original_payload = bytes(a ^ b for a, b in zip(masked_payload, mask_bytes[:len(masked_payload)]))
             
-            self.logger.debug(f"Statistical masking reversed: {len(masked_payload)} -> {len(original_payload)} bytes")
+            self.logger.debug(f"Simple statistical masking reversed: {len(masked_payload)} -> {len(original_payload)} bytes")
             return original_payload
             
         except Exception as e:
-            self.logger.debug(f"Statistical masking reversal failed: {e}")
+            self.logger.debug(f"Simple statistical masking reversal failed: {e}")
             return None
     
     def _calculate_entropy(self, data) -> float:
