@@ -46,7 +46,7 @@ class ConfigManager:
             "chunk_size_mb": 10
         },
         ConfigSection.INTERFACE.value: {
-            "theme": "dark",
+            "theme": "dark",  # Locked to dark mode
             "language": "en",
             "window_width": 1200,
             "window_height": 800,
@@ -164,6 +164,10 @@ class ConfigManager:
             interface['window_width'] = 800
         if interface['window_height'] < 600:
             interface['window_height'] = 600
+        # Ensure theme is always locked to dark mode
+        if interface.get('theme') != 'dark':
+            interface['theme'] = 'dark'
+            self.logger.info("Theme locked to dark mode during validation")
         
         # Save if any changes were made
         self.save_config()
@@ -203,6 +207,11 @@ class ConfigManager:
             section = section.value
         
         try:
+            # Prevent changing theme - always lock to dark mode
+            if section == ConfigSection.INTERFACE.value and key == "theme":
+                value = "dark"
+                self.logger.debug(f"Theme locked to dark mode")
+            
             if section not in self.config:
                 self.config[section] = {}
             
@@ -242,6 +251,11 @@ class ConfigManager:
             section = section.value
         
         try:
+            # Ensure theme is locked to dark mode for interface section
+            if section == ConfigSection.INTERFACE.value and "theme" in values:
+                values["theme"] = "dark"
+                self.logger.debug(f"Theme locked to dark mode in section update")
+            
             self.config[section] = values.copy()
             self.logger.info(f"Updated config section: {section}")
             return True

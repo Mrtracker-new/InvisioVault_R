@@ -186,9 +186,7 @@ class SettingsPanel(QDialog):
         appearance_group = QGroupBox("Appearance")
         appearance_layout = QFormLayout(appearance_group)
         
-        self.theme = QComboBox()
-        self.theme.addItems(["dark", "light", "auto"])
-        appearance_layout.addRow("Theme:", self.theme)
+        # Theme removed - app uses dark mode only
         
         self.font_size = QSpinBox()
         self.font_size.setRange(8, 24)
@@ -477,8 +475,7 @@ class SettingsPanel(QDialog):
             self.secure_delete_passes.setValue(self.config.get(ConfigSection.SECURITY, "secure_delete_passes", 3))
             self.session_timeout.setValue(self.config.get(ConfigSection.SECURITY, "session_timeout_minutes", 30))
             
-            # Interface settings
-            self.theme.setCurrentText(self.config.get(ConfigSection.INTERFACE, "theme", "dark"))
+            # Interface settings (theme removed - app uses dark mode only)
             self.font_size.setValue(self.config.get(ConfigSection.INTERFACE, "font_size", 12))
             self.enable_animations.setChecked(self.config.get(ConfigSection.INTERFACE, "enable_animations", True))
             self.remember_window_state.setChecked(self.config.get(ConfigSection.INTERFACE, "remember_window_state", True))
@@ -588,8 +585,8 @@ class SettingsPanel(QDialog):
         self.config.set(ConfigSection.SECURITY, "secure_delete_passes", self.secure_delete_passes.value())
         self.config.set(ConfigSection.SECURITY, "session_timeout_minutes", self.session_timeout.value())
         
-        # Interface settings
-        self.config.set(ConfigSection.INTERFACE, "theme", self.theme.currentText())
+        # Interface settings (theme locked to dark mode)
+        self.config.set(ConfigSection.INTERFACE, "theme", "dark")
         self.config.set(ConfigSection.INTERFACE, "font_size", self.font_size.value())
         self.config.set(ConfigSection.INTERFACE, "enable_animations", self.enable_animations.isChecked())
         self.config.set(ConfigSection.INTERFACE, "remember_window_state", self.remember_window_state.isChecked())
