@@ -381,6 +381,9 @@ dev_notes/
 scratch/
 sandbox/
 
+# Project development rules (local only)
+PROJECT_RULES.md
+
 # Development scripts and utilities (potentially with hardcoded paths/data)
 dev_scripts/
 utils_local/
