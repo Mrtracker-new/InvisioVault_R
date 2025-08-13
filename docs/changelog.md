@@ -104,6 +104,27 @@ def extract_data_optimized(stego_path, password):
 **Release Date**: January 10, 2025  
 **Status**: ✅ Live - Revolutionary Security Update
 
+### 📦 **IMPORTANT: Installation Method Update**
+
+#### **🔄 Modern Installation Process**
+Starting with v1.0.1, we recommend using the modern package installation method:
+
+```bash
+# Modern approach (recommended)
+pip install -e .
+
+# Legacy approach (fallback)
+pip install -r requirements.txt
+```
+
+**Why the change?**
+- ✅ **Better dependency management**: Automatic resolution of package conflicts
+- ✅ **Entry point support**: Run `invisiovault` from anywhere after installation
+- ✅ **Development mode**: Changes reflect immediately without reinstallation
+- ✅ **Future-proof**: Compatible with modern Python packaging standards
+
+**Note**: The old `python setup.py` commands are deprecated and may have permission issues on some systems.
+
 ### 🎉 **Major New Feature: Transparent Decoy Mode Integration**
 
 #### ⚡ **What's New**

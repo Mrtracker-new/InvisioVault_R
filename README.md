@@ -172,17 +172,31 @@ This project was developed as an advanced learning journey into:
 # Works on any Windows computer without Python
 ```
 
-#### **Option 2: From Source (Advanced)**
+#### **Option 2: From Source (Recommended for Developers)**
 ```bash
 # 1️⃣ Clone or download InvisioVault
-git clone https://github.com/Mrtracker-new/InvisioVault_R.git
-cd InvisioVault_R
+git clone https://github.com/Mrtracker-new/InVisioVault_R.git
+cd InVisioVault_R
 
-# 2️⃣ Install required packages
-pip install -r requirements.txt
+# 2️⃣ Install in development mode (modern approach)
+pip install -e .
+
+# Alternative: Install required packages manually
+# pip install -r requirements.txt
 
 # 3️⃣ Launch the magic! ✨
 python main.py
+```
+
+#### **Option 3: Package Installation Only**
+```bash
+# Install as editable package (for development)
+pip install -e .
+
+# Run from command line anywhere
+invisiovault
+# or
+invisiovault-cli
 ```
 
 ### 🎭 **Your First Secret Mission**

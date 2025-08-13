@@ -62,33 +62,49 @@
 
 ### **Installation Guide**
 
-#### **Method 1: Git Clone (Recommended)**
+#### **Method 1: Git Clone + Modern Install (Recommended)**
 ```bash
 # Clone the repository
-git clone https://github.com/Mrtracker-new/InvisioVault_R.git
-cd InvisioVault_R
+git clone https://github.com/Mrtracker-new/InVisioVault_R.git
+cd InVisioVault_R
 
-# Install dependencies
+# Install in development mode (modern approach)
+pip install -e .
+
+# Launch application
+python main.py
+```
+
+#### **Method 2: Direct Download + Package Install**
+1. Download ZIP from GitHub repository
+2. Extract to desired location
+3. Open terminal in extracted folder
+4. Run: `pip install -e .`
+5. Launch: `python main.py`
+
+#### **Method 3: Legacy Installation (Fallback)**
+```bash
+# If modern install fails, use legacy method:
+# Clone or download project
+# cd InVisioVault_R
+
+# Install dependencies manually
 pip install -r requirements.txt
 
 # Launch application
 python main.py
 ```
 
-#### **Method 2: Direct Download**
-1. Download ZIP from GitHub repository
-2. Extract to desired location
-3. Open terminal in extracted folder
-4. Run installation commands above
-
-#### **Method 3: Package Installation**
+#### **Method 4: Package Entry Points**
 ```bash
-# Install as package
-pip install -e .
-
-# Run from anywhere
-invisiovault
+# After installing with 'pip install -e .'
+# Run from anywhere using entry points:
+invisiovault          # GUI version
+# or
+invisiovault-cli      # CLI version
 ```
+
+> **💡 Recommended**: Use Method 1 (modern install) for best compatibility and easier updates.
 
 ### **First Launch**
 
