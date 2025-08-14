@@ -175,7 +175,7 @@ class SelfExecutingDialog(QDialog):
             "The output file will be an .exe that can ALSO be opened as an image by image viewers."
         )
         desc_label.setWordWrap(True)
-        desc_label.setStyleSheet("background: #ffe6e6; padding: 15px; border-radius: 5px; border: 2px solid #ff9999;")
+        desc_label.setStyleSheet("background: #ffe6e6; color: #cc0000; padding: 15px; border-radius: 5px; border: 2px solid #ff9999; font-weight: bold;")
         layout.addWidget(desc_label)
         
         # Form layout
