@@ -110,6 +110,7 @@ This project was developed as an advanced learning journey into:
 - 📊 **Smart Image Analysis**: Entropy-based capacity calculation and suitability scoring
 - 🛡️ **Anti-Detection Mode**: Advanced steganography designed to evade steganalysis tools
 - 🎲 **Hybrid LSB Randomization**: Combines randomized positioning with anti-detection techniques
+- 🚀 **Self-Executing Images**: Create images that can execute embedded code when triggered
 
 ### 🛡️ **Advanced Security**
 - 🔐 **AES-256-CBC Encryption**: Military-grade encryption with PBKDF2 key derivation
@@ -454,6 +455,96 @@ test_with_external_tools.bat
 
 ---
 
+## 🚀 **NEW: Self-Executing Images**
+
+<div align="center">
+
+### 🕵️ **Advanced Steganographic Payloads**
+
+*Create images that can execute embedded code when triggered - for educational and security research purposes*
+
+</div>
+
+**🎓 Educational Security Research Feature**
+
+InVisioVault now includes an advanced self-executing images feature designed for educational purposes and security research. This sophisticated steganographic technique allows researchers and educators to explore polyglot files and script embedding.
+
+### 🎯 **Feature Highlights**
+
+#### **🔧 Polyglot File Creation**
+- **Dual-Nature Files**: Create files that function as both images AND executables
+- **Cross-Platform Support**: Windows PE, Linux ELF, macOS Mach-O compatibility
+- **Invisible Embedding**: Executables hidden within normal-looking images
+- **Educational Analysis**: Perfect for malware research and forensics training
+
+#### **📜 Script-Executing Images**
+- **Multi-Language Support**: Python, JavaScript, PowerShell, Batch, Bash, VBScript
+- **Steganographic Hiding**: Scripts embedded using advanced LSB techniques
+- **Encrypted Payloads**: Password-protected script content with AES-256
+- **Execution Controls**: Safe analysis, interactive, and auto-execution modes
+
+#### **🔍 Professional Analysis Tools**
+- **Standalone Viewer**: Independent tool for analyzing suspicious images
+- **Safe Analysis Mode**: Detect content without executing (recommended)
+- **Interactive Execution**: User-controlled execution with security warnings
+- **Command-Line Interface**: Automated analysis and batch processing
+
+### 🛡️ **Security & Ethical Usage**
+
+| ⚠️ **Important Security Notice** |
+|-----------------------------------|
+| This feature is designed for **educational and research purposes ONLY**. Users must: |
+| • Only analyze images from trusted, known sources |
+| • Use isolated environments (VMs, sandboxes) for testing |
+| • Follow responsible disclosure practices for security research |
+| • Never create or distribute malicious content |
+| • Comply with all applicable laws and regulations |
+
+### 🚀 **Quick Start Guide**
+
+#### **Creating Educational Examples**
+1. 🚀 Launch InVisioVault
+2. 📄 Navigate to "🚀 Self-Executing" in the sidebar  
+3. 🖼️ Select creation method (Polyglot or Script)
+4. ⚙️ Configure your educational payload
+5. 🔐 Set security options and passwords
+6. ✨ Create your research specimen!
+
+#### **Safe Analysis Workflow**
+1. 🔍 Use "Analysis & Execution" tab
+2. 📂 Select image to analyze
+3. 🛡️ Always start with "Safe Mode" analysis
+4. 📊 Review detailed analysis results
+5. ⚠️ Only proceed with execution in isolated environments
+
+### 📚 **Educational Applications**
+
+- **🎓 Cybersecurity Education**: Demonstrate steganographic techniques and detection
+- **🔬 Malware Research**: Study polyglot file techniques and evasion methods
+- **🕵️ Digital Forensics**: Training for analysts to detect and analyze suspicious images
+- **🛡️ Security Testing**: Validate detection capabilities of security tools
+- **📖 Academic Research**: Explore advanced steganography and file format research
+
+### 🔧 **Technical Specifications**
+
+| **Component** | **Description** | **Formats Supported** |
+|---------------|-----------------|----------------------|
+| **Image Carriers** | Lossless image formats | PNG, BMP, TIFF |
+| **Script Languages** | Embedded script support | .py, .js, .ps1, .bat, .sh, .vbs |
+| **Executable Types** | Polyglot file creation | Windows PE, Linux ELF, macOS Mach-O |
+| **Encryption** | Payload protection | AES-256 with PBKDF2 key derivation |
+| **Analysis Modes** | Security levels | Safe, Interactive, Auto-execution |
+
+### 📖 **Complete Documentation**
+
+For detailed technical documentation, security guidelines, and educational examples:
+
+**📘 [Self-Executing Images Guide](docs/SELF_EXECUTING_IMAGES.md)**
+
+*Comprehensive 386-line documentation covering creation, analysis, security considerations, examples, and troubleshooting.*
+
+---
+
 ## 📚 Documentation
 
 <div align="center">
@@ -478,6 +569,7 @@ test_with_external_tools.bat
 |-------------|----------------|------------|--------|
 | **⚡ Performance Analysis** | Speed optimization breakdown | Performance | [`docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md`](docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md) |
 | **🎭 Multi-Decoy Guide** | Advanced decoy features | Security | [`docs/MULTI_DECOY_IMPLEMENTATION.md`](docs/MULTI_DECOY_IMPLEMENTATION.md) |
+| **🚀 Self-Executing Images** | Polyglot files and script execution | Educational Research | [`docs/SELF_EXECUTING_IMAGES.md`](docs/SELF_EXECUTING_IMAGES.md) |
 | **📂 Project Structure** | Codebase organization | Development | [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) |
 | **🔒 Security Framework** | Advanced security features | Security Architecture | [`docs/SECURITY.md`](docs/SECURITY.md) |
 
@@ -630,7 +722,8 @@ For complete build instructions, troubleshooting, and advanced options:
 │   ├── encryption_engine.py      # AES-256 encryption
 │   ├── multi_decoy_engine.py     # Multi-layer security
 │   ├── two_factor_engine.py      # 2FA authentication
-│   └── decoy_engine.py           # Plausible deniability
+│   ├── decoy_engine.py           # Plausible deniability
+│   └── self_executing_engine.py  # Self-executing images & polyglot files
 ├── 📚 docs/                      # Complete documentation
 │   ├── user_guide.md             # User manual
 │   ├── api_reference.md          # Developer API docs
