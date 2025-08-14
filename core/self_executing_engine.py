@@ -52,7 +52,7 @@ class SelfExecutingEngine:
         self.logger.info("Self-executing image engine initialized")
     
     def create_polyglot_executable(self, image_path: str, executable_path: str, 
-                                 output_path: str, password: str = None) -> bool:
+                                 output_path: str, password: Optional[str] = None) -> bool:
         """
         Create a polyglot file that's both a valid image AND executable.
         
@@ -109,7 +109,7 @@ class SelfExecutingEngine:
     
     def create_script_executing_image(self, image_path: str, script_content: str, 
                                     script_type: str, output_path: str, 
-                                    password: str = None, auto_execute: bool = False) -> bool:
+                                    password: Optional[str] = None, auto_execute: bool = False) -> bool:
         """
         Create an image with embedded script that can be extracted and executed.
         
@@ -165,7 +165,7 @@ class SelfExecutingEngine:
             self.error_handler.handle_exception(e)
             return False
     
-    def extract_and_execute(self, image_path: str, password: str = None, 
+    def extract_and_execute(self, image_path: str, password: Optional[str] = None, 
                           execution_mode: str = 'safe') -> Dict[str, Any]:
         """
         Extract and potentially execute embedded code from image.
@@ -555,7 +555,7 @@ class SelfExecutingEngine:
             
         except Exception as e:
             self.logger.error(f"PE stub creation failed: {e}")
-            return None
+            return b''
     
     def _create_pe_overlay_polyglot(self, image_data: bytes, exe_data: bytes) -> bytes:
         """Create PE executable with image in overlay section."""
@@ -607,7 +607,7 @@ class SelfExecutingEngine:
             # Ultimate fallback
             return self._create_pe_overlay_with_png(png_data, exe_data)
     
-    def extract_image_from_polyglot(self, polyglot_path: str, output_image_path: str = None) -> bool:
+    def extract_image_from_polyglot(self, polyglot_path: str, output_image_path: Optional[str] = None) -> bool:
         """Extract the embedded image from a polyglot file for viewing."""
         try:
             self.logger.info(f"Extracting image from polyglot: {polyglot_path}")
@@ -787,7 +787,7 @@ pause
             self.logger.error(f"Error checking polyglot: {e}")
             return {'is_polyglot': False, 'error': str(e)}
     
-    def _extract_embedded_script(self, image_path: str, password: str = None) -> Dict[str, Any]:
+    def _extract_embedded_script(self, image_path: str, password: Optional[str] = None) -> Dict[str, Any]:
         """Extract embedded script from image."""
         try:
             # Use steganography engine to extract data
@@ -2082,7 +2082,7 @@ exit /b 0
                 file_data = f.read()
             
             # Encrypt the data
-            encrypted_data = self.encryption_engine.encrypt_data(file_data, password)
+            encrypted_data = self.encryption_engine.encrypt_with_metadata(file_data, password)
             
             # Write back encrypted data
             with open(file_path, 'wb') as f:
@@ -2096,7 +2096,7 @@ exit /b 0
             return False
     
     def _create_polyglot_fallback(self, image_path: str, executable_path: str, 
-                                output_path: str, password: str = None) -> bool:
+                                output_path: str, password: Optional[str] = None) -> bool:
         """Fallback polyglot creation using internal methods."""
         try:
             self.logger.info("Using fallback polyglot creation methods")
@@ -2111,7 +2111,7 @@ exit /b 0
             
             # Encrypt executable if password provided
             if password:
-                exe_data = self.encryption_engine.encrypt_data(exe_data, password)
+                exe_data = self.encryption_engine.encrypt_with_metadata(exe_data, password)
             
             # Create polyglot structure using internal methods
             polyglot_data = self._create_polyglot_structure(image_data, exe_data)
