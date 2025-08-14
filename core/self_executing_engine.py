@@ -239,38 +239,64 @@ class SelfExecutingEngine:
     
     def _create_polyglot_structure(self, image_data: bytes, exe_data: bytes) -> bytes:
         """Create polyglot file structure that works as both image and executable."""
-        # Different approach: Create a structure that's both valid image and executable
-        # This creates a proper polyglot that can be opened as both
+        # For Windows, we need the PE header at the beginning for proper execution
+        # We'll create a structure where the executable comes first, then embed the image
         
         try:
-            # For PNG images, we can append executable data after IEND chunk
-            # This makes it a valid PNG that image viewers can display
-            # while also being executable when run
+            self.logger.info("Creating Windows PE polyglot structure")
             
-            # Find PNG IEND chunk (if PNG)
-            if image_data.startswith(b'\x89PNG'):
-                # Find IEND chunk
-                iend_pos = image_data.rfind(b'IEND')
-                if iend_pos != -1:
-                    # Split at IEND + CRC (4 bytes after IEND)
-                    split_pos = iend_pos + 8
-                    png_part = image_data[:split_pos]
-                    
-                    # Create executable section with proper PE header alignment
-                    exe_section = b'\n' * 16 + exe_data  # Add padding for alignment
-                    
-                    # Combine: PNG + padding + executable
-                    return png_part + exe_section
+            # Method 1: PE with image data in overlay section
+            # This puts the executable first (so Windows can execute it)
+            # and stores the image in the PE overlay section
             
-            # For other image formats, append executable data
-            # Add some padding to separate image from executable
-            padding = b'\x00' * 64
-            return image_data + padding + exe_data
+            if exe_data.startswith(b'MZ'):  # Windows PE executable
+                # Create a polyglot where the EXE comes first and image is in overlay
+                
+                # Add image data as PE overlay (after the main executable sections)
+                # PE loaders ignore overlay data, but we can access it programmatically
+                
+                # Create a separator/marker
+                image_marker = b'\n\n# IMAGE_DATA_SECTION\n'
+                image_marker += b'# This section contains embedded image data\n'
+                image_marker += b'# Image format: ' + self._detect_image_format(image_data) + b'\n'
+                image_marker += b'# Image size: ' + str(len(image_data)).encode() + b' bytes\n'
+                image_marker += b'\n'
+                
+                # Combine: EXE + marker + image data
+                polyglot_data = exe_data + image_marker + image_data
+                
+                self.logger.info(f"Created PE polyglot: {len(polyglot_data)} bytes")
+                return polyglot_data
+            
+            else:
+                # If not a PE file, try reverse approach for compatibility
+                self.logger.warning("Non-PE executable detected, using alternative method")
+                
+                # For non-PE executables, create a simple concatenation
+                # with proper alignment
+                padding = b'\x00' * 16  # Minimal padding
+                return exe_data + padding + image_data
             
         except Exception as e:
             self.logger.error(f"Error creating polyglot structure: {e}")
-            # Fallback to simple concatenation
-            return image_data + b'\x00' * 32 + exe_data
+            # Fallback: simple concatenation with warning
+            self.logger.warning("Using fallback polyglot method")
+            return exe_data + b'\x00' * 32 + image_data
+    
+    def _detect_image_format(self, image_data: bytes) -> bytes:
+        """Detect and return image format as bytes."""
+        if image_data.startswith(b'\x89PNG'):
+            return b'PNG'
+        elif image_data.startswith(b'BM'):
+            return b'BMP'
+        elif image_data.startswith(b'\xff\xd8\xff'):
+            return b'JPEG'
+        elif image_data.startswith(b'GIF8'):
+            return b'GIF'
+        elif image_data.startswith(b'II*\x00') or image_data.startswith(b'MM\x00*'):
+            return b'TIFF'
+        else:
+            return b'UNKNOWN'
     
     def _serialize_script_data(self, script_data: Dict) -> bytes:
         """Serialize script data for embedding."""
@@ -297,10 +323,11 @@ class SelfExecutingEngine:
                 is_elf = header.startswith(b'\x7fELF')  # Linux ELF
                 is_macho = header.startswith(b'\xfe\xed\xfa\xce')  # macOS Mach-O
                 
-                # Check for image marker
+                # Check for image marker (both old and new formats)
                 f.seek(0)
                 content = f.read()
-                has_image_marker = b'__IMAGE_DATA_START__' in content
+                has_image_marker = (b'__IMAGE_DATA_START__' in content or 
+                                   b'IMAGE_DATA_SECTION' in content)
                 
                 return {
                     'is_polyglot': any([is_pe, is_elf, is_macho]) and has_image_marker,
