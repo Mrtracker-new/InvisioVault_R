@@ -232,7 +232,7 @@ class AdvancedPolyglotCreator:
         # For now, we'll use the simpler overlay approach
         return original_pe
     
-    def create_hybrid_polyglot_v2(self, pe_path: str, png_path: str = None, 
+    def create_hybrid_polyglot_v2(self, pe_path: str, png_path: Optional[str] = None, 
                                  output_path: str = "polyglot_hybrid.exe") -> bool:
         """
         Create a hybrid polyglot using the most reliable method.
