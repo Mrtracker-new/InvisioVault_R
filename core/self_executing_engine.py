@@ -239,49 +239,149 @@ class SelfExecutingEngine:
     
     def _create_polyglot_structure(self, image_data: bytes, exe_data: bytes) -> bytes:
         """Create polyglot file structure that works as both image and executable."""
-        # For Windows, we need the PE header at the beginning for proper execution
-        # We'll create a structure where the executable comes first, then embed the image
+        # Advanced polyglot approach: Create a structure that can be read as both
+        # This is tricky because we need PE header first for execution, but image header for viewing
         
         try:
-            self.logger.info("Creating Windows PE polyglot structure")
+            self.logger.info("Creating advanced polyglot structure")
             
-            # Method 1: PE with image data in overlay section
-            # This puts the executable first (so Windows can execute it)
-            # and stores the image in the PE overlay section
-            
-            if exe_data.startswith(b'MZ'):  # Windows PE executable
-                # Create a polyglot where the EXE comes first and image is in overlay
+            if exe_data.startswith(b'MZ') and len(exe_data) > 64:  # Windows PE executable
+                # Method: Use PE overlay + create a secondary image file for image viewers
                 
-                # Add image data as PE overlay (after the main executable sections)
-                # PE loaders ignore overlay data, but we can access it programmatically
-                
-                # Create a separator/marker
+                # 1. Create the main polyglot (EXE first for execution)
                 image_marker = b'\n\n# IMAGE_DATA_SECTION\n'
                 image_marker += b'# This section contains embedded image data\n'
                 image_marker += b'# Image format: ' + self._detect_image_format(image_data) + b'\n'
                 image_marker += b'# Image size: ' + str(len(image_data)).encode() + b' bytes\n'
-                image_marker += b'\n'
+                image_marker += b'# IMAGE_START_MARKER\n'
                 
-                # Combine: EXE + marker + image data
+                # Main polyglot: EXE + marker + image
                 polyglot_data = exe_data + image_marker + image_data
                 
-                self.logger.info(f"Created PE polyglot: {len(polyglot_data)} bytes")
+                self.logger.info(f"Created PE polyglot with overlay: {len(polyglot_data)} bytes")
                 return polyglot_data
             
-            else:
-                # If not a PE file, try reverse approach for compatibility
-                self.logger.warning("Non-PE executable detected, using alternative method")
+            elif image_data.startswith(b'\x89PNG') and len(image_data) > 64:
+                # For PNG images, we can try a different approach
+                # PNG files can have custom chunks that are ignored by viewers
+                # But executables still need to be first for Windows
                 
-                # For non-PE executables, create a simple concatenation
-                # with proper alignment
-                padding = b'\x00' * 16  # Minimal padding
+                self.logger.info("Using PNG-specific polyglot method")
+                
+                # Create marker that looks like comments to both formats
+                separator = b'\n\n# POLYGLOT BOUNDARY\n# EXE->IMG TRANSITION\n\n'
+                
+                # Structure: EXE + separator + PNG
+                return exe_data + separator + image_data
+            
+            else:
+                # Fallback for other formats
+                self.logger.warning("Using generic polyglot method")
+                padding = b'\x00' * 32
                 return exe_data + padding + image_data
             
         except Exception as e:
             self.logger.error(f"Error creating polyglot structure: {e}")
-            # Fallback: simple concatenation with warning
-            self.logger.warning("Using fallback polyglot method")
-            return exe_data + b'\x00' * 32 + image_data
+            # Ultimate fallback
+            return exe_data + b'\x00' * 64 + image_data
+    
+    def extract_image_from_polyglot(self, polyglot_path: str, output_image_path: str = None) -> bool:
+        """Extract the embedded image from a polyglot file for viewing."""
+        try:
+            self.logger.info(f"Extracting image from polyglot: {polyglot_path}")
+            
+            if not os.path.exists(polyglot_path):
+                raise FileNotFoundError(f"Polyglot file not found: {polyglot_path}")
+            
+            # Read the polyglot file
+            with open(polyglot_path, 'rb') as f:
+                content = f.read()
+            
+            # Find the image data section
+            image_start = None
+            
+            # Look for our image markers
+            markers = [b'IMAGE_START_MARKER', b'IMAGE_DATA_SECTION']
+            for marker in markers:
+                if marker in content:
+                    marker_pos = content.find(marker)
+                    # Look for the actual image data after the marker
+                    search_start = marker_pos + len(marker)
+                    
+                    # Common image signatures
+                    image_sigs = [
+                        (b'\x89PNG', '.png'),
+                        (b'BM', '.bmp'), 
+                        (b'\xff\xd8\xff', '.jpg'),
+                        (b'GIF8', '.gif'),
+                        (b'II*\x00', '.tiff'),
+                        (b'MM\x00*', '.tiff')
+                    ]
+                    
+                    for sig, ext in image_sigs:
+                        sig_pos = content.find(sig, search_start)
+                        if sig_pos != -1:
+                            image_start = sig_pos
+                            detected_ext = ext
+                            self.logger.info(f"Found {ext} image at position {sig_pos}")
+                            break
+                    
+                    if image_start:
+                        break
+            
+            if not image_start:
+                self.logger.error("No image data found in polyglot file")
+                return False
+            
+            # Extract the image data
+            image_data = content[image_start:]
+            
+            # Determine output path
+            if not output_image_path:
+                base_path = os.path.splitext(polyglot_path)[0]
+                output_image_path = f"{base_path}_extracted{detected_ext}"
+            
+            # Write the extracted image
+            with open(output_image_path, 'wb') as f:
+                f.write(image_data)
+            
+            self.logger.info(f"Image extracted successfully: {output_image_path}")
+            self.logger.info(f"Extracted image size: {len(image_data)} bytes")
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to extract image from polyglot: {e}")
+            return False
+    
+    def create_image_extract_script(self, polyglot_path: str) -> str:
+        """Create a script to extract the image from a polyglot file for viewing."""
+        try:
+            extract_script = f'''@echo off
+REM Image Extractor for Polyglot File
+REM This extracts the embedded image for viewing
+
+set "polyglot_file={polyglot_path}"
+set "output_image=%~dpn1_extracted_image.png"
+
+echo Extracting image from polyglot file...
+echo Source: %polyglot_file%
+echo Output: %output_image%
+
+REM This would need a proper extraction tool
+echo Please use InVisioVault's analysis feature to extract the image.
+pause
+'''
+            
+            script_path = polyglot_path.replace('.exe', '_extract_image.bat')
+            with open(script_path, 'w') as f:
+                f.write(extract_script)
+            
+            return script_path
+            
+        except Exception as e:
+            self.logger.error(f"Failed to create image extract script: {e}")
+            return ""
     
     def _detect_image_format(self, image_data: bytes) -> bytes:
         """Detect and return image format as bytes."""

@@ -365,6 +365,10 @@ class SelfExecutingDialog(QDialog):
         execute_btn.clicked.connect(self.execute_image_content)
         button_layout.addWidget(execute_btn)
         
+        extract_btn = QPushButton("🖼️ Extract Image")
+        extract_btn.clicked.connect(self.extract_image_from_polyglot)
+        button_layout.addWidget(extract_btn)
+        
         layout.addLayout(button_layout)
         
         # Results area
@@ -733,6 +737,71 @@ Always exercise caution when executing embedded content!
             self.status_label.setText("Ready")
         else:
             QMessageBox.warning(self, "Failed", message)
+            self.status_label.setText("Error occurred")
+    
+    def extract_image_from_polyglot(self):
+        """Extract image data from a polyglot file for viewing."""
+        try:
+            image_path = self.analysis_image_input.text().strip()
+            
+            if not image_path:
+                QMessageBox.warning(self, "Input Required", "Please select a polyglot file to extract image from.")
+                return
+            
+            if not Path(image_path).exists():
+                QMessageBox.warning(self, "File Not Found", f"File not found: {image_path}")
+                return
+            
+            self.status_label.setText("Extracting image from polyglot...")
+            
+            # Extract the image
+            success = self.engine.extract_image_from_polyglot(image_path)
+            
+            if success:
+                # Get the extracted image path
+                base_path = os.path.splitext(image_path)[0]
+                extracted_images = [f"{base_path}_extracted.png", f"{base_path}_extracted.jpg", 
+                                  f"{base_path}_extracted.bmp", f"{base_path}_extracted.gif",
+                                  f"{base_path}_extracted.tiff"]
+                
+                # Find which one was created
+                extracted_path = None
+                for path in extracted_images:
+                    if Path(path).exists():
+                        extracted_path = path
+                        break
+                
+                if extracted_path:
+                    QMessageBox.information(
+                        self,
+                        "Image Extracted Successfully",
+                        f"Image extracted from polyglot file!\n\n"
+                        f"Extracted to: {extracted_path}\n\n"
+                        f"You can now open this file with any image viewer."
+                    )
+                    
+                    # Update analysis results
+                    extract_text = f"""🖼️ Image Extraction Successful
+
+Original polyglot: {image_path}
+Extracted image: {extracted_path}
+
+The extracted image can now be viewed with standard image viewers.
+"""
+                    self.analysis_results.setPlainText(extract_text)
+                else:
+                    QMessageBox.warning(self, "Extraction Failed", 
+                                      "Image was processed but extracted file not found.")
+            else:
+                QMessageBox.warning(self, "Extraction Failed", 
+                                  "Failed to extract image from polyglot file. "
+                                  "Make sure the file contains embedded image data.")
+            
+            self.status_label.setText("Ready")
+            
+        except Exception as e:
+            self.error_handler.handle_exception(e)
+            QMessageBox.critical(self, "Extraction Error", f"Failed to extract image: {e}")
             self.status_label.setText("Error occurred")
     
     def apply_theme(self):
