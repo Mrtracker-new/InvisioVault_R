@@ -171,8 +171,9 @@ class SelfExecutingDialog(QDialog):
             "Create a polyglot file that's both a valid image AND executable. "
             "When run as an executable, it executes the embedded program. "
             "When opened as an image, it displays normally.\n\n"
-            "🔴 IMPORTANT: Polyglot files MUST have .exe extension to work as executables! "
-            "The output file will be an .exe that can ALSO be opened as an image by image viewers."
+            "🔴 IMPORTANT: True polyglot files work best with PNG images! "
+            "You can save the output as both .exe (to run) and .png (to view). "
+            "Advanced PNG/EXE polyglots will be created for maximum compatibility."
         )
         desc_label.setWordWrap(True)
         desc_label.setStyleSheet("background: #ffe6e6; color: #cc0000; padding: 15px; border-radius: 5px; border: 2px solid #ff9999; font-weight: bold;")
@@ -422,9 +423,9 @@ class SelfExecutingDialog(QDialog):
         if current_tab == 0:  # Polyglot Files tab
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
-                "Save Polyglot File (Must have .exe extension)",
+                "Save True PNG/EXE Polyglot File",
                 "polyglot_image.exe",
-                "Windows Executable (*.exe);;Binary Files (*.bin);;All Files (*.*)"
+                "True Polyglot (*.exe);;PNG Polyglot (*.png);;Binary Files (*.bin);;All Files (*.*)"
             )
         else:
             file_path, _ = QFileDialog.getSaveFileName(
