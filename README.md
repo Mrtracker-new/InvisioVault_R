@@ -495,29 +495,40 @@ This cutting-edge capability is fully integrated into the InVisioVault steganogr
 
 ### 🚀 **Quick Polyglot Creation**
 
-#### **🎯 Method 1: EXE-First (Recommended for Execution)**
+#### **🎯 Method 1: Using InVisioVault GUI (Recommended)**
 ```bash
-# Create polyglot with maximum execution compatibility
-python advanced_polyglot.py program.exe image.png output.exe
+# Launch InVisioVault application
+python main.py
 
-# Result: File runs as .exe, displays as .png when renamed
+# Navigate to "Self-Executing" in the sidebar
+# Select "Polyglot File Creation"
+# Choose your image and executable files
+# Result: Professional polyglot with dual-format compatibility
 ```
 
-#### **🖼️ Method 2: PNG-First (Perfect Image Compatibility)**
-```bash
-# Create polyglot with perfect PNG compatibility
-python png_first_polyglot.py image.png program.exe output.png embedded
+#### **🖼️ Method 2: Direct Module Usage (Advanced)**
+```python
+# Using the advanced polyglot module directly
+from core.advanced_polyglot import AdvancedPolyglotCreator
+from core.self_executing_engine import SelfExecutingEngine
 
-# Extract and run when needed
-python png_first_polyglot.py --extract output.png
+# Create polyglot using the engine
+engine = SelfExecutingEngine()
+engine.create_polyglot_executable(
+    image_path="image.png",
+    executable_path="program.exe", 
+    output_path="polyglot_output.exe"
+)
 ```
 
-#### **⚡ Method 3: True Simultaneous (Revolutionary)**
+#### **⚡ Method 3: Command-Line Verification**
 ```bash
-# Create revolutionary simultaneous format polyglot
-python polyglot_creator.py image.png program.exe true_polyglot
+# Verify and test existing polyglot files
+python polyglot_verifier.py polyglot_file.exe
 
-# Works perfectly as both formats without any modification
+# Test dual-format compatibility
+# 1. Run as executable: polyglot_file.exe
+# 2. View as image: copy and rename to .png extension
 ```
 
 ### 📊 **Polyglot Comparison Matrix**
@@ -790,10 +801,11 @@ python test_extraction_msg.py
 python test_final_decoy.py
 
 # PNG/EXE Polyglot creation and testing (NEW!)
-python polyglot_creator.py image.png program.exe polyglot_file
-python advanced_polyglot.py program.exe image.png output.exe
-python png_first_polyglot.py image.png program.exe output.png embedded
+# Use InVisioVault GUI: python main.py -> "Self-Executing" -> "Polyglot File Creation"
+# Or verify existing polyglots:
 python polyglot_verifier.py polyglot_file
+# Or use direct module access (advanced):
+# from core.self_executing_engine import SelfExecutingEngine
 ```
 
 ### 🛠️ **Development Tools**
@@ -909,7 +921,8 @@ For complete build instructions, troubleshooting, and advanced options:
 │   ├── multi_decoy_engine.py     # Multi-layer security
 │   ├── two_factor_engine.py      # 2FA authentication
 │   ├── decoy_engine.py           # Plausible deniability
-│   └── self_executing_engine.py  # Self-executing images & polyglot files
+│   ├── self_executing_engine.py  # Self-executing images & polyglot files
+│   └── advanced_polyglot.py      # Advanced polyglot creation capabilities
 ├── 📚 docs/                      # Complete documentation
 │   ├── user_guide.md             # User manual
 │   ├── api_reference.md          # Developer API docs
