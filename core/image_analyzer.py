@@ -6,9 +6,10 @@ Comprehensive image analysis for steganographic capacity, quality assessment, an
 import math
 import statistics
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Union
+from typing import Dict, List, Optional, Tuple, Any, Union, TYPE_CHECKING
 from enum import Enum
 
+# Optional dependencies - graceful fallback if not available
 try:
     from PIL import Image
     import numpy as np
@@ -17,10 +18,24 @@ except ImportError:
     np = None
 
 try:
-    import scipy.ndimage
-    import scipy.signal
+    import scipy  # type: ignore # Optional dependency for advanced analysis
+    import scipy.ndimage  # type: ignore
+    import scipy.signal   # type: ignore
 except ImportError:
     scipy = None
+    # Create dummy modules to prevent attribute errors
+    class DummyModule:
+        def __getattr__(self, name):
+            def dummy_func(*args, **kwargs):
+                raise ImportError(f"scipy is not installed. Install with: pip install scipy")
+            return dummy_func
+    
+    if TYPE_CHECKING:
+        import scipy
+        import scipy.ndimage
+        import scipy.signal
+    else:
+        scipy = DummyModule()  # type: ignore
 
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
@@ -218,7 +233,7 @@ class ImageAnalyzer:
             self.logger.error(f"Error analyzing image properties: {e}")
             return {'error': str(e)}
     
-    def _prepare_image_array(self, img: Image.Image, analysis_level: AnalysisLevel) -> np.ndarray:
+    def _prepare_image_array(self, img: Image.Image, analysis_level: AnalysisLevel):
         """Prepare image array for analysis with optional optimization."""
         # Convert to RGB if necessary
         if img.mode not in ['RGB', 'RGBA']:
@@ -236,7 +251,7 @@ class ImageAnalyzer:
         
         return np.array(img)
     
-    def _analyze_capacity(self, img: Image.Image, img_array: np.ndarray) -> Dict[str, Any]:
+    def _analyze_capacity(self, img: Image.Image, img_array) -> Dict[str, Any]:
         """Analyze steganographic capacity."""
         try:
             width, height = img.size
@@ -268,7 +283,7 @@ class ImageAnalyzer:
             self.logger.error(f"Error analyzing capacity: {e}")
             return {'error': str(e)}
     
-    def _analyze_quality_metrics(self, img_array: np.ndarray, analysis_level: AnalysisLevel) -> Dict[str, Any]:
+    def _analyze_quality_metrics(self, img_array, analysis_level: AnalysisLevel) -> Dict[str, Any]:
         """Analyze image quality metrics."""
         try:
             metrics = {}
@@ -297,7 +312,7 @@ class ImageAnalyzer:
             self.logger.error(f"Error analyzing quality metrics: {e}")
             return {'error': str(e)}
     
-    def _calculate_entropy(self, img_array: np.ndarray) -> Dict[str, float]:
+    def _calculate_entropy(self, img_array) -> Dict[str, Any]:
         """Calculate Shannon entropy for image channels."""
         try:
             if len(img_array.shape) == 2:
@@ -331,7 +346,7 @@ class ImageAnalyzer:
             self.logger.error(f"Error calculating entropy: {e}")
             return {'error': str(e)}
     
-    def _calculate_noise_level(self, img_array: np.ndarray) -> Dict[str, float]:
+    def _calculate_noise_level(self, img_array) -> Dict[str, Any]:
         """Calculate noise level using standard deviation."""
         try:
             if len(img_array.shape) == 2:
@@ -356,7 +371,7 @@ class ImageAnalyzer:
             self.logger.error(f"Error calculating noise level: {e}")
             return {'error': str(e)}
     
-    def _calculate_texture_complexity(self, img_array: np.ndarray) -> Dict[str, float]:
+    def _calculate_texture_complexity(self, img_array) -> Dict[str, Any]:
         """Calculate texture complexity using local variance."""
         try:
             if len(img_array.shape) == 3:
@@ -369,14 +384,16 @@ class ImageAnalyzer:
             kernel_size = 5
             kernel = np.ones((kernel_size, kernel_size)) / (kernel_size ** 2)
             
-            # Mean filter
-            mean_filtered = scipy.ndimage.convolve(gray, kernel) if scipy else np.mean(gray)
-            
-            # Variance calculation
-            if scipy:
-                variance = scipy.ndimage.convolve((gray - mean_filtered) ** 2, kernel)
-                complexity = float(np.mean(variance))
-            else:
+            # Mean filter and variance calculation
+            try:
+                if hasattr(scipy, 'ndimage') and scipy.ndimage:
+                    mean_filtered = scipy.ndimage.convolve(gray, kernel)
+                    variance = scipy.ndimage.convolve((gray - mean_filtered) ** 2, kernel)
+                    complexity = float(np.mean(variance))
+                else:
+                    # Fallback without scipy
+                    complexity = float(np.var(gray))
+            except (ImportError, AttributeError):
                 # Fallback without scipy
                 complexity = float(np.var(gray))
             
@@ -389,7 +406,7 @@ class ImageAnalyzer:
             self.logger.error(f"Error calculating texture complexity: {e}")
             return {'error': str(e)}
     
-    def _analyze_color_distribution(self, img_array: np.ndarray) -> Dict[str, Any]:
+    def _analyze_color_distribution(self, img_array) -> Dict[str, Any]:
         """Analyze color distribution and uniformity."""
         try:
             if len(img_array.shape) == 2:
@@ -424,7 +441,7 @@ class ImageAnalyzer:
             self.logger.error(f"Error analyzing color distribution: {e}")
             return {'error': str(e)}
     
-    def _calculate_edge_density(self, img_array: np.ndarray) -> Dict[str, float]:
+    def _calculate_edge_density(self, img_array) -> Dict[str, Any]:
         """Calculate edge density using gradient magnitude."""
         try:
             if len(img_array.shape) == 3:
@@ -434,11 +451,17 @@ class ImageAnalyzer:
                 gray = img_array
             
             # Calculate gradients
-            if scipy:
-                grad_x = scipy.ndimage.sobel(gray, axis=1)
-                grad_y = scipy.ndimage.sobel(gray, axis=0)
-                gradient_magnitude = np.sqrt(grad_x**2 + grad_y**2)
-            else:
+            try:
+                if hasattr(scipy, 'ndimage') and scipy.ndimage:
+                    grad_x = scipy.ndimage.sobel(gray, axis=1)
+                    grad_y = scipy.ndimage.sobel(gray, axis=0)
+                    gradient_magnitude = np.sqrt(grad_x**2 + grad_y**2)
+                else:
+                    # Simple gradient calculation without scipy
+                    grad_x = np.gradient(gray, axis=1)
+                    grad_y = np.gradient(gray, axis=0)
+                    gradient_magnitude = np.sqrt(grad_x**2 + grad_y**2)
+            except (ImportError, AttributeError):
                 # Simple gradient calculation without scipy
                 grad_x = np.gradient(gray, axis=1)
                 grad_y = np.gradient(gray, axis=0)
@@ -458,7 +481,7 @@ class ImageAnalyzer:
             self.logger.error(f"Error calculating edge density: {e}")
             return {'error': str(e)}
     
-    def _detect_compression_artifacts(self, img_array: np.ndarray) -> Dict[str, Any]:
+    def _detect_compression_artifacts(self, img_array) -> Dict[str, Any]:
         """Detect potential compression artifacts."""
         try:
             # Simple artifact detection based on block patterns
@@ -481,9 +504,9 @@ class ImageAnalyzer:
                 variance_std = np.std(block_variance)
                 
                 # Artifacts likely if block variances are very uniform
-                artifact_likelihood = max(0, 1.0 - (variance_std / avg_block_variance)) if avg_block_variance > 0 else 0
+                artifact_likelihood = max(0.0, 1.0 - (variance_std / avg_block_variance)) if avg_block_variance > 0 else 0.0
             else:
-                artifact_likelihood = 0
+                artifact_likelihood = 0.0
             
             return {
                 'artifact_likelihood': float(artifact_likelihood),
@@ -495,7 +518,7 @@ class ImageAnalyzer:
             self.logger.error(f"Error detecting compression artifacts: {e}")
             return {'error': str(e)}
     
-    def _analyze_lsb_patterns(self, img_array: np.ndarray, analysis_level: AnalysisLevel) -> Dict[str, Any]:
+    def _analyze_lsb_patterns(self, img_array, analysis_level: AnalysisLevel) -> Dict[str, Any]:
         """Analyze LSB (Least Significant Bit) patterns."""
         try:
             results = {}
@@ -551,7 +574,7 @@ class ImageAnalyzer:
             self.logger.error(f"Error analyzing LSB patterns: {e}")
             return {'error': str(e)}
     
-    def _detect_lsb_patterns(self, lsb_plane: np.ndarray) -> float:
+    def _detect_lsb_patterns(self, lsb_plane) -> float:
         """Detect anomalous patterns in LSB plane."""
         try:
             # Chi-square test for randomness
@@ -570,7 +593,7 @@ class ImageAnalyzer:
             self.logger.error(f"Error detecting LSB patterns: {e}")
             return 0.0
     
-    def _analyze_security_aspects(self, img_array: np.ndarray) -> Dict[str, Any]:
+    def _analyze_security_aspects(self, img_array) -> Dict[str, Any]:
         """Analyze security-related aspects for steganography."""
         try:
             security_metrics = {}
@@ -582,13 +605,17 @@ class ImageAnalyzer:
                 gray = img_array
             
             # Calculate autocorrelation to measure predictability
-            if scipy:
-                # Simple autocorrelation approximation
-                autocorr = scipy.signal.correlate2d(gray, gray, mode='same')
-                predictability = float(np.max(autocorr) / np.mean(autocorr))
-            else:
+            try:
+                if hasattr(scipy, 'signal') and scipy.signal:
+                    # Simple autocorrelation approximation
+                    autocorr = scipy.signal.correlate2d(gray, gray, mode='same')
+                    predictability = float(np.max(autocorr) / np.mean(autocorr))
+                else:
+                    # Fallback: use variance as predictability measure
+                    predictability = float(np.var(gray) / np.mean(gray)) if np.mean(gray) > 0 else 0.0
+            except (ImportError, AttributeError):
                 # Fallback: use variance as predictability measure
-                predictability = float(np.var(gray) / np.mean(gray)) if np.mean(gray) > 0 else 0
+                predictability = float(np.var(gray) / np.mean(gray)) if np.mean(gray) > 0 else 0.0
             
             security_metrics['predictability_score'] = predictability
             security_metrics['unpredictability_rating'] = 'high' if predictability < 2 else 'medium' if predictability < 5 else 'low'

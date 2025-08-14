@@ -24,31 +24,35 @@ from utils.error_handler import ErrorHandler
 from core.steganography_engine import SteganographyEngine
 from core.encryption_engine import EncryptionEngine, SecurityLevel
 
-if TYPE_CHECKING:
+# Optional dependencies - graceful fallback if not available
+try:
+    from PIL import Image
     import numpy as np
-    from PIL import Image as PILImage
-    try:
-        import scipy
-        import scipy.ndimage  # type: ignore
-        import scipy.signal   # type: ignore
-    except ImportError:
-        scipy = None
-else:
-    try:
-        from PIL import Image
-        import numpy as np
-        PILImage = Image
-    except ImportError:
-        Image = None
-        np = None
-        PILImage = None
+    PILImage = Image
+except ImportError:
+    Image = None
+    np = None
+    PILImage = None
+
+try:
+    import scipy  # type: ignore # Optional dependency for advanced analysis
+    import scipy.ndimage  # type: ignore
+    import scipy.signal   # type: ignore
+except ImportError:
+    scipy = None
+    # Create dummy modules to prevent attribute errors
+    class DummyModule:
+        def __getattr__(self, name):
+            def dummy_func(*args, **kwargs):
+                raise ImportError(f"scipy is not installed. Install with: pip install scipy")
+            return dummy_func
     
-    try:
-        import scipy  # type: ignore # Optional dependency for advanced analysis
+    if TYPE_CHECKING:
+        import scipy
         import scipy.ndimage
         import scipy.signal
-    except ImportError:
-        scipy = None
+    else:
+        scipy = DummyModule()  # type: ignore
 
 
 class AnalysisWorkerThread(QThread):
