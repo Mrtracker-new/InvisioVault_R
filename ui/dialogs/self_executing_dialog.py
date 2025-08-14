@@ -166,14 +166,16 @@ class SelfExecutingDialog(QDialog):
         tab = QWidget()
         layout = QVBoxLayout(tab)
         
-        # Description
+        # Description with important note about file extensions
         desc_label = QLabel(
             "Create a polyglot file that's both a valid image AND executable. "
             "When run as an executable, it executes the embedded program. "
-            "When opened as an image, it displays normally."
+            "When opened as an image, it displays normally.\n\n"
+            "🔴 IMPORTANT: Polyglot files MUST have .exe extension to work as executables! "
+            "The output file will be an .exe that can ALSO be opened as an image by image viewers."
         )
         desc_label.setWordWrap(True)
-        desc_label.setStyleSheet("background: #f0f0f0; padding: 10px; border-radius: 5px;")
+        desc_label.setStyleSheet("background: #ffe6e6; padding: 15px; border-radius: 5px; border: 2px solid #ff9999;")
         layout.addWidget(desc_label)
         
         # Form layout
@@ -409,13 +411,24 @@ class SelfExecutingDialog(QDialog):
         layout.addWidget(self.status_label)
     
     def browse_output_file(self, line_edit):
-        """Browse for output file location."""
-        file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Select Output File",
-            "",
-            "All Files (*.*)"
-        )
+        """Browse for output file location - for polyglot files."""
+        # Get the current tab to determine appropriate file filter
+        current_tab = self.tab_widget.currentIndex()
+        
+        if current_tab == 0:  # Polyglot Files tab
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Save Polyglot File (Must have .exe extension)",
+                "polyglot_image.exe",
+                "Windows Executable (*.exe);;Binary Files (*.bin);;All Files (*.*)"
+            )
+        else:
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Select Output File",
+                "",
+                "All Files (*.*)"
+            )
         
         if file_path:
             line_edit.setText(file_path)
