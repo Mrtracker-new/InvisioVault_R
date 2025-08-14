@@ -141,7 +141,7 @@ class SelfExecutingDialog(QDialog):
     def create_header(self, layout):
         """Create dialog header."""
         header_frame = QFrame()
-        header_frame.setFrameStyle(QFrame.StyledPanel)
+        header_frame.setFrameStyle(QFrame.Shape.StyledPanel)
         header_layout = QVBoxLayout(header_frame)
         
         # Title
@@ -150,11 +150,11 @@ class SelfExecutingDialog(QDialog):
         title_font.setPointSize(16)
         title_font.setBold(True)
         title_label.setFont(title_font)
-        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         # Subtitle
         subtitle_label = QLabel("Create images that can execute embedded code when triggered")
-        subtitle_label.setAlignment(Qt.AlignCenter)
+        subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitle_label.setStyleSheet("color: #666; font-style: italic;")
         
         header_layout.addWidget(title_label)
@@ -643,11 +643,11 @@ Error: {result.get('error', 'None')}
                 "Confirm Execution",
                 "Are you sure you want to execute the embedded content?\n\n"
                 "⚠️ WARNING: This could be potentially dangerous!",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
             )
             
-            if reply != QMessageBox.Yes:
+            if reply != QMessageBox.StandardButton.Yes:
                 return
             
             self.status_label.setText("Executing content...")
