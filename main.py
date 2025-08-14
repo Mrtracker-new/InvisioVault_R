@@ -14,14 +14,18 @@ Users are responsible for compliance with local laws and regulations.
 
 import sys
 import os
+import warnings
 from pathlib import Path
 
 # Add project root to Python path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
+# Suppress Qt warnings about unhandled schemes (common Windows issue)
+os.environ['QT_LOGGING_RULES'] = '*.debug=false;qt.qpa.mime=false'
+
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import Qt, QDir
+from PySide6.QtCore import Qt, QDir, qInstallMessageHandler, QtMsgType
 from PySide6.QtGui import QIcon
 
 from ui.main_window import MainWindow
@@ -30,8 +34,30 @@ from utils.logger import Logger
 from utils.error_handler import ErrorHandler
 
 
+def qt_message_handler(msg_type, context, message):
+    """Custom Qt message handler to filter unwanted warnings."""
+    # Filter out known harmless Qt warnings
+    if "Unhandled scheme" in message:
+        return  # Suppress this specific warning
+    if "QWindowsNativeFileDialogBase::shellItem" in message:
+        return  # Suppress file dialog warnings
+    if "data" in message and "scheme" in message:
+        return  # Suppress scheme-related warnings
+    
+    # Allow other Qt messages to be printed (optional)
+    if msg_type == QtMsgType.QtWarningMsg:
+        print(f"Qt Warning: {message}")
+    elif msg_type == QtMsgType.QtCriticalMsg:
+        print(f"Qt Critical: {message}")
+    elif msg_type == QtMsgType.QtFatalMsg:
+        print(f"Qt Fatal: {message}")
+
+
 def setup_application():
     """Initialize application settings and resources."""
+    # Install Qt message handler to filter warnings
+    qInstallMessageHandler(qt_message_handler)
+    
     # Initialize logging
     logger = Logger()
     logger.info("Starting InvisioVault application")
