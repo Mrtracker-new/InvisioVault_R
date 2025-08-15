@@ -32,6 +32,7 @@ from ui.main_window import MainWindow
 from utils.config_manager import ConfigManager
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
+from core.security_service import SecurityService
 
 
 def qt_message_handler(msg_type, context, message):
@@ -68,6 +69,10 @@ def setup_application():
     # Initialize error handling
     error_handler = ErrorHandler()
     
+    # Initialize security service
+    security_service = SecurityService()
+    logger.info("Security service initialized")
+    
     # Create QApplication
     app = QApplication(sys.argv)
     app.setApplicationName("InvisioVault")
@@ -84,17 +89,17 @@ def setup_application():
     # The AA_EnableHighDpiScaling and AA_UseHighDpiPixmaps attributes are deprecated
     # and no longer needed as high DPI support is built-in
     
-    return app, logger, config, error_handler
+    return app, logger, config, error_handler, security_service
 
 
 def main():
     """Main application function."""
     try:
         # Setup application
-        app, logger, config, error_handler = setup_application()
+        app, logger, config, error_handler, security_service = setup_application()
         
         # Create main window
-        main_window = MainWindow()
+        main_window = MainWindow(security_service)
         main_window.show()
         
         logger.info("Application started successfully")

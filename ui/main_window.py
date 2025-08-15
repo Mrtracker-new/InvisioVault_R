@@ -19,18 +19,20 @@ from PySide6.QtGui import QAction, QIcon, QFont, QPixmap
 from utils.logger import Logger
 from utils.config_manager import ConfigManager, ConfigSection
 from utils.error_handler import ErrorHandler
+from core.security_service import SecurityService
 
 
 class MainWindow(QMainWindow):
     """Main application window with navigation and operation panels."""
     
-    def __init__(self):
+    def __init__(self, security_service: SecurityService = None):
         super().__init__()
         
         # Initialize components
         self.logger = Logger()
         self.config = ConfigManager()
         self.error_handler = ErrorHandler()
+        self.security_service = security_service or SecurityService()
         
         # Window state
         self.current_operation = None
@@ -43,6 +45,9 @@ class MainWindow(QMainWindow):
         
         # Load settings
         self.load_window_state()
+        
+        # Update initial security status
+        self.update_security_status()
         
         self.logger.info("Main window initialized")
     
@@ -824,6 +829,20 @@ class MainWindow(QMainWindow):
         
         self.statusBar().showMessage("Ready")
         
+        # Security status label
+        self.security_status_label = QLabel("🔓 No Authentication")
+        self.security_status_label.setStyleSheet("""
+            QLabel {
+                color: #d32f2f;
+                font-weight: bold;
+                padding: 4px 8px;
+                border: 1px solid #d32f2f;
+                border-radius: 4px;
+                background-color: #ffebee;
+            }
+        """)
+        self.statusBar().addPermanentWidget(self.security_status_label)
+        
         # Progress bar (hidden by default)
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
@@ -859,7 +878,7 @@ class MainWindow(QMainWindow):
         """Show the enhanced file hiding dialog with anti-detection capabilities."""
         try:
             from ui.dialogs.enhanced_hide_files_dialog import EnhancedHideFilesDialog
-            dialog = EnhancedHideFilesDialog(self)
+            dialog = EnhancedHideFilesDialog(self.security_service, self)
             dialog.exec()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to open hide files dialog:\n{str(e)}")
@@ -992,6 +1011,25 @@ class MainWindow(QMainWindow):
         
         self.progress_bar.setVisible(False)
         self.statusBar().showMessage("Ready")
+    
+    def update_security_status(self):
+        """Update the security status display - simplified for offline application."""
+        try:
+            # For offline application, show simple ready status
+            self.security_status_label.setText("🔓 Local Mode - Ready")
+            self.security_status_label.setStyleSheet("""
+                QLabel {
+                    color: #388e3c;
+                    font-weight: bold;
+                    padding: 4px 8px;
+                    border: 1px solid #388e3c;
+                    border-radius: 4px;
+                    background-color: #e8f5e8;
+                }
+            """)
+        except Exception as e:
+            self.logger.error(f"Failed to update security status: {e}")
+    
     
     def closeEvent(self, event):
         """Handle application close event."""

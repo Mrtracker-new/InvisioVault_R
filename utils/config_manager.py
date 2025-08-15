@@ -35,7 +35,14 @@ class ConfigManager:
             "default_security_level": "standard",
             "enable_keyfile_auth": False,
             "secure_delete_passes": 3,
-            "session_timeout_minutes": 30
+            "session_timeout_minutes": 30,
+            # SecurityManager-specific configurations
+            "max_failed_attempts": 5,
+            "lockout_duration_minutes": 15,
+            "password_history_size": 5,
+            "require_2fa": False,
+            "security_policy": "standard",
+            "enable_audit_logging": True
         },
         ConfigSection.PERFORMANCE.value: {
             "max_threads": 4,

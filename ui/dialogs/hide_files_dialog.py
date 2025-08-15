@@ -23,6 +23,7 @@ from utils.error_handler import ErrorHandler
 from core.steganography_engine import SteganographyEngine
 from core.encryption_engine import EncryptionEngine, SecurityLevel
 from core.multi_decoy_engine import MultiDecoyEngine
+from core.security_service import SecurityService
 
 
 class ImageAnalysisWorker(QThread):
@@ -203,7 +204,7 @@ class HideWorkerThread(QThread):
 class HideFilesDialog(QDialog):
     """Dialog for hiding files in images using steganography."""
     
-    def __init__(self, parent=None):
+    def __init__(self, security_service: SecurityService = None, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Hide Files in Image")
         self.setModal(True)
@@ -214,6 +215,7 @@ class HideFilesDialog(QDialog):
         self.config = ConfigManager()
         self.error_handler = ErrorHandler()
         self.stego_engine = SteganographyEngine()
+        self.security_service = security_service or SecurityService()
         
         # State variables
         self.carrier_image_path = None
@@ -486,6 +488,10 @@ class HideFilesDialog(QDialog):
     def hide_files(self):
         """Start the file hiding operation."""
         try:
+            # Check authentication first
+            if not self._check_authentication():
+                return
+            
             # Validate inputs
             password = self.password_input.text().strip()
             if len(password) < 6:
@@ -638,6 +644,12 @@ class HideFilesDialog(QDialog):
         self.check_ready_state()
         
         self.logger.error(f"Image analysis failed: {error_message}")
+    
+    def _check_authentication(self) -> bool:
+        """Check if user is authenticated - simplified for offline application."""
+        # For offline steganography application, no authentication required
+        # Just return True to allow all operations
+        return True
     
     def cancel_operation(self):
         """Cancel the current operation."""

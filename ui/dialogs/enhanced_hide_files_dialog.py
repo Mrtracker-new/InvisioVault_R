@@ -19,6 +19,7 @@ from PySide6.QtGui import QFont, QPixmap
 
 from core.enhanced_steganography_engine import EnhancedSteganographyEngine
 from core.encryption_engine import EncryptionEngine, SecurityLevel
+from core.security_service import SecurityService
 from utils.logger import Logger
 from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler
@@ -252,7 +253,7 @@ class EnhancedHideWorkerThread(QThread):
 class EnhancedHideFilesDialog(QDialog):
     """Enhanced dialog for hiding files with anti-detection capabilities."""
     
-    def __init__(self, parent=None):
+    def __init__(self, security_service: SecurityService = None, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Enhanced Hide Files - Anti-Detection Steganography")
         self.setModal(True)
@@ -263,6 +264,7 @@ class EnhancedHideFilesDialog(QDialog):
         self.config = ConfigManager()
         self.error_handler = ErrorHandler()
         self.enhanced_engine = EnhancedSteganographyEngine(use_anti_detection=True)
+        self.security_service = security_service or SecurityService()
         
         # State variables
         self.carrier_image_path = None
@@ -762,6 +764,10 @@ class EnhancedHideFilesDialog(QDialog):
         if not self._validate_inputs():
             return
         
+        # Check authentication first
+        if not self._check_authentication():
+            return
+        
         # Get settings
         password = self.password_input.text().strip()
         security_levels = [SecurityLevel.STANDARD, SecurityLevel.HIGH, SecurityLevel.MAXIMUM]
@@ -1048,6 +1054,12 @@ Average Detection Risk: {overall_assessment.get('average_detection_risk', 0):.3f
             self.hide_button.setText("🛡️ Create Undetectable Stego")
         else:
             self.hide_button.setText("⚡ Create Fast Stego")
+    
+    def _check_authentication(self) -> bool:
+        """Check if user is authenticated - simplified for offline application."""
+        # For offline steganography application, no authentication required
+        # Just return True to allow all operations
+        return True
     
     def cancel_operation(self):
         """Cancel current operation or close dialog."""
