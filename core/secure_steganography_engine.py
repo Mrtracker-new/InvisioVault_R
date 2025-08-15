@@ -23,7 +23,12 @@ from pathlib import Path
 from PIL import Image
 import zlib
 import math
-from scipy import stats
+
+# Optional scipy import with fallback
+try:
+    from scipy import stats
+except ImportError:
+    stats = None
 
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
@@ -145,7 +150,7 @@ class SecureSteganographyEngine:
             return None
     
     def _create_secure_payload(self, data: bytes, password: str, compression_level: int, 
-                              carrier_array: np.ndarray = None) -> bytes:
+                              carrier_array: Optional[np.ndarray] = None) -> bytes:
         """Create secure payload with statistical masking and entropy management."""
         
         # 1. Compress data
@@ -386,7 +391,7 @@ class SecureSteganographyEngine:
             return None
     
     def _parse_secure_payload(self, payload: bytes, password: str, 
-                             carrier_array: np.ndarray = None) -> Optional[bytes]:
+                             carrier_array: Optional[np.ndarray] = None) -> Optional[bytes]:
         """
         Parse secure payload and verify integrity, with statistical masking reversal.
         """
