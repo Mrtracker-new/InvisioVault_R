@@ -155,14 +155,18 @@ def demonstrate_anti_detection_features():
         print("-"*50)
         
         print("📤 Extracting hidden data...")
-        extracted_encrypted = enhanced_engine.extract_data_enhanced(
+        extracted_result = enhanced_engine.extract_data_enhanced(
             stego_path=output_path,
             password=password,
             use_anti_detection=True
         )
         
+        # extract_data_enhanced returns a tuple (data, info), we need just the data
+        extracted_encrypted, extraction_info = extracted_result
+        
         if extracted_encrypted:
             print(f"✅ Extracted encrypted data: {len(extracted_encrypted)} bytes")
+            print(f"📊 Extraction method: {extraction_info.get('successful_method', 'unknown')}")
             
             # Decrypt
             extracted_data = encryption_engine.decrypt_with_metadata(extracted_encrypted, password)
