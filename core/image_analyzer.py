@@ -505,12 +505,16 @@ class ImageAnalyzer:
                 
                 # Artifacts likely if block variances are very uniform
                 artifact_likelihood = max(0.0, 1.0 - (variance_std / avg_block_variance)) if avg_block_variance > 0 else 0.0
+                block_variance_uniformity = float(variance_std / avg_block_variance) if avg_block_variance > 0 else 0
             else:
                 artifact_likelihood = 0.0
+                avg_block_variance = 0
+                variance_std = 0
+                block_variance_uniformity = 0
             
             return {
                 'artifact_likelihood': float(artifact_likelihood),
-                'block_variance_uniformity': float(variance_std / avg_block_variance) if avg_block_variance > 0 else 0,
+                'block_variance_uniformity': block_variance_uniformity,
                 'artifact_assessment': 'likely' if artifact_likelihood > 0.7 else 'possible' if artifact_likelihood > 0.4 else 'unlikely'
             }
             
