@@ -198,21 +198,45 @@ class AnalysisOperation(BaseOperation):
             else:
                 analysis_level = AnalysisLevel.BALANCED
             
-            self.update_status(f"Performing {analysis_level.value} image analysis...")
+            # Progressive updates for comprehensive analysis
+            if self.analysis_level == 'comprehensive':
+                self.update_status("Loading and preparing image for thorough analysis...")
+                self.update_progress(60)
+            else:
+                self.update_status(f"Performing {analysis_level.value} image analysis...")
+                self.update_progress(55)
             
             # Perform comprehensive analysis using ImageAnalyzer
             comprehensive_results = self.image_analyzer.analyze_image_comprehensive(
                 self.image_path, analysis_level
             )
             
+            if self.analysis_level == 'comprehensive':
+                self.update_status("Analyzing image properties and quality metrics...")
+                self.update_progress(75)
+            else:
+                self.update_progress(70)
+            
             # Generate human-readable summary
             analysis_summary = self.image_analyzer.get_analysis_summary(comprehensive_results)
             
+            if self.analysis_level == 'comprehensive':
+                self.update_status("Running advanced steganography detection...")
+                self.update_progress(85)
+            else:
+                self.update_status("Detecting potential steganographic content...")
+                self.update_progress(80)
+            
             # Perform steganography detection
-            self.update_status("Detecting potential steganographic content...")
             detection_results = self.image_analyzer.detect_potential_steganography(
                 self.image_path, analysis_level
             )
+            
+            if self.analysis_level == 'comprehensive':
+                self.update_status("Finalizing comprehensive analysis report...")
+                self.update_progress(95)
+            else:
+                self.update_progress(90)
             
             # Combine all results
             full_results = {

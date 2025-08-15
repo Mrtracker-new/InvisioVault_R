@@ -77,7 +77,12 @@ class AnalysisWorkerThread(QThread):
             if self._cancelled:
                 return
             
-            self.status_updated.emit("Running comprehensive analysis...")
+            # Provide more detailed progress for thorough analysis
+            if operation_level == "comprehensive":
+                self.status_updated.emit("Starting thorough analysis (this may take longer)...")
+            else:
+                self.status_updated.emit("Running comprehensive analysis...")
+            
             self.progress_updated.emit(20)
             
             # Run the analysis with callbacks
@@ -615,6 +620,18 @@ class AnalysisDialog(QDialog):
         quality_map = {"Fast": "fast", "Balanced": "balanced", "Thorough": "thorough"}
         selected_quality = quality_map.get(self.quality_combo.currentText(), "balanced")
         
+        # Show warning for thorough analysis
+        if selected_quality == "thorough":
+            reply = QMessageBox.question(
+                self, "Thorough Analysis", 
+                "Thorough analysis may take several minutes and will process the entire image.\n\n"
+                "For very large images, this could take 3-5 minutes. Continue?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
+            )
+            if reply != QMessageBox.StandardButton.Yes:
+                return
+        
         # Start worker thread with quality setting
         self.worker_thread = AnalysisWorkerThread(self.image_path, selected_quality)
         self.worker_thread.progress_updated.connect(self.progress_bar.setValue)
@@ -636,7 +653,7 @@ class AnalysisDialog(QDialog):
         estimated_time = {
             "fast": "10-30 seconds",
             "balanced": "30-60 seconds", 
-            "thorough": "1-3 minutes"
+            "thorough": "2-5 minutes (optimized for large images)"
         }.get(selected_quality, "unknown")
         self.logger.info(f"Starting {selected_quality} analysis using ImageAnalyzer, estimated time: {estimated_time}")
     
@@ -743,10 +760,19 @@ class AnalysisDialog(QDialog):
         self.statistics_table.setRowCount(len(channels))
         for i, (channel, stats) in enumerate(zip(channels, stats_data)):
             self.statistics_table.setItem(i, 0, QTableWidgetItem(channel))
-            self.statistics_table.setItem(i, 1, QTableWidgetItem(f"{stats['mean']:.2f}"))
-            self.statistics_table.setItem(i, 2, QTableWidgetItem(f"{stats['std']:.2f}"))
+            
+            # Handle case where stats might be a float instead of a dict
+            if isinstance(stats, dict):
+                mean_val = stats.get('mean', 0.0)
+                std_val = stats.get('std', 0.0)
+            else:
+                mean_val = stats  # Assuming the float itself is mean
+                std_val = 0.0
+            
+            self.statistics_table.setItem(i, 1, QTableWidgetItem(f"{mean_val:.2f}"))
+            self.statistics_table.setItem(i, 2, QTableWidgetItem(f"{std_val:.2f}"))
             if channel == "Overall":
-                self.statistics_table.setItem(i, 3, QTableWidgetItem(f"{statistics['entropy']:.3f}"))
+                self.statistics_table.setItem(i, 3, QTableWidgetItem(f"{statistics.get('entropy', 0.0):.3f}"))
             else:
                 self.statistics_table.setItem(i, 3, QTableWidgetItem("N/A"))
         

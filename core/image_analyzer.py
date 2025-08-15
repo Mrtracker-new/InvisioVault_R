@@ -239,15 +239,25 @@ class ImageAnalyzer:
         if img.mode not in ['RGB', 'RGBA']:
             img = img.convert('RGB')
         
-        # Optimize for large images in fast mode
+        width, height = img.size
+        
+        # Optimize for large images based on analysis level
         if analysis_level == AnalysisLevel.FAST:
-            width, height = img.size
             if width > 2048 or height > 2048:
                 # Sample down for faster processing
                 max_size = 1024
                 ratio = min(max_size / width, max_size / height)
                 new_size = (int(width * ratio), int(height * ratio))
                 img = img.resize(new_size, Image.Resampling.LANCZOS)
+        elif analysis_level == AnalysisLevel.THOROUGH:
+            # Even for thorough analysis, optimize very large images to prevent UI freezing
+            if width > 4096 or height > 4096:
+                self.logger.info(f"Large image detected ({width}x{height}), optimizing for thorough analysis")
+                max_size = 3072  # Larger than balanced but still manageable
+                ratio = min(max_size / width, max_size / height)
+                new_size = (int(width * ratio), int(height * ratio))
+                img = img.resize(new_size, Image.Resampling.LANCZOS)
+                self.logger.info(f"Resized to {new_size[0]}x{new_size[1]} for better performance")
         
         return np.array(img)
     
