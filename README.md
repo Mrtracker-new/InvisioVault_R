@@ -510,6 +510,7 @@ python main.py
 ```python
 # Using the advanced polyglot module directly
 from core.advanced_polyglot import AdvancedPolyglotCreator
+from core.working_polyglot import WorkingPolyglotCreator
 from core.self_executing_engine import SelfExecutingEngine
 
 # Create polyglot using the engine
@@ -581,7 +582,7 @@ polyglot.exe
 #### **📊 Advanced Analysis**
 ```bash
 # Analyze polyglot structure
-python advanced_polyglot.py --analyze polyglot_file
+python core/advanced_polyglot.py --analyze polyglot_file
 
 # Test with different image viewers
 python polyglot_verifier.py --test-viewers polyglot.png
@@ -904,7 +905,6 @@ For complete build instructions, troubleshooting, and advanced options:
 ├── 📋 requirements.txt           # Python dependencies
 ├── ⚙️ setup.py                   # Package configuration
 ├── 🔄 polyglot_creator.py         # Revolutionary PNG/EXE polyglot creation
-├── 🎯 advanced_polyglot.py        # Advanced polyglot with hybrid methods
 ├── 🖼️ png_first_polyglot.py       # PNG-first polyglot implementation
 ├── 🔍 polyglot_verifier.py        # Polyglot testing and verification
 ├── 📁 assets/                    # Application assets
@@ -922,6 +922,7 @@ For complete build instructions, troubleshooting, and advanced options:
 │   ├── two_factor_engine.py      # 2FA authentication
 │   ├── decoy_engine.py           # Plausible deniability
 │   ├── self_executing_engine.py  # Self-executing images & polyglot files
+│   ├── working_polyglot.py       # Production-ready polyglot creation
 │   └── advanced_polyglot.py      # Advanced polyglot creation capabilities
 ├── 📚 docs/                      # Complete documentation
 │   ├── user_guide.md             # User manual

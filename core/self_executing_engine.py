@@ -21,6 +21,7 @@ from utils.error_handler import ErrorHandler
 from core.steganography_engine import SteganographyEngine
 from core.encryption_engine import EncryptionEngine
 from core.advanced_polyglot import AdvancedPolyglotCreator
+from core.working_polyglot import WorkingPolyglotCreator
 
 
 class SelfExecutingEngine:
@@ -48,8 +49,9 @@ class SelfExecutingEngine:
         self.stego_engine = SteganographyEngine(use_secure_mode=True)
         self.encryption_engine = EncryptionEngine()
         self.advanced_polyglot = AdvancedPolyglotCreator()
+        self.working_polyglot = WorkingPolyglotCreator()  # NEW: Working polyglot creator
         
-        self.logger.info("Self-executing image engine initialized")
+        self.logger.info("Self-executing image engine initialized with working polyglot support")
     
     def create_polyglot_executable(self, image_path: str, executable_path: str, 
                                  output_path: str, password: Optional[str] = None) -> bool:
@@ -74,10 +76,10 @@ class SelfExecutingEngine:
             if not os.path.exists(executable_path):
                 raise FileNotFoundError(f"Executable file not found: {executable_path}")
             
-            # Use AdvancedPolyglotCreator to create polyglot
-            # The create_hybrid_polyglot_v2 method handles file reading and writing internally
-            success = self.advanced_polyglot.create_hybrid_polyglot_v2(
-                pe_path=executable_path, 
+            # Use WorkingPolyglotCreator for TRUE working polyglots (NEW)
+            # This uses the proven working implementation
+            success = self.working_polyglot.create_ultimate_working_polyglot(
+                exe_path=executable_path, 
                 png_path=image_path, 
                 output_path=output_path
             )
