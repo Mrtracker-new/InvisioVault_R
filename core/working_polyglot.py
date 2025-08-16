@@ -231,12 +231,13 @@ class WorkingPolyglotCreator:
                                          png_path: Optional[str] = None,
                                          output_path: str = "polyglot.exe") -> bool:
         """
-        ULTIMATE METHOD: Combines all techniques for maximum compatibility
-        ===================================================================
-        This is the production-ready method that actually works in practice.
+        ULTIMATE METHOD: DOS-First with Proper Structure Separation
+        ============================================================
+        Fixed implementation that prevents PNG/PE structure collisions.
+        Uses proven DOS-first approach with clean boundaries.
         """
         
-        self.log("=== ULTIMATE WORKING POLYGLOT CREATOR ===")
+        self.log("=== ULTIMATE WORKING POLYGLOT CREATOR (FIXED) ===")
         
         try:
             # Read EXE
@@ -261,54 +262,71 @@ class WorkingPolyglotCreator:
             self.log(f"  EXE: {len(exe_data)} bytes")
             self.log(f"  PNG: {len(png_data)} bytes")
             
-            # Build the ultimate polyglot structure
+            # === CRITICAL FIX: Proper DOS-First Structure ===
+            
+            # Step 1: Create proper DOS header at offset 0 (Windows requirement)
+            dos_header = bytearray(128)  # Standard DOS header size
+            
+            # DOS header fields
+            dos_header[0:2] = b'MZ'  # DOS signature (REQUIRED at offset 0)
+            dos_header[2:4] = struct.pack('<H', 0x90)  # Bytes on last page
+            dos_header[4:6] = struct.pack('<H', 3)  # Pages in file  
+            dos_header[6:8] = struct.pack('<H', 0)  # Relocations
+            dos_header[8:10] = struct.pack('<H', 4)  # Header size in paragraphs
+            dos_header[10:12] = struct.pack('<H', 0)  # Min extra paragraphs
+            dos_header[12:14] = struct.pack('<H', 0xFFFF)  # Max extra paragraphs
+            dos_header[14:16] = struct.pack('<H', 0)  # Initial SS
+            dos_header[16:18] = struct.pack('<H', 0xB8)  # Initial SP
+            dos_header[18:20] = struct.pack('<H', 0)  # Checksum
+            dos_header[20:22] = struct.pack('<H', 0)  # Initial IP
+            dos_header[22:24] = struct.pack('<H', 0)  # Initial CS
+            dos_header[24:26] = struct.pack('<H', 0x40)  # Relocation table offset
+            dos_header[26:28] = struct.pack('<H', 0)  # Overlay number
+            
+            # Calculate PE offset (after DOS header + PNG data + alignment)
+            # This is the KEY: PE must come AFTER PNG to avoid collision
+            pe_new_offset = 128 + len(png_data)
+            # Align to 512-byte boundary for optimal PE loading
+            pe_new_offset = ((pe_new_offset + 511) // 512) * 512
+            
+            # Set PE pointer at 0x3C (CRITICAL for Windows to find PE)
+            dos_header[0x3C:0x40] = struct.pack('<I', pe_new_offset)
+            
+            # DOS stub program
+            dos_stub_code = b'\x0E\x1F\xBA\x0E\x00\xB4\x09\xCD\x21\xB8\x01\x4C\xCD\x21'
+            dos_stub_msg = b'This program cannot be run in DOS mode.\r\r\n$'
+            dos_header[0x40:0x40+len(dos_stub_code)] = dos_stub_code
+            dos_header[0x4E:0x4E+len(dos_stub_msg)] = dos_stub_msg
+            
+            # Build the polyglot with proper structure
             polyglot = bytearray()
             
-            # === PART 1: DOS/PE Header with PNG compatibility ===
+            # Step 2: Add DOS header first (Windows requirement)
+            polyglot.extend(dos_header)
             
-            # Custom DOS stub that doesn't break PNG parsing
-            dos_stub = bytearray(b'MZ')  # DOS signature
-            dos_stub.extend(b'\x90' * 58)  # Padding
-            dos_stub.extend(struct.pack('<I', 0x100))  # PE header offset at 0x100
-            dos_stub.extend(b'\x0E\x1F\xBA\x0E\x00\xB4\x09\xCD\x21\xB8\x01\x4C\xCD\x21')  # DOS code
-            dos_stub.extend(b'This program cannot be run in DOS mode.\r\r\n$\x00' * 2)
-            
-            # Pad to make room for PNG signature at specific offset
-            while len(dos_stub) < 0x80:
-                dos_stub.append(0)
-            
-            polyglot.extend(dos_stub)
-            
-            # === PART 2: PNG Data (complete and valid) ===
-            
-            # Insert complete PNG at offset 0x80
+            # Step 3: Add PNG data immediately after DOS header
+            # The PNG is at offset 128, cleanly separated from DOS
             png_offset = len(polyglot)
             polyglot.extend(png_data)
             
-            # Align to 16-byte boundary
-            while len(polyglot) % 16 != 0:
+            # Step 4: Add padding to reach PE offset
+            while len(polyglot) < pe_new_offset:
                 polyglot.append(0)
             
-            # === PART 3: PE Executable ===
+            # Step 5: Add the complete PE/EXE data
+            # Extract the original PE data from the EXE
+            original_pe_offset = struct.unpack('<I', exe_data[0x3C:0x40])[0]
+            if original_pe_offset < len(exe_data):
+                pe_data = exe_data[original_pe_offset:]
+            else:
+                # If PE offset is invalid, use the whole EXE minus DOS header
+                pe_data = exe_data[64:] if len(exe_data) > 64 else exe_data
             
-            # Ensure PE starts at the offset specified in DOS header (0x100)
-            while len(polyglot) < 0x100:
-                polyglot.append(0)
+            # Add PE data at calculated offset
+            polyglot.extend(pe_data)
             
-            # Parse and adjust PE headers
-            pe_offset_in_exe = struct.unpack('<I', exe_data[0x3C:0x40])[0]
-            pe_header = exe_data[pe_offset_in_exe:]
-            
-            # Insert adjusted PE data
-            polyglot.extend(b'PE\x00\x00')  # PE signature
-            polyglot.extend(pe_header[4:])  # Rest of PE header and sections
-            
-            # === PART 4: Add extraction helper ===
-            
-            # Add a small extraction routine for compatibility
-            extraction_code = b'\x90' * 16  # NOP sled
-            extraction_code += b'\xC3'  # RET
-            polyglot.extend(extraction_code)
+            # Step 6: Add polyglot identifier
+            polyglot.extend(b'\x00\x00POLYGLOT_PNG_EXE\x00\x00')
             
             # Write the polyglot
             with open(output_path, 'wb') as f:
@@ -318,11 +336,13 @@ class WorkingPolyglotCreator:
             if sys.platform != 'win32':
                 os.chmod(output_path, 0o755)
             
-            self.log(f"✓ ULTIMATE polyglot created successfully!")
+            self.log(f"✓ FIXED polyglot created successfully!")
             self.log(f"  Output: {output_path}")
+            self.log(f"  Structure:")
+            self.log(f"    DOS header: 0x0 - 0x7F (offset 0, Windows requirement)")
+            self.log(f"    PNG data: 0x{png_offset:X} - 0x{png_offset + len(png_data) - 1:X}")
+            self.log(f"    PE header: 0x{pe_new_offset:X} (no collision!)")
             self.log(f"  Total size: {len(polyglot)} bytes")
-            self.log(f"  PNG at offset: 0x{png_offset:x}")
-            self.log(f"  PE at offset: 0x100")
             
             # Verify the polyglot
             self._verify_polyglot(output_path)
