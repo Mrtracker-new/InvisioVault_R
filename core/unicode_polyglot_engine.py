@@ -9,7 +9,7 @@ that appear as PNG images in Windows Explorer using Unicode right-to-left overri
 This module is designed to integrate seamlessly with the InVisioVault application
 as the main polyglot creation engine.
 
-Author: InVisioVault Integration Team
+Author: Rolan (RNR)
 """
 
 import os
@@ -21,7 +21,11 @@ import tempfile
 import subprocess
 import json
 from datetime import datetime
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Tuple, Dict, Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # Type hints for win32 modules when not available
+    from typing import Any as Win32Handle
 from pathlib import Path
 
 # Try to import PIL, fallback gracefully
@@ -36,9 +40,14 @@ try:
     import win32file
     import win32con
     import win32api
+    import pywintypes
     WIN32_AVAILABLE = True
 except ImportError:
     WIN32_AVAILABLE = False
+    win32file = None
+    win32con = None
+    win32api = None
+    pywintypes = None
 
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
@@ -310,7 +319,7 @@ class UnicodePolyglotEngine:
             
             def datetime_to_filetime(dt):
                 timestamp = int((dt - datetime(1601, 1, 1)).total_seconds() * 10**7)
-                return win32file.PyTime(timestamp)
+                return pywintypes.Time(timestamp)
             
             win32file.SetFileTime(
                 handle,
@@ -319,7 +328,7 @@ class UnicodePolyglotEngine:
                 datetime_to_filetime(modified_time)
             )
             
-            win32file.CloseHandle(handle)
+            win32api.CloseHandle(handle)
             
             self.logger.info("✓ File properties applied successfully")
             
