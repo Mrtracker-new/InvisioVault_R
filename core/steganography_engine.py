@@ -165,7 +165,7 @@ class SteganographyEngine:
         return recommendations
     
     def hide_data_with_password(self, carrier_path, data: bytes, output_path, 
-                               password: str, use_secure_mode: bool = None) -> bool:
+                               password: str, use_secure_mode: Optional[bool] = None) -> bool:
         """
         Hide data with password-based security (recommended method).
         
@@ -203,7 +203,7 @@ class SteganographyEngine:
             )
     
     def extract_data_with_password(self, stego_path, password: str, 
-                                  use_secure_mode: bool = None) -> Optional[bytes]:
+                                  use_secure_mode: Optional[bool] = None) -> Optional[bytes]:
         """
         Extract data with password-based security (recommended method).
         
