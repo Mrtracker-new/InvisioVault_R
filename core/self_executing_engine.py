@@ -237,6 +237,50 @@ class SelfExecutingEngine:
             self.logger.error(f"Failed to create custom viewer: {e}")
             return False
     
+    def extract_image_from_polyglot(self, polyglot_path: str) -> bool:
+        """
+        Extract the image portion from an ICO/EXE polyglot file.
+        
+        Args:
+            polyglot_path: Path to the polyglot file
+            
+        Returns:
+            Success status
+        """
+        try:
+            self.logger.info(f"Extracting image from polyglot: {polyglot_path}")
+            
+            # Validate input file
+            if not os.path.exists(polyglot_path):
+                raise FileNotFoundError(f"Polyglot file not found: {polyglot_path}")
+            
+            # Check if it's actually a polyglot
+            polyglot_result = self._check_ico_exe_polyglot(polyglot_path)
+            if not polyglot_result.get('is_polyglot'):
+                self.logger.error("File does not appear to be an ICO/EXE polyglot")
+                return False
+            
+            # Use the ICO/EXE polyglot engine to extract the image
+            base_path = os.path.splitext(polyglot_path)[0]
+            output_path = f"{base_path}_extracted.png"
+            
+            success = self.ico_exe_polyglot.extract_image_from_polyglot(
+                polyglot_path=polyglot_path,
+                output_path=output_path
+            )
+            
+            if success:
+                self.logger.info(f"Image successfully extracted to: {output_path}")
+            else:
+                self.logger.error("Failed to extract image from polyglot")
+            
+            return success
+            
+        except Exception as e:
+            self.logger.error(f"Failed to extract image from polyglot: {e}")
+            self.error_handler.handle_exception(e)
+            return False
+    
     # === ICO/EXE POLYGLOT SUPPORT METHODS ===
     
     def _check_ico_exe_polyglot(self, file_path: str) -> Dict[str, Any]:

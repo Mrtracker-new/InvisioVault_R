@@ -596,6 +596,176 @@ class IcoExePolyglot:
         
         return results
     
+    def extract_image_from_polyglot(self, polyglot_path: str, output_path: str) -> bool:
+        """
+        Extract the icon/image portion from an ICO/EXE polyglot file.
+        
+        Args:
+            polyglot_path: Path to the polyglot file
+            output_path: Output path for extracted image
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            self.logger.info(f"Extracting image from polyglot: {polyglot_path}")
+            
+            # Validate input
+            if not os.path.exists(polyglot_path):
+                self.last_error = f"Polyglot file not found: {polyglot_path}"
+                self.logger.error(self.last_error)
+                return False
+            
+            # Read the polyglot file
+            with open(polyglot_path, 'rb') as f:
+                data = f.read()
+            
+            # Verify it contains ICO data
+            verification = self._verify_polyglot(polyglot_path)
+            if not verification.get('ico_valid'):
+                self.last_error = "File does not contain valid ICO data"
+                self.logger.error(self.last_error)
+                return False
+            
+            # Parse ICO structure to find the largest/best icon
+            icon_data = self._extract_best_icon_from_polyglot(data)
+            if not icon_data:
+                self.last_error = "Could not extract icon data from polyglot"
+                self.logger.error(self.last_error)
+                return False
+            
+            # Convert to PNG format if possible
+            if PIL_AVAILABLE:
+                try:
+                    # Convert the raw icon data to a PIL image
+                    img = self._convert_ico_data_to_image(icon_data)
+                    if img:
+                        # Save as PNG
+                        img.save(output_path, 'PNG')
+                        self.logger.info(f"Successfully extracted image to: {output_path}")
+                        return True
+                except Exception as e:
+                    self.logger.warning(f"PIL conversion failed: {e}")
+            
+            # Fallback: save raw icon data as ICO file
+            fallback_path = output_path.replace('.png', '.ico').replace('.jpg', '.ico').replace('.bmp', '.ico')
+            with open(fallback_path, 'wb') as f:
+                f.write(icon_data)
+            
+            self.logger.info(f"Extracted raw icon data to: {fallback_path}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to extract image from polyglot: {e}")
+            self.last_error = str(e)
+            self.error_handler.handle_exception(e)
+            return False
+    
+    def _extract_best_icon_from_polyglot(self, data: bytes) -> Optional[bytes]:
+        """Extract the best (largest) icon from polyglot data."""
+        
+        try:
+            # Look for ICO signature in the data
+            ico_offset = 0
+            
+            # ICO data might not be at the beginning due to PE header
+            # Search for ICO signature
+            for i in range(0, min(len(data) - 6, 1024)):  # Search first 1KB
+                if data[i:i+4] == self.ICO_SIGNATURE:
+                    ico_offset = i
+                    break
+            else:
+                # If not found in first 1KB, might be at a standard offset
+                if len(data) > 64 and data[64:68] == self.ICO_SIGNATURE:
+                    ico_offset = 64
+                else:
+                    return None
+            
+            # Parse ICO header
+            if ico_offset + 6 > len(data):
+                return None
+            
+            num_images = struct.unpack('<H', data[ico_offset + 4:ico_offset + 6])[0]
+            if num_images == 0 or num_images > 10:  # Sanity check
+                return None
+            
+            # Parse directory entries to find the best icon
+            best_icon_offset = 0
+            best_icon_size = 0
+            best_pixel_size = 0
+            
+            for i in range(num_images):
+                entry_offset = ico_offset + 6 + (i * 16)
+                if entry_offset + 16 > len(data):
+                    continue
+                
+                # Parse directory entry
+                width = data[entry_offset] or 256  # 0 means 256
+                height = data[entry_offset + 1] or 256
+                
+                # Get image data info
+                image_size = struct.unpack('<I', data[entry_offset + 8:entry_offset + 12])[0]
+                image_offset = struct.unpack('<I', data[entry_offset + 12:entry_offset + 16])[0]
+                
+                pixel_count = width * height
+                
+                # Choose the largest icon
+                if pixel_count > best_pixel_size and image_size > 0:
+                    best_pixel_size = pixel_count
+                    best_icon_size = image_size
+                    best_icon_offset = image_offset
+            
+            # Extract the best icon's data
+            if best_icon_size > 0 and best_icon_offset > 0:
+                if best_icon_offset + best_icon_size <= len(data):
+                    # Create a complete ICO file with just this icon
+                    ico_header = bytearray()
+                    ico_header.extend(self.ICO_SIGNATURE)  # Signature
+                    ico_header.extend(struct.pack('<H', 1))  # One image
+                    
+                    # Find the directory entry for this icon
+                    for i in range(num_images):
+                        entry_offset = ico_offset + 6 + (i * 16)
+                        image_offset = struct.unpack('<I', data[entry_offset + 12:entry_offset + 16])[0]
+                        
+                        if image_offset == best_icon_offset:
+                            # Copy the directory entry but update offset
+                            entry_data = bytearray(data[entry_offset:entry_offset + 16])
+                            # Update offset to account for new ICO header (6 + 16 = 22 bytes)
+                            entry_data[12:16] = struct.pack('<I', 22)
+                            ico_header.extend(entry_data)
+                            break
+                    
+                    # Add the actual image data
+                    image_data = data[best_icon_offset:best_icon_offset + best_icon_size]
+                    ico_header.extend(image_data)
+                    
+                    return bytes(ico_header)
+            
+            return None
+            
+        except Exception as e:
+            self.logger.error(f"Error extracting icon data: {e}")
+            return None
+    
+    def _convert_ico_data_to_image(self, ico_data: bytes) -> Optional['Image.Image']:
+        """Convert ICO data to PIL Image."""
+        
+        if not PIL_AVAILABLE:
+            return None
+        
+        try:
+            # Try to open as ICO directly with PIL
+            import io
+            ico_stream = io.BytesIO(ico_data)
+            img = Image.open(ico_stream)
+            return img.convert('RGBA')
+            
+        except Exception as e:
+            self.logger.debug(f"Direct ICO conversion failed: {e}")
+            # Could implement manual BMP parsing here if needed
+            return None
+    
     def get_operation_status(self) -> Dict[str, Any]:
         """Get status of the last operation."""
         return {
