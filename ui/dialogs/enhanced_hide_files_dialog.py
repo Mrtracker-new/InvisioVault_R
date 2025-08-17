@@ -253,7 +253,7 @@ class EnhancedHideWorkerThread(QThread):
 class EnhancedHideFilesDialog(QDialog):
     """Enhanced dialog for hiding files with anti-detection capabilities."""
     
-    def __init__(self, security_service: SecurityService = None, parent=None):
+    def __init__(self, security_service: Optional[SecurityService] = None, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Enhanced Hide Files - Anti-Detection Steganography")
         self.setModal(True)
