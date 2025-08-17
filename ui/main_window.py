@@ -25,7 +25,7 @@ from core.security_service import SecurityService
 class MainWindow(QMainWindow):
     """Main application window with navigation and operation panels."""
     
-    def __init__(self, security_service: SecurityService = None):
+    def __init__(self, security_service: Optional[SecurityService] = None):
         super().__init__()
         
         # Initialize components
