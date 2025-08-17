@@ -899,58 +899,111 @@ For complete build instructions, troubleshooting, and advanced options:
 
 ```
 📁 InvisioVault/
-├── 🚀 main.py                    # Launch the application
-├── 📋 requirements.txt           # Python dependencies
-├── ⚙️ setup.py                   # Package configuration
-├── 🔄 polyglot_creator.py         # Revolutionary PNG/EXE polyglot creation
-├── 🖼️ png_first_polyglot.py       # PNG-first polyglot implementation
-├── 🔍 polyglot_verifier.py        # Polyglot testing and verification
-├── 📁 assets/                    # Application assets
-│   ├── 🎨 icons/                 # Application icons
-│   ├── 🖼️ images/                # Logos and branding
-│   ├── 🎭 ui/                    # UI-specific graphics
-│   └── 📚 demo/                  # Demo and example files
-├── 📁 build_scripts/             # Build automation
-├── 🔧 core/                      # Steganography engines
-│   ├── steganography_engine.py   # Revolutionary LSB algorithm
-│   ├── enhanced_steganography_engine.py  # Enhanced engine with anti-detection
-│   ├── anti_detection_engine.py  # Advanced anti-detection techniques
-│   ├── encryption_engine.py      # AES-256 encryption
-│   ├── multi_decoy_engine.py     # Multi-layer security
-│   ├── two_factor_engine.py      # 2FA authentication
-│   ├── decoy_engine.py           # Plausible deniability
-│   ├── self_executing_engine.py  # Self-executing images & polyglot files
-│   ├── working_polyglot.py       # Production-ready polyglot creation
-│   └── advanced_polyglot.py      # Advanced polyglot creation capabilities
-├── 📚 docs/                      # Complete documentation
-│   ├── user_guide.md             # User manual
-│   ├── api_reference.md          # Developer API docs
-│   ├── security_notes.md         # Security best practices
-│   ├── changelog.md              # Version history
-│   └── PROJECT_STRUCTURE.md      # Architecture details
-├── 🗂️ my_keys/                   # Keyfile storage
-├── ⚡ operations/                 # Core operations
-│   ├── hide_operation.py         # File hiding logic
-│   ├── extract_operation.py      # File extraction logic
-│   ├── analysis_operation.py     # Image analysis
-│   └── batch_operation.py        # Batch processing
-├── 🛠️ scripts/                   # Utility scripts
-│   ├── security_check.py         # Security validation
-│   └── check_sensitive_files.py  # File scanning
-├── 🧪 tests/                     # Quality assurance
-│   ├── test_steganography.py     # Core algorithm tests
-│   ├── test_encryption.py        # Security tests
-│   └── test_ui_components.py     # Interface tests
-├── 🎨 ui/                        # Professional interface
-│   ├── main_window.py            # Main application window
-│   ├── dialogs/                  # User dialogs
-│   ├── components/               # Reusable UI components
-│   └── themes/                   # Dark/Light themes
-└── 🔧 utils/                     # Utility modules
-    ├── config_manager.py         # Configuration handling
-    ├── logger.py                 # Secure logging
-    ├── file_utils.py             # File operations
-    └── error_handler.py          # Error management
+├── 🚀 main.py                            # Launch the application
+├── 📋 requirements.txt                   # Python dependencies  
+├── ⚙️ setup.py                           # Package configuration
+├── 🔍 self_executing_viewer.py           # Self-executing image viewer
+├── 📄 InvisioVault.spec                  # PyInstaller build specification
+├── 📋 MANIFEST.in                        # Package manifest
+├── 📜 LICENSE                            # MIT License
+├── 📁 assets/                            # Application assets
+│   ├── 🎨 icons/                         # Application icons
+│   ├── 🖼️ images/                        # Logos and branding
+│   ├── 🎭 ui/                            # UI-specific graphics
+│   └── 📚 demo/                          # Demo and example files
+├── 📁 build_scripts/                     # Build automation
+│   ├── 🔧 build_executable.py           # Professional build system
+│   ├── 📄 build_exe.bat                 # Windows batch build script
+│   └── 🔧 build_exe.ps1                 # PowerShell build script
+├── 🔧 core/                              # Advanced engines
+│   ├── 📊 steganography_engine.py       # Revolutionary LSB algorithm
+│   ├── 🛡️ enhanced_steganography_engine.py  # Anti-detection steganography
+│   ├── 🕵️ anti_detection_engine.py      # Advanced anti-detection techniques
+│   ├── 🔐 encryption_engine.py          # AES-256 encryption
+│   ├── 🛡️ advanced_encryption.py        # Advanced encryption features
+│   ├── 🔒 secure_steganography_engine.py # Secure steganography engine
+│   ├── 🎭 multi_decoy_engine.py         # Multi-layer security
+│   ├── 🔑 two_factor_engine.py          # 2FA authentication
+│   ├── 👻 decoy_engine.py               # Plausible deniability
+│   ├── 🚀 self_executing_engine.py      # Self-executing images & polyglots
+│   ├── 🔄 ico_exe_polyglot.py           # ICO/EXE polyglot creation
+│   ├── 🎯 unicode_polyglot_engine.py    # Unicode RTL polyglot engine
+│   ├── 🏗️ working_polyglot.py           # Production-ready polyglots
+│   ├── 🔍 image_analyzer.py             # Image analysis and suitability
+│   ├── 📁 file_manager.py               # File management utilities
+│   ├── 🛡️ security_service.py          # Security service layer
+│   └── 🔐 crypto_utils.py               # Cryptographic utilities
+├── 📚 docs/                              # Comprehensive documentation
+│   ├── 📖 user_guide.md                 # Complete user manual
+│   ├── 🔧 api_reference.md              # Developer API documentation
+│   ├── 🛡️ security_notes.md            # Security best practices
+│   ├── 📋 changelog.md                  # Version history
+│   ├── 🏗️ PROJECT_STRUCTURE.md         # Architecture details
+│   ├── ⚡ PERFORMANCE_OPTIMIZATION_SUMMARY.md # Performance analysis
+│   ├── 🎭 MULTI_DECOY_IMPLEMENTATION.md # Multi-decoy features
+│   ├── 🚀 SELF_EXECUTING_IMAGES.md     # Self-executing image guide
+│   ├── 🛡️ SECURITY.md                  # Security framework
+│   ├── 🕵️ ANTI_DETECTION_IMPLEMENTATION_SUMMARY.md # Anti-detection guide
+│   ├── 📊 ANTI_DETECTION_TEST_REPORT.md # Steganalysis test results
+│   ├── 🎲 LSB_RANDOMIZATION_IMPLEMENTATION.md # LSB randomization
+│   ├── 🧪 TESTING_GUIDE.md             # Testing methodology
+│   ├── 🛡️ anti_detection_techniques.md # Technical anti-detection details
+│   ├── 🔄 POLYGLOT_IMPLEMENTATION.md   # Polyglot technology guide
+│   ├── 📈 SECURITY_IMPROVEMENTS.md     # Security enhancement details
+│   ├── 🏗️ TECHNICAL_ARCHITECTURE.md   # System architecture
+│   ├── 📊 STATISTICAL_MASKING_DOCUMENTATION.md # Statistical techniques
+│   └── 📋 INSTALLATION.md              # Installation guide
+├── 🧪 examples/                         # Example implementations
+│   ├── 🛡️ anti_detection_integration.py # Anti-detection examples
+│   ├── 🔍 image_analysis_example.py    # Image analysis examples
+│   └── 🚀 self_executing_demo.py       # Self-executing demos
+├── 🗂️ my_keys/                          # Keyfile storage directory
+├── ⚡ operations/                        # Core operation handlers
+│   ├── 🔒 hide_operation.py            # File hiding logic
+│   ├── 🔓 extract_operation.py         # File extraction logic
+│   ├── 📊 analysis_operation.py        # Image analysis operations
+│   ├── 📦 batch_operation.py           # Batch processing
+│   └── ⚡ base_operation.py             # Base operation class
+├── 🛠️ scripts/                          # Utility scripts
+│   ├── 🛡️ security_check.py            # Security validation
+│   └── 🔍 check_sensitive_files.py     # Sensitive file scanner
+├── 🧪 tests/                            # Quality assurance
+│   ├── 📊 test_steganography.py        # Core algorithm tests
+│   ├── 🔐 test_encryption.py           # Security tests
+│   ├── 🎨 test_ui_components.py        # Interface tests
+│   ├── 🔓 test_extract_dialog.py       # Extraction dialog tests
+│   ├── 📁 test_file_operations.py      # File operation tests
+│   └── 🔗 test_integration_dialogs.py  # Integration tests
+├── 🎨 ui/                               # Professional user interface
+│   ├── 🖥️ main_window.py               # Main application window
+│   ├── 📋 dialogs/                      # Specialized dialog windows
+│   │   ├── 🔒 hide_files_dialog.py     # File hiding dialog
+│   │   ├── 🛡️ enhanced_hide_files_dialog.py # Enhanced hiding with anti-detection
+│   │   ├── 🔓 extract_files_dialog.py  # File extraction dialog
+│   │   ├── 🔑 keyfile_dialog.py        # Keyfile management
+│   │   ├── 🛡️ two_factor_dialog.py     # Two-factor authentication
+│   │   ├── 👻 decoy_dialog.py          # Decoy mode operations
+│   │   ├── 🚀 self_executing_dialog.py # Self-executing image creation
+│   │   ├── 🎯 unicode_polyglot_dialog.py # Unicode RTL polyglot dialog
+│   │   └── 📊 analysis_dialog.py       # Image analysis dialog
+│   ├── 🔧 components/                   # Reusable UI components
+│   │   ├── 📄 file_drop_zone.py        # Drag & drop file handling
+│   │   ├── 🖼️ image_preview.py         # Image preview widget
+│   │   ├── 🔔 notification_widget.py   # Notification system
+│   │   ├── 🔑 password_input.py        # Secure password input
+│   │   ├── 📊 progress_dialog.py       # Progress tracking
+│   │   └── ⚙️ settings_panel.py        # Settings management
+│   ├── 🎨 themes/                       # Theme system
+│   │   ├── 🌙 dark_theme.py            # Dark mode theme
+│   │   ├── ☀️ light_theme.py           # Light mode theme
+│   │   └── 🎨 theme_manager.py         # Theme management
+│   └── 🔗 integrations/                 # Feature integrations
+│       └── 🎯 unicode_polyglot_integration.py # Unicode polyglot integration
+└── 🔧 utils/                            # Core utility modules
+    ├── ⚙️ config_manager.py            # Configuration management
+    ├── 📝 logger.py                    # Secure logging system
+    ├── 📁 file_utils.py               # File operation utilities
+    └── ❌ error_handler.py             # Error management system
 ```
 
 ## 🧠 How It Works
