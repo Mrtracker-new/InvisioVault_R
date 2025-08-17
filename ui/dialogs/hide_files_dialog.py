@@ -7,7 +7,7 @@ from pathlib import Path
 import json
 import zipfile
 import tempfile
-from typing import List
+from typing import List, Optional
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel, 
@@ -204,7 +204,7 @@ class HideWorkerThread(QThread):
 class HideFilesDialog(QDialog):
     """Dialog for hiding files in images using steganography."""
     
-    def __init__(self, security_service: SecurityService = None, parent=None):
+    def __init__(self, security_service: Optional[SecurityService] = None, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Hide Files in Image")
         self.setModal(True)
