@@ -11,7 +11,7 @@ Key Innovation:
 - Same file renamed .exe → Executes as Windows program perfectly  
 - True simultaneous format coexistence in the same bytes
 
-Author: InVisioVault Advanced Research Team
+Author: Rolan (RNR)
 Created: 2025 - World's First ICO/EXE Polyglot Implementation
 """
 
@@ -20,6 +20,7 @@ import sys
 import struct
 import hashlib
 import tempfile
+import math
 from typing import Optional, Dict, Any, Tuple, List
 from pathlib import Path
 from datetime import datetime
@@ -233,8 +234,8 @@ class IcoExePolyglot:
                 else:
                     radius = inner_radius
                 
-                x = center + radius * cos(angle) if 'cos' in dir(__builtins__) else center + radius * (1 if i < teeth else -1)
-                y = center + radius * sin(angle) if 'sin' in dir(__builtins__) else center + radius * (1 if i % 4 < 2 else -1)
+                x = center + radius * math.cos(angle)
+                y = center + radius * math.sin(angle)
                 
                 if i == 0:
                     points = [(x, y)]
@@ -282,7 +283,14 @@ class IcoExePolyglot:
         # Convert pixels (ICO uses bottom-up format)
         for y in range(height - 1, -1, -1):
             for x in range(width):
-                r, g, b, a = img.getpixel((x, y))
+                pixel = img.getpixel((x, y))
+                if isinstance(pixel, (tuple, list)) and len(pixel) >= 3:
+                    r, g, b = pixel[:3]
+                    a = pixel[3] if len(pixel) > 3 else 255
+                else:
+                    # Fallback for unexpected pixel format
+                    r = g = b = int(pixel) if isinstance(pixel, (int, float)) else 128
+                    a = 255
                 pixel_data.extend([b, g, r, a])  # BGRA format
         
         pixel_bytes = bytes(pixel_data)
@@ -675,7 +683,7 @@ def main():
                 try:
                     colors = [int(x.strip()) for x in sys.argv[i + 1].split(',')]
                     if len(colors) == 3:
-                        icon_colors = tuple(colors)
+                        icon_colors = (colors[0], colors[1], colors[2])  # Ensure proper Tuple[int, int, int] type
                 except ValueError:
                     print("⚠️ Invalid color format, using defaults")
         
