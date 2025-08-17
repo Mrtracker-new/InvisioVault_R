@@ -111,8 +111,17 @@ This project was developed as an advanced learning journey into:
 - 🛡️ **Anti-Detection Mode**: Advanced steganography designed to evade steganalysis tools
 - 🎲 **Hybrid LSB Randomization**: Combines randomized positioning with anti-detection techniques
 - 🚀 **Self-Executing Images**: Create images that can execute embedded code when triggered
-- 🔄 **ICO/EXE Polyglot Creation**: Revolutionary dual-format files that work as both icons AND executables
-- 🎯 **True Simultaneous Format**: Files where ICO and EXE formats coexist in perfect harmony
+
+### 🔄 **Revolutionary Polyglot Technology**
+- 🎯 **ICO/EXE Polyglot Creation**: Revolutionary dual-format files that work as both icons AND executables
+- ✨ **True Simultaneous Format**: Files where multiple formats coexist in perfect harmony
+- 🧠 **Intelligent Format Selection**: Automatic method selection based on file characteristics
+- 🛡️ **Encrypted Polyglot Embedding**: PE executables protected with AES-256 encryption
+- 🎭 **Unicode RTL Polyglots**: Executables disguised as PNG images using Unicode tricks
+- 🔍 **Anti-Detection Polyglots**: Designed to evade security scanners and detection tools
+- 📊 **Cross-Platform Support**: Windows PE, Linux ELF, macOS Mach-O compatibility
+- ⚡ **Native Execution**: Run directly as executables without extraction
+- 🖥️ **Perfect Image Display**: Works with all major image viewers and browsers
 
 ### 🛡️ **Advanced Security**
 - 🔐 **AES-256-CBC Encryption**: Military-grade encryption with PBKDF2 key derivation
