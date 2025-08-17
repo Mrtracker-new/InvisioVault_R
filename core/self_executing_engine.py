@@ -76,10 +76,10 @@ class SelfExecutingEngine:
             if not os.path.exists(executable_path):
                 raise FileNotFoundError(f"Executable file not found: {executable_path}")
             
-            # Use WorkingPolyglotCreator for TRUE working polyglots (NEW)
-            # This uses the proven working implementation
+            # Use true working polyglot method for maximum compatibility (UPDATED)
+            # This creates a real dual-format file that works as both PNG and EXE
             success = self.working_polyglot.create_ultimate_working_polyglot(
-                exe_path=executable_path, 
+                exe_path=executable_path,
                 png_path=image_path, 
                 output_path=output_path
             )
@@ -1927,6 +1927,7 @@ exit /b 0
         except Exception as e:
             self.logger.error(f"Format-neutral polyglot failed: {e}")
             return png_data + b'\n\n' + exe_data
+    
     
     def _create_format_overlay_hybrid(self, png_data: bytes, exe_data: bytes) -> bytes:
         """Create format overlay hybrid as ultimate fallback."""

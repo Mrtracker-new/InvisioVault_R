@@ -318,8 +318,8 @@ def find_pe_gaps(pe_data):
 Extend to support additional formats:
 
 ```python
-# Example: PNG/EXE/ZIP polyglot
-# Structure: [PNG][ZIP central directory][PE][ZIP data]
+# Example: PNG/EXE resource polyglot
+# Structure: [PNG][PE with embedded PNG resource][Metadata]
 ```
 
 ## Working Examples

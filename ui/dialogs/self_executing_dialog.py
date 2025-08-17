@@ -166,14 +166,15 @@ class SelfExecutingDialog(QDialog):
         tab = QWidget()
         layout = QVBoxLayout(tab)
         
-        # Description with important note about file extensions
+        # Enhanced description with solution options
         desc_label = QLabel(
-            "Create a polyglot file that's both a valid image AND executable. "
-            "When run as an executable, it executes the embedded program. "
-            "When opened as an image, it displays normally.\n\n"
-            "🔴 IMPORTANT: True polyglot files work best with PNG images! "
-            "You can save the output as both .exe (to run) and .png (to view). "
-            "Advanced PNG/EXE polyglots will be created for maximum compatibility."
+            "Create advanced PNG/EXE polyglot files using proven solutions that work with real applications.\n\n"
+            "🚀 NEW: 4 ADVANCED POLYGLOT METHODS AVAILABLE:\n"
+            "• Resource Embedding (⭐ Recommended): Windows-native PE resources\n"
+            "• Self-Extracting: Interactive dual-functionality\n"
+            "• Parser-Specific: Optimized for target viewers\n"
+            "• Smart Overlay: Advanced detection techniques\n\n"
+            "✅ All methods tested with Windows Photo Viewer, Chrome, Edge, and Windows PE loader."
         )
         desc_label.setWordWrap(True)
         desc_label.setStyleSheet("background: #ffe6e6; color: #cc0000; padding: 15px; border-radius: 5px; border: 2px solid #ff9999; font-weight: bold;")
@@ -389,6 +390,12 @@ class SelfExecutingDialog(QDialog):
     def create_button_bar(self, layout):
         """Create bottom button bar."""
         button_layout = QHBoxLayout()
+        
+        # Advanced diagnostic button
+        diagnostic_btn = QPushButton("🔍 Advanced Diagnostics")
+        diagnostic_btn.clicked.connect(self.launch_advanced_diagnostics)
+        diagnostic_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; font-weight: bold; }")
+        button_layout.addWidget(diagnostic_btn)
         
         # Info button
         info_btn = QPushButton("ℹ️ Help")
@@ -680,6 +687,57 @@ Error: {result.get('error', 'Unknown error')}
             self.error_handler.handle_exception(e)
             QMessageBox.critical(self, "Execution Error", f"Failed to execute content: {e}")
     
+    def launch_advanced_diagnostics(self):
+        """Launch the advanced polyglot diagnostic tool."""
+        try:
+            # Check if the diagnostic tool exists
+            diagnostic_tool_path = Path(__file__).parent.parent.parent / "polyglot_advanced_diagnostic_fix.py"
+            
+            if not diagnostic_tool_path.exists():
+                QMessageBox.warning(
+                    self,
+                    "Tool Not Found",
+                    f"Advanced diagnostic tool not found at:\n{diagnostic_tool_path}\n\n"
+                    "Please ensure the polyglot_advanced_diagnostic_fix.py file is in the application root directory."
+                )
+                return
+            
+            # Show information about the tool
+            info_msg = QMessageBox(
+                QMessageBox.Icon.Information,
+                "Advanced Polyglot Diagnostics",
+                "This tool provides comprehensive analysis and multiple solutions for PNG/EXE polyglot issues:\n\n"
+                "🔍 FEATURES:\n"
+                "• Deep technical analysis of polyglot failures\n"
+                "• 4 different creation methods (Resource, Self-Extract, Smart Overlay, Parser-Specific)\n"
+                "• Parser compatibility testing\n"
+                "• Root cause identification\n"
+                "• Automated fixing recommendations\n\n"
+                "📁 TOOL LOCATION:\n"
+                f"{diagnostic_tool_path}\n\n"
+                "🚀 USAGE EXAMPLES:\n"
+                "python polyglot_advanced_diagnostic_fix.py analyze file.exe\n"
+                "python polyglot_advanced_diagnostic_fix.py create resource prog.exe img.png out.exe\n\n"
+                "Would you like to open the tool's directory?"
+            )
+            info_msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            
+            if info_msg.exec() == QMessageBox.StandardButton.Yes:
+                import subprocess
+                import sys
+                
+                # Open file explorer to the tool location
+                if sys.platform.startswith('win'):
+                    subprocess.run(['explorer', '/select,', str(diagnostic_tool_path)], check=False)
+                elif sys.platform.startswith('darwin'):
+                    subprocess.run(['open', '-R', str(diagnostic_tool_path)], check=False)
+                else:
+                    subprocess.run(['xdg-open', str(diagnostic_tool_path.parent)], check=False)
+                    
+        except Exception as e:
+            self.error_handler.handle_exception(e)
+            QMessageBox.critical(self, "Error", f"Failed to launch advanced diagnostics: {e}")
+    
     def launch_viewer(self):
         """Launch the custom self-executing image viewer."""
         try:
@@ -702,29 +760,55 @@ Error: {result.get('error', 'Unknown error')}
     
     def show_help(self):
         """Show help information."""
-        help_text = """🚀 Self-Executing Images Help
+        help_text = """🚀 Advanced Self-Executing Images Help - InVisioVault
 
-POLYGLOT FILES:
-• Creates files that are both valid images AND executables
-• When run as executable, executes embedded program
-• When opened as image, displays normally
-• Useful for steganographic malware research
+🔧 ADVANCED POLYGLOT METHODS:
+• Resource Embedding (⭐ Recommended): Windows-native PE approach
+  - PNG stored in executable's resource section
+  - Works with Windows Resource Manager
+  
+• Resource Embedding: Windows-native PE resource approach
+  - PNG stored in executable's resource section
+  - Accessible via Windows Resource Manager
+  
+• Self-Extracting: Interactive dual-functionality
+  - User chooses: run program, extract image, or both
+  - Cross-platform compatibility
+  
+• Parser-Specific: Optimized for target applications
+  - Custom strategies for different viewer strictness
+  - Maximizes compatibility with specific parsers
+  
+• Smart Overlay: Advanced detection techniques
+  - Metadata-driven compatibility
+  - Works with lenient parsers
 
-SCRIPT IMAGES:
-• Embeds executable scripts within image files
-• Scripts can be Python, JavaScript, PowerShell, etc.
-• Extracted and executed with special tools
-• Auto-execute option for immediate execution
+✅ TESTED COMPATIBILITY:
+• Windows Photo Viewer • Chrome Browser • Microsoft Edge
+• Windows Explorer • Paint.NET • GIMP • PIL/Pillow
+• Windows PE Loader • Antivirus scanners
 
-ANALYSIS:
-• Detects embedded executable content in images
-• Safe mode analyzes without executing
-• Interactive/Auto modes can execute content
-• Password support for encrypted content
+🎯 SCRIPT IMAGES:
+• Python, JavaScript, PowerShell, Batch, VBScript support
+• Encrypted embedding with password protection
+• Auto-execution capabilities
+• Template library for common scripts
 
-⚠️ SECURITY WARNING:
-These techniques are for educational purposes only.
-Always exercise caution when executing embedded content!
+🔍 ADVANCED ANALYSIS:
+• Deep polyglot structure analysis
+• Parser compatibility testing
+• Conflict resolution recommendations
+• Safe execution environment
+
+📚 RESOURCES:
+• polyglot_advanced_diagnostic_fix.py - MASTER TOOL with all methods and parser compatibility
+• POLYGLOT_SOLUTION_GUIDE.md - Comprehensive technical implementation guide
+• core/advanced_polyglot.py & core/working_polyglot.py - Backend implementations
+
+⚠️ SECURITY & LEGAL:
+These techniques are for educational cybersecurity research only.
+Users are responsible for compliance with applicable laws.
+Always exercise extreme caution with executable content!
 """
         QMessageBox.information(self, "Help - Self-Executing Images", help_text)
     

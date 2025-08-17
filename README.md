@@ -483,7 +483,7 @@ This cutting-edge capability is fully integrated into the InVisioVault steganogr
 
 #### **🛡️ Advanced Polyglot Security**
 - **🔐 Encrypted PE Embedding**: Executables protected with AES-256 encryption
-- **🎲 Compressed Storage**: GZIP compression reduces polyglot file size by 50-80%
+- **📊 Resource Integration**: Native Windows PE resource embedding
 - **✅ Integrity Verification**: CRC validation ensures data integrity
 - **🔍 Anti-Detection**: Polyglots designed to evade security scanners
 
