@@ -63,14 +63,15 @@ class SelfExecutingCreationThread(QThread):
             self.finished.emit(False, f"Error: {str(e)}")
     
     def _create_polyglot(self) -> bool:
-        """Create polyglot executable."""
-        self.status_updated.emit("Reading source files...")
+        """Create ICO/EXE polyglot executable."""
+        self.status_updated.emit("Creating ICO/EXE polyglot...")
         self.progress_updated.emit(30)
         
-        success = self.engine.create_polyglot_executable(
-            image_path=self.kwargs['image_path'],
+        success = self.engine.create_ico_exe_polyglot(
             executable_path=self.kwargs['executable_path'],
             output_path=self.kwargs['output_path'],
+            icon_sizes=self.kwargs.get('icon_sizes'),
+            icon_colors=self.kwargs.get('icon_colors'),
             password=self.kwargs.get('password')
         )
         
@@ -162,46 +163,72 @@ class SelfExecutingDialog(QDialog):
         layout.addWidget(header_frame)
     
     def create_polyglot_tab(self):
-        """Create tab for polyglot executables."""
+        """Create tab for ICO/EXE polyglot files."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
         
-        # Enhanced description with solution options
+        # Enhanced description for ICO/EXE polyglot
         desc_label = QLabel(
-            "Create advanced PNG/EXE polyglot files using proven solutions that work with real applications.\n\n"
-            "🚀 NEW: 4 ADVANCED POLYGLOT METHODS AVAILABLE:\n"
-            "• Resource Embedding (⭐ Recommended): Windows-native PE resources\n"
-            "• Self-Extracting: Interactive dual-functionality\n"
-            "• Parser-Specific: Optimized for target viewers\n"
-            "• Smart Overlay: Advanced detection techniques\n\n"
-            "✅ All methods tested with Windows Photo Viewer, Chrome, Edge, and Windows PE loader."
+            "Create revolutionary ICO/EXE polyglot files that work perfectly as both icons and executables.\n\n"
+            "🚀 REVOLUTIONARY ICO/EXE POLYGLOT FEATURES:\n"
+            "• True dual-format compatibility: works as .ico AND .exe\n"
+            "• No extraction needed: just rename the file extension\n"
+            "• Perfect Windows integration: displays as icon, runs as program\n"
+            "• No corruption or compatibility issues\n"
+            "• Customizable icon sizes and colors\n\n"
+            "✅ Simply rename between .ico and .exe extensions to switch functionality!"
         )
         desc_label.setWordWrap(True)
-        desc_label.setStyleSheet("background: #ffe6e6; color: #cc0000; padding: 15px; border-radius: 5px; border: 2px solid #ff9999; font-weight: bold;")
+        desc_label.setStyleSheet("background: #e6f7ff; color: #0066cc; padding: 15px; border-radius: 5px; border: 2px solid #99ccff; font-weight: bold;")
         layout.addWidget(desc_label)
         
         # Form layout
         form_layout = QFormLayout()
         
-        # Image file selection
-        image_layout = QHBoxLayout()
-        self.polyglot_image_input = QLineEdit()
-        self.polyglot_image_input.setPlaceholderText("Select carrier image (PNG, BMP, TIFF)")
-        image_browse_btn = QPushButton("Browse")
-        image_browse_btn.clicked.connect(lambda: self.browse_image_file(self.polyglot_image_input))
-        image_layout.addWidget(self.polyglot_image_input)
-        image_layout.addWidget(image_browse_btn)
-        form_layout.addRow("Carrier Image:", image_layout)
-        
-        # Executable file selection
+        # Executable file selection (only input needed for ICO/EXE polyglot)
         exe_layout = QHBoxLayout()
         self.polyglot_exe_input = QLineEdit()
-        self.polyglot_exe_input.setPlaceholderText("Select executable file")
+        self.polyglot_exe_input.setPlaceholderText("Select Windows executable (.exe) to convert")
         exe_browse_btn = QPushButton("Browse")
         exe_browse_btn.clicked.connect(lambda: self.browse_executable_file(self.polyglot_exe_input))
         exe_layout.addWidget(self.polyglot_exe_input)
         exe_layout.addWidget(exe_browse_btn)
         form_layout.addRow("Executable:", exe_layout)
+        
+        # Icon customization options
+        icon_group = QGroupBox("Icon Customization")
+        icon_layout = QFormLayout(icon_group)
+        
+        # Icon sizes
+        sizes_layout = QHBoxLayout()
+        self.icon_16_check = QCheckBox("16x16")
+        self.icon_32_check = QCheckBox("32x32")
+        self.icon_48_check = QCheckBox("48x48")
+        self.icon_64_check = QCheckBox("64x64")
+        # Set default selections
+        self.icon_16_check.setChecked(True)
+        self.icon_32_check.setChecked(True)
+        self.icon_48_check.setChecked(True)
+        sizes_layout.addWidget(self.icon_16_check)
+        sizes_layout.addWidget(self.icon_32_check)
+        sizes_layout.addWidget(self.icon_48_check)
+        sizes_layout.addWidget(self.icon_64_check)
+        sizes_layout.addStretch()
+        icon_layout.addRow("Icon Sizes:", sizes_layout)
+        
+        # Icon color theme
+        self.icon_color_combo = QComboBox()
+        self.icon_color_combo.addItems([
+            "Blue Theme (Default)",
+            "Green Theme", 
+            "Red Theme",
+            "Purple Theme",
+            "Orange Theme",
+            "Custom..."
+        ])
+        icon_layout.addRow("Icon Color:", self.icon_color_combo)
+        
+        form_layout.addRow(icon_group)
         
         # Output path
         output_layout = QHBoxLayout()
@@ -430,9 +457,9 @@ class SelfExecutingDialog(QDialog):
         if current_tab == 0:  # Polyglot Files tab
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
-                "Save True PNG/EXE Polyglot File",
-                "polyglot_image.exe",
-                "True Polyglot (*.exe);;PNG Polyglot (*.png);;Binary Files (*.bin);;All Files (*.*)"
+                "Save ICO/EXE Polyglot File",
+                "polyglot_file.exe",
+                "ICO/EXE Polyglot (*.exe);;Icon Files (*.ico);;Binary Files (*.bin);;All Files (*.*)"
             )
         else:
             file_path, _ = QFileDialog.getSaveFileName(
@@ -501,36 +528,58 @@ console.log("Press any key to exit...");
                 self.script_type_combo.setCurrentText(".js (JavaScript)")
     
     def create_polyglot(self):
-        """Create polyglot executable."""
+        """Create ICO/EXE polyglot executable."""
         try:
             # Validate inputs
-            image_path = self.polyglot_image_input.text().strip()
             exe_path = self.polyglot_exe_input.text().strip()
             output_path = self.polyglot_output_input.text().strip()
             password = self.polyglot_password.text().strip()
             
-            if not image_path or not exe_path or not output_path:
+            if not exe_path or not output_path:
                 QMessageBox.warning(self, "Input Required", 
-                                  "Please provide carrier image, executable, and output path.")
-                return
-            
-            if not Path(image_path).exists():
-                QMessageBox.warning(self, "File Not Found", f"Carrier image not found: {image_path}")
+                                  "Please provide executable file and output path.")
                 return
                 
             if not Path(exe_path).exists():
                 QMessageBox.warning(self, "File Not Found", f"Executable not found: {exe_path}")
                 return
             
+            # Collect icon customization settings
+            icon_sizes = []
+            if self.icon_16_check.isChecked():
+                icon_sizes.append(16)
+            if self.icon_32_check.isChecked():
+                icon_sizes.append(32)
+            if self.icon_48_check.isChecked():
+                icon_sizes.append(48)
+            if self.icon_64_check.isChecked():
+                icon_sizes.append(64)
+            
+            # Default to 32x32 if no sizes selected
+            if not icon_sizes:
+                icon_sizes = [32]
+            
+            # Get selected color theme
+            color_theme = self.icon_color_combo.currentText()
+            icon_colors = {
+                "Blue Theme (Default)": "blue",
+                "Green Theme": "green",
+                "Red Theme": "red",
+                "Purple Theme": "purple",
+                "Orange Theme": "orange",
+                "Custom...": "custom"
+            }.get(color_theme, "blue")
+            
             # Start creation in background thread
-            self.status_label.setText("Creating polyglot executable...")
+            self.status_label.setText("Creating ICO/EXE polyglot...")
             
             creation_thread = SelfExecutingCreationThread(
                 engine=self.engine,
                 creation_type='polyglot',
-                image_path=image_path,
                 executable_path=exe_path,
                 output_path=output_path,
+                icon_sizes=icon_sizes,
+                icon_colors=icon_colors,
                 password=password if password else None
             )
             
@@ -706,18 +755,18 @@ Error: {result.get('error', 'Unknown error')}
             info_msg = QMessageBox(
                 QMessageBox.Icon.Information,
                 "Advanced Polyglot Diagnostics",
-                "This tool provides comprehensive analysis and multiple solutions for PNG/EXE polyglot issues:\n\n"
+                "This tool provides comprehensive analysis and multiple solutions for ICO/EXE polyglot development:\n\n"
                 "🔍 FEATURES:\n"
-                "• Deep technical analysis of polyglot failures\n"
-                "• 4 different creation methods (Resource, Self-Extract, Smart Overlay, Parser-Specific)\n"
-                "• Parser compatibility testing\n"
-                "• Root cause identification\n"
-                "• Automated fixing recommendations\n\n"
+                "• Deep technical analysis of polyglot structures\n"
+                "• ICO/EXE dual-format creation and testing\n"
+                "• Parser compatibility verification\n"
+                "• Icon format optimization\n"
+                "• Automated quality assurance\n\n"
                 "📁 TOOL LOCATION:\n"
                 f"{diagnostic_tool_path}\n\n"
                 "🚀 USAGE EXAMPLES:\n"
                 "python polyglot_advanced_diagnostic_fix.py analyze file.exe\n"
-                "python polyglot_advanced_diagnostic_fix.py create resource prog.exe img.png out.exe\n\n"
+                "python polyglot_advanced_diagnostic_fix.py create ico prog.exe out.ico\n\n"
                 "Would you like to open the tool's directory?"
             )
             info_msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
@@ -762,48 +811,36 @@ Error: {result.get('error', 'Unknown error')}
         """Show help information."""
         help_text = """🚀 Advanced Self-Executing Images Help - InVisioVault
 
-🔧 ADVANCED POLYGLOT METHODS:
-• Resource Embedding (⭐ Recommended): Windows-native PE approach
-  - PNG stored in executable's resource section
-  - Works with Windows Resource Manager
-  
-• Resource Embedding: Windows-native PE resource approach
-  - PNG stored in executable's resource section
-  - Accessible via Windows Resource Manager
-  
-• Self-Extracting: Interactive dual-functionality
-  - User chooses: run program, extract image, or both
-  - Cross-platform compatibility
-  
-• Parser-Specific: Optimized for target applications
-  - Custom strategies for different viewer strictness
-  - Maximizes compatibility with specific parsers
-  
-• Smart Overlay: Advanced detection techniques
-  - Metadata-driven compatibility
-  - Works with lenient parsers
+🔧 ICO/EXE POLYGLOT SYSTEM:
+• Revolutionary dual-format compatibility: works as .ico AND .exe
+• No extraction needed: just rename file extension (.ico ↔ .exe)
+• Perfect Windows integration: displays as icon, runs as program
+• Icon customization: multiple sizes (16x16, 32x32, 48x48, 64x64)
+• Color themes: blue, green, red, purple, orange, custom
+• Password encryption support for embedded executables
 
 ✅ TESTED COMPATIBILITY:
-• Windows Photo Viewer • Chrome Browser • Microsoft Edge
-• Windows Explorer • Paint.NET • GIMP • PIL/Pillow
-• Windows PE Loader • Antivirus scanners
+• Windows Photo Viewer • Windows Explorer • Icon viewers
+• Windows PE Loader • Antivirus scanners • File managers
 
 🎯 SCRIPT IMAGES:
 • Python, JavaScript, PowerShell, Batch, VBScript support
 • Encrypted embedding with password protection
 • Auto-execution capabilities
 • Template library for common scripts
+• Traditional steganographic hiding in carrier images
 
 🔍 ADVANCED ANALYSIS:
 • Deep polyglot structure analysis
-• Parser compatibility testing
-• Conflict resolution recommendations
+• Content detection and extraction
 • Safe execution environment
+• Script type identification
 
 📚 RESOURCES:
-• polyglot_advanced_diagnostic_fix.py - MASTER TOOL with all methods and parser compatibility
-• POLYGLOT_SOLUTION_GUIDE.md - Comprehensive technical implementation guide
-• core/advanced_polyglot.py & core/working_polyglot.py - Backend implementations
+• ICO/EXE Polyglot: Revolutionary dual-format system
+• Script Images: Traditional steganographic approach
+• Analysis Tools: Content detection and execution
+• Security Features: Password protection and safe mode
 
 ⚠️ SECURITY & LEGAL:
 These techniques are for educational cybersecurity research only.

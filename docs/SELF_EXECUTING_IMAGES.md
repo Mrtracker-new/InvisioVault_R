@@ -61,7 +61,7 @@ Specialized viewer for detecting and executing embedded content.
 ### Method 1: Polyglot Files
 
 1. **Select the "Polyglot Files" tab**
-2. **Choose carrier image**: Select a PNG, BMP, or TIFF image
+2. **Choose carrier image**: Select a supported image format (ICO, PNG, BMP, TIFF)
 3. **Choose executable**: Select the .exe file to embed
 4. **Set output path**: Where to save the polyglot file
 5. **Optional encryption**: Add password protection
@@ -207,7 +207,7 @@ console.log("Press any key to exit...");
 
 ### Supported File Formats
 
-**Images**: PNG, BMP, TIFF (lossless formats required)
+**Images**: ICO, PNG, BMP, TIFF (lossless formats preferred)
 **Scripts**: .py, .js, .ps1, .bat, .sh, .vbs
 **Executables**: Windows PE, Linux ELF, macOS Mach-O
 

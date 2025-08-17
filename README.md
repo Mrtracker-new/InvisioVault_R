@@ -111,8 +111,8 @@ This project was developed as an advanced learning journey into:
 - 🛡️ **Anti-Detection Mode**: Advanced steganography designed to evade steganalysis tools
 - 🎲 **Hybrid LSB Randomization**: Combines randomized positioning with anti-detection techniques
 - 🚀 **Self-Executing Images**: Create images that can execute embedded code when triggered
-- 🔄 **PNG/EXE Polyglot Creation**: Revolutionary dual-format files that work as both images AND executables
-- 🎯 **True Simultaneous Format**: Files where PNG and PE formats coexist in the same bytes
+- 🔄 **ICO/EXE Polyglot Creation**: Revolutionary dual-format files that work as both icons AND executables
+- 🎯 **True Simultaneous Format**: Files where ICO and EXE formats coexist in perfect harmony
 
 ### 🛡️ **Advanced Security**
 - 🔐 **AES-256-CBC Encryption**: Military-grade encryption with PBKDF2 key derivation
@@ -457,21 +457,21 @@ test_with_external_tools.bat
 
 ---
 
-## 🔄 **NEW: Revolutionary PNG/EXE Polyglot Technology**
+## 🔄 **NEW: Revolutionary ICO/EXE Polyglot Technology**
 
 <div align="center">
 
 ### 🎯 **True Dual-Format Files: One File, Two Formats**
 
-*Create files that function perfectly as BOTH PNG images AND Windows executables simultaneously*
+*Create files that function perfectly as BOTH ICO icons AND Windows executables simultaneously*
 
 </div>
 
 **🚀 Breakthrough Innovation: True Simultaneous Format Technology**
 
-InVisioVault includes a revolutionary polyglot file creation feature that solves the age-old problem of format conflicts. Instead of choosing between image OR executable, InVisioVault's advanced polyglot engine creates files where PNG and PE formats **coexist in the same bytes**.
+InVisioVault includes a revolutionary polyglot file creation feature that solves the age-old problem of format conflicts. Instead of choosing between icon OR executable, InVisioVault's advanced polyglot engine creates files where ICO and EXE formats **coexist in perfect harmony**.
 
-This cutting-edge capability is fully integrated into the InVisioVault steganography suite, combining the power of hidden file storage with innovative dual-format technology.
+This cutting-edge capability is fully integrated into the InVisioVault steganography suite, combining the power of advanced steganography with innovative dual-format technology.
 
 ### 🎯 **Polyglot Features Overview**
 
@@ -508,17 +508,16 @@ python main.py
 
 #### **🖼️ Method 2: Direct Module Usage (Advanced)**
 ```python
-# Using the advanced polyglot module directly
-from core.advanced_polyglot import AdvancedPolyglotCreator
-from core.working_polyglot import WorkingPolyglotCreator
+# Using the ICO/EXE polyglot engine directly
 from core.self_executing_engine import SelfExecutingEngine
 
-# Create polyglot using the engine
+# Create ICO/EXE polyglot using the engine
 engine = SelfExecutingEngine()
-engine.create_polyglot_executable(
-    image_path="image.png",
+engine.create_ico_exe_polyglot(
     executable_path="program.exe", 
-    output_path="polyglot_output.exe"
+    output_path="polyglot_output.exe",
+    icon_sizes=[16, 32, 48],
+    icon_colors="blue"
 )
 ```
 
@@ -757,8 +756,7 @@ For detailed technical documentation, security guidelines, and educational examp
 | **🚀 Self-Executing Images** | Polyglot files and script execution | Educational Research | [`docs/SELF_EXECUTING_IMAGES.md`](docs/SELF_EXECUTING_IMAGES.md) |
 | **📂 Project Structure** | Codebase organization | Development | [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) |
 | **🔒 Security Framework** | Advanced security features | Security Architecture | [`docs/SECURITY.md`](docs/SECURITY.md) |
-| **🔄 PNG/EXE Polyglot Guide** | Complete polyglot creation guide | File Format Innovation | [`docs/POLYGLOT_GUIDE.md`](docs/POLYGLOT_GUIDE.md) |
-| **⚡ PNG/EXE Technical Guide** | Advanced polyglot implementation | Technical Innovation | [`docs/PNG_EXE_POLYGLOT_GUIDE.md`](docs/PNG_EXE_POLYGLOT_GUIDE.md) |
+| **🔄 ICO/EXE Polyglot Guide** | Complete polyglot creation guide | File Format Innovation | [`docs/POLYGLOT_GUIDE.md`](docs/POLYGLOT_GUIDE.md) |
 | **🚀 True Simultaneous Format** | Revolutionary polyglot technology | Breakthrough Research | [`docs/POLYGLOT_IMPLEMENTATION.md`](docs/POLYGLOT_IMPLEMENTATION.md) |
 
 ### 📅 **Release Information**

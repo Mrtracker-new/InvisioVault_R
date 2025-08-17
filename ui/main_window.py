@@ -777,6 +777,15 @@ class MainWindow(QMainWindow):
         # Tools menu
         tools_menu = menubar.addMenu("&Tools")
         
+        # Unicode RTL Polyglot action
+        unicode_polyglot_action = QAction("🎭 &Unicode RTL Polyglot", self)
+        unicode_polyglot_action.setShortcut("Ctrl+U")
+        unicode_polyglot_action.setStatusTip("Create executables disguised as PNG images")
+        unicode_polyglot_action.triggered.connect(self.show_unicode_polyglot_dialog)
+        tools_menu.addAction(unicode_polyglot_action)
+        
+        tools_menu.addSeparator()
+        
         # Image Analysis action
         analysis_action = QAction("&Image Analysis", self)
         analysis_action.setStatusTip("Analyze image suitability")
@@ -817,6 +826,12 @@ class MainWindow(QMainWindow):
         toolbar.addAction(extract_action)
         
         toolbar.addSeparator()
+        
+        # Unicode RTL Polyglot button
+        unicode_polyglot_toolbar_action = QAction("🎭 Unicode RTL", self)
+        unicode_polyglot_toolbar_action.setStatusTip("Create executables disguised as PNG images")
+        unicode_polyglot_toolbar_action.triggered.connect(self.show_unicode_polyglot_dialog)
+        toolbar.addAction(unicode_polyglot_toolbar_action)
         
         # Settings button
         settings_action = QAction("⚙️ Settings", self)
@@ -927,6 +942,15 @@ class MainWindow(QMainWindow):
             dialog.exec()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to open self-executing dialog:\n{str(e)}")
+    
+    def show_unicode_polyglot_dialog(self):
+        """Show the Unicode RTL polyglot dialog."""
+        try:
+            from ui.dialogs.unicode_polyglot_dialog import UnicodePolyglotDialog
+            dialog = UnicodePolyglotDialog(self)
+            dialog.exec()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to open Unicode RTL polyglot dialog:\n{str(e)}")
     
     def show_analysis_dialog(self):
         """Show the image analysis dialog."""
