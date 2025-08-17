@@ -12,7 +12,7 @@ This dialog asks the user for:
 3. Output settings
 Then creates a disguised executable that appears as a PNG in Windows Explorer.
 
-Author: InVisioVault Integration Team
+Author: Rolan (RNR)
 """
 
 import os
@@ -61,7 +61,7 @@ class UnicodePolyglotWorker(QObject):
             
             # Create the Unicode RTL polyglot
             success = self.engine.create_unicode_polyglot(
-                png_image_path=self.kwargs['image_path'],
+                icon_reference_path=self.kwargs['image_path'],
                 executable_path=self.kwargs['executable_path'],
                 output_path=self.kwargs['output_path'],
                 disguise_name=self.kwargs.get('disguise_name')
