@@ -9,20 +9,38 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any, Union, TYPE_CHECKING
 from enum import Enum
 
+# Type imports for proper typing
+if TYPE_CHECKING:
+    from PIL import Image
+    import numpy as np
+    import scipy
+    import scipy.ndimage
+    import scipy.signal
+    from numpy.typing import NDArray
+else:
+    NDArray = Any
+
 # Optional dependencies - graceful fallback if not available
 try:
     from PIL import Image
     import numpy as np
+    PIL_AVAILABLE = True
+    NUMPY_AVAILABLE = True
 except ImportError:
     Image = None
     np = None
+    PIL_AVAILABLE = False
+    NUMPY_AVAILABLE = False
 
 try:
-    import scipy  # type: ignore # Optional dependency for advanced analysis
-    import scipy.ndimage  # type: ignore
-    import scipy.signal   # type: ignore
+    import scipy
+    import scipy.ndimage
+    import scipy.signal
+    SCIPY_AVAILABLE = True
 except ImportError:
     scipy = None
+    SCIPY_AVAILABLE = False
+    
     # Create dummy modules to prevent attribute errors
     class DummyModule:
         def __getattr__(self, name):
@@ -30,12 +48,16 @@ except ImportError:
                 raise ImportError(f"scipy is not installed. Install with: pip install scipy")
             return dummy_func
     
-    if TYPE_CHECKING:
-        import scipy
-        import scipy.ndimage
-        import scipy.signal
-    else:
-        scipy = DummyModule()  # type: ignore
+    class DummyScipy:
+        ndimage = DummyModule()
+        signal = DummyModule()
+        
+        def __getattr__(self, name):
+            def dummy_func(*args, **kwargs):
+                raise ImportError(f"scipy is not installed. Install with: pip install scipy")
+            return dummy_func
+    
+    scipy = DummyScipy()  # type: ignore
 
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
@@ -81,7 +103,7 @@ class ImageAnalyzer:
         self.crypto_utils = CryptoUtils()
         
         # Verify required dependencies
-        if not Image or not np:
+        if not PIL_AVAILABLE or not NUMPY_AVAILABLE:
             self.logger.warning("PIL and numpy not available - limited functionality")
         
         self.logger.info("ImageAnalyzer initialized")
@@ -107,7 +129,7 @@ class ImageAnalyzer:
                 return False
             
             # Try to open the image
-            if Image:
+            if PIL_AVAILABLE and Image:
                 with Image.open(path) as img:
                     # Basic validation
                     if img.size[0] < 10 or img.size[1] < 10:
@@ -154,7 +176,7 @@ class ImageAnalyzer:
                 'recommendations': []
             }
             
-            if not Image or not np:
+            if not PIL_AVAILABLE or not NUMPY_AVAILABLE:
                 results['error'] = "PIL and numpy required for full analysis"
                 return results
             
@@ -214,7 +236,7 @@ class ImageAnalyzer:
             self.logger.error(f"Error analyzing file info: {e}")
             return {'error': str(e)}
     
-    def _analyze_image_properties(self, img: Image.Image) -> Dict[str, Any]:
+    def _analyze_image_properties(self, img: Any) -> Dict[str, Any]:
         """Analyze basic image properties."""
         try:
             width, height = img.size
@@ -233,7 +255,7 @@ class ImageAnalyzer:
             self.logger.error(f"Error analyzing image properties: {e}")
             return {'error': str(e)}
     
-    def _prepare_image_array(self, img: Image.Image, analysis_level: AnalysisLevel):
+    def _prepare_image_array(self, img: Any, analysis_level: AnalysisLevel) -> Any:
         """Prepare image array for analysis with optional optimization."""
         # Convert to RGB if necessary
         if img.mode not in ['RGB', 'RGBA']:
@@ -261,7 +283,7 @@ class ImageAnalyzer:
         
         return np.array(img)
     
-    def _analyze_capacity(self, img: Image.Image, img_array) -> Dict[str, Any]:
+    def _analyze_capacity(self, img: Any, img_array: Any) -> Dict[str, Any]:
         """Analyze steganographic capacity."""
         try:
             width, height = img.size
