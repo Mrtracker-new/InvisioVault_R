@@ -64,6 +64,46 @@ This project was developed as an advanced learning journey into:
 
 **⚠️ Important**: This software is designed for **legitimate educational, research, and privacy purposes only**. Please use responsibly and in compliance with local laws.
 
+---
+
+## 🔒 Important Security Notice
+
+### 🚨 **Advanced Features Moved to Private Development**
+
+<div align="center">
+
+**🎭 Unicode RTL Polyglot • ⚡ Self-Executing Images • 🔧 Advanced Polyglot Technologies**
+
+*These features have been temporarily removed from the public repository*
+
+</div>
+
+#### 📋 **What Was Removed:**
+- 🎭 **Unicode RTL Polyglot Engine**: Advanced bidirectional text exploitation
+- ⚡ **Self-Executing Image Technology**: Images that function as executables
+- 🔧 **ICO/EXE Polyglot Generation**: Multi-format polyglot file creation
+- 🖼️ **Self-Executing Viewers**: Standalone executable image processors
+
+#### 🎯 **Why This Decision:**
+- 🛡️ **Responsible Development**: These features are nearly production-ready
+- ⚠️ **Misuse Prevention**: Advanced techniques could be weaponized if made public
+- 🎓 **Ethical Considerations**: Balancing education with security responsibility
+- 🔐 **Security Review**: Features require comprehensive security auditing
+
+#### 🔮 **Future Plans:**
+- 🏗️ **Continued Development**: Features will advance in private repositories
+- 🎓 **Educational Access**: Academic/research versions may be available upon request
+- 📚 **Documentation**: Educational materials will be developed for legitimate use cases
+- ✅ **Responsible Release**: Public availability only after proper safeguards are implemented
+
+#### 📞 **Academic/Research Access:**
+For legitimate educational or research purposes, contact the development team through appropriate channels with:
+- 🎓 **Academic Affiliation**: University/Research institution details
+- 📋 **Research Purpose**: Clear description of educational objectives
+- 🛡️ **Security Assurance**: Commitment to responsible use and non-disclosure
+
+*InvisioVault remains committed to advancing cybersecurity education while ensuring responsible development of security technologies.*
+
 ## ⚡ Revolutionary Performance
 
 <div align="center">
