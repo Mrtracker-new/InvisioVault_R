@@ -559,16 +559,9 @@ console.log("Press any key to exit...");
             if not icon_sizes:
                 icon_sizes = [32]
             
-            # Get selected color theme
+            # Get selected color theme and convert to RGB tuple
             color_theme = self.icon_color_combo.currentText()
-            icon_colors = {
-                "Blue Theme (Default)": "blue",
-                "Green Theme": "green",
-                "Red Theme": "red",
-                "Purple Theme": "purple",
-                "Orange Theme": "orange",
-                "Custom...": "custom"
-            }.get(color_theme, "blue")
+            icon_colors = self._get_color_rgb_from_theme(color_theme)
             
             # Start creation in background thread
             self.status_label.setText("Creating ICO/EXE polyglot...")
@@ -925,6 +918,18 @@ The extracted image can now be viewed with standard image viewers.
             self.error_handler.handle_exception(e)
             QMessageBox.critical(self, "Extraction Error", f"Failed to extract image: {e}")
             self.status_label.setText("Error occurred")
+    
+    def _get_color_rgb_from_theme(self, theme_name: str) -> tuple:
+        """Convert color theme name to RGB tuple."""
+        color_map = {
+            "Blue Theme (Default)": (70, 130, 180),      # Steel blue
+            "Green Theme": (34, 139, 34),                 # Forest green
+            "Red Theme": (220, 20, 60),                   # Crimson
+            "Purple Theme": (138, 43, 226),               # Blue violet
+            "Orange Theme": (255, 140, 0),                # Dark orange
+            "Custom...": (100, 100, 100)                  # Gray default for custom
+        }
+        return color_map.get(theme_name, (70, 130, 180))  # Default to blue
     
     def apply_theme(self):
         """Apply current theme to dialog."""

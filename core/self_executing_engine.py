@@ -237,7 +237,7 @@ class SelfExecutingEngine:
             self.logger.error(f"Failed to create custom viewer: {e}")
             return False
     
-    def extract_image_from_polyglot(self, polyglot_path: str) -> bool:
+    def extract_image_from_polyglot(self, polyglot_path: str, output_path: str = None) -> bool:
         """
         Extract the image portion from an ICO/EXE polyglot file.
         
