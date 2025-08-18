@@ -100,50 +100,6 @@ def extract_data_optimized(stego_path, password):
 
 ---
 
-## 🏆 Version 1.0.2 - Self-Executing Images Feature
-**Release Date**: January 15, 2025  
-**Status**: ✅ Latest - Advanced Educational Research Feature
-
-### 🎓 **Major New Feature: Self-Executing Images**
-
-#### ✨ **What's New**
-- 🚀 **Polyglot File Creation**: Create files that function as both images AND executables
-- 📜 **Script-Executing Images**: Embed executable scripts (Python, JS, PowerShell, etc.) in images
-- 🔍 **Professional Analysis Tools**: Standalone viewer for analyzing suspicious images
-- 🔒 **AES-256 Encrypted Payloads**: Password-protected script content
-- 🛡️ **Multiple Execution Modes**: Safe analysis, interactive, and auto-execution modes
-
-#### 🔧 **Technical Implementation**
-- ✅ **SelfExecutingEngine**: Core engine for creating and analyzing self-executing images
-- ✅ **SelfExecutingDialog**: Multi-tab UI for creation and analysis
-- ✅ **Standalone Viewer**: Independent tool (`self_executing_viewer.py`)
-- ✅ **Cross-Platform Support**: Windows PE, Linux ELF, macOS Mach-O compatibility
-- ✅ **Multi-Language Scripts**: Support for .py, .js, .ps1, .bat, .sh, .vbs files
-
-#### 📚 **Educational Applications**
-- 🎓 **Cybersecurity Education**: Demonstrate steganographic techniques and detection
-- 🔬 **Malware Research**: Study polyglot file techniques and evasion methods
-- 🕵️ **Digital Forensics**: Training for analysts to detect and analyze suspicious images
-- 🛡️ **Security Testing**: Validate detection capabilities of security tools
-
-#### ⚠️ **Security & Ethical Usage**
-- 🎓 **Educational Purpose Only**: Designed for legitimate research and education
-- 🛡️ **Isolated Environment Recommended**: Use VMs/sandboxes for testing
-- 📋 **Comprehensive Documentation**: 386-line guide with security considerations
-- 📝 **Responsible Disclosure**: Guidelines for security researchers
-
-#### 📄 **Documentation Added**
-- ✅ **Complete Feature Guide**: [`docs/SELF_EXECUTING_IMAGES.md`](SELF_EXECUTING_IMAGES.md)
-- ✅ **Usage Examples**: Educational script templates and tutorials
-- ✅ **Security Guidelines**: Best practices for safe analysis
-- ✅ **Troubleshooting Guide**: Common issues and solutions
-
-#### 🔄 **Integration Updates**
-- ✅ **Main Window Integration**: New "🚀 Self-Executing" sidebar navigation
-- ✅ **README Updates**: Comprehensive feature documentation
-- ✅ **Project Structure**: Added `self_executing_engine.py` to core modules
-
----
 
 ## 🏆 Version 1.0.1 - Decoy Integration Enhancement
 **Release Date**: January 10, 2025  

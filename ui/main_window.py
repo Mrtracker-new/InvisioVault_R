@@ -118,7 +118,6 @@ class MainWindow(QMainWindow):
             ("🔐 Keyfile Mode", "keyfile", "Two-factor authentication with keyfiles"),
             ("🛡️ Two-Factor", "twofactor", "Distribute data across multiple images"),
             ("👻 Decoy Mode", "decoy", "Hide multiple datasets with plausible deniability"),
-            ("🚀 Self-Executing", "self_executing", "Create images that execute embedded code when triggered"),
             ("🔍 Image Analysis", "analysis", "Analyze image capacity and suitability"),
             ("⚙️ Settings", "settings", "Configure application preferences")
         ]
@@ -144,7 +143,6 @@ class MainWindow(QMainWindow):
         self.keyfile_widget = self.create_keyfile_operations_widget()
         self.twofactor_widget = self.create_twofactor_operations_widget()
         self.decoy_widget = self.create_decoy_operations_widget()
-        self.self_executing_widget = self.create_self_executing_operations_widget()
         self.analysis_widget = self.create_analysis_operations_widget()
         self.settings_widget = self.create_settings_widget()
         
@@ -153,9 +151,8 @@ class MainWindow(QMainWindow):
         self.content_stack.addWidget(self.keyfile_widget)    # Index 1
         self.content_stack.addWidget(self.twofactor_widget)  # Index 2
         self.content_stack.addWidget(self.decoy_widget)      # Index 3
-        self.content_stack.addWidget(self.self_executing_widget)  # Index 4
-        self.content_stack.addWidget(self.analysis_widget)   # Index 5
-        self.content_stack.addWidget(self.settings_widget)   # Index 6
+        self.content_stack.addWidget(self.analysis_widget)   # Index 4
+        self.content_stack.addWidget(self.settings_widget)   # Index 5
         
         return self.content_stack
     
@@ -471,93 +468,6 @@ class MainWindow(QMainWindow):
         
         return widget
     
-    def create_self_executing_operations_widget(self) -> QWidget:
-        """Create the self-executing operations widget."""
-        
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(20)
-        
-        # Title
-        title = QLabel("Self-Executing Images")
-        title_font = QFont()
-        title_font.setBold(True)
-        title_font.setPointSize(18)
-        title.setFont(title_font)
-        layout.addWidget(title)
-        
-        # Description
-        desc = QLabel("Create images that can execute embedded code when triggered. Advanced technique for educational steganography research.")
-        desc.setWordWrap(True)
-        desc.setStyleSheet("color: #666; font-size: 14px;")
-        layout.addWidget(desc)
-        
-        # Warning notice
-        warning_label = QLabel("⚠️ WARNING: This feature is for educational purposes only. Always exercise caution with executable content!")
-        warning_label.setWordWrap(True)
-        warning_label.setStyleSheet("""
-            background-color: #FFF3CD;
-            color: #856404;
-            border: 2px solid #FFE69C;
-            border-radius: 8px;
-            padding: 10px;
-            font-weight: bold;
-            margin: 5px 0;
-        """)
-        layout.addWidget(warning_label)
-        
-        # Operation buttons
-        button_layout = QHBoxLayout()
-        
-        self_exec_btn = QPushButton("🚀 Open Self-Executing Dialog")
-        self_exec_btn.setMinimumHeight(60)
-        self_exec_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #E91E63;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: 16px;
-                font-weight: bold;
-                padding: 10px;
-            }
-            QPushButton:hover {
-                background-color: #C2185B;
-            }
-            QPushButton:pressed {
-                background-color: #AD1457;
-            }
-        """)
-        self_exec_btn.clicked.connect(self.show_self_executing_dialog)
-        
-        button_layout.addWidget(self_exec_btn)
-        layout.addLayout(button_layout)
-        
-        # Feature list
-        features_label = QLabel("Capabilities:")
-        features_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
-        layout.addWidget(features_label)
-        
-        features = [
-            "• Create polyglot files (image + executable)",
-            "• Embed executable scripts in images",
-            "• Support Python, JavaScript, PowerShell, Batch",
-            "• Safe analysis mode for detection",
-            "• Custom viewer for self-executing images",
-            "• Encrypted payload support",
-            "• Educational malware research techniques"
-        ]
-        
-        for feature in features:
-            feature_label = QLabel(feature)
-            feature_label.setStyleSheet("margin-left: 10px; color: #444;")
-            layout.addWidget(feature_label)
-        
-        # Spacer to push content to top
-        layout.addStretch()
-        
-        return widget
     
     def create_analysis_operations_widget(self) -> QWidget:
         """Create the analysis operations widget."""
@@ -777,14 +687,6 @@ class MainWindow(QMainWindow):
         # Tools menu
         tools_menu = menubar.addMenu("&Tools")
         
-        # Unicode RTL Polyglot action
-        unicode_polyglot_action = QAction("🎭 &Unicode RTL Polyglot", self)
-        unicode_polyglot_action.setShortcut("Ctrl+U")
-        unicode_polyglot_action.setStatusTip("Create executables disguised as PNG images")
-        unicode_polyglot_action.triggered.connect(self.show_unicode_polyglot_dialog)
-        tools_menu.addAction(unicode_polyglot_action)
-        
-        tools_menu.addSeparator()
         
         # Image Analysis action
         analysis_action = QAction("&Image Analysis", self)
@@ -826,12 +728,6 @@ class MainWindow(QMainWindow):
         toolbar.addAction(extract_action)
         
         toolbar.addSeparator()
-        
-        # Unicode RTL Polyglot button
-        unicode_polyglot_toolbar_action = QAction("🎭 Unicode RTL", self)
-        unicode_polyglot_toolbar_action.setStatusTip("Create executables disguised as PNG images")
-        unicode_polyglot_toolbar_action.triggered.connect(self.show_unicode_polyglot_dialog)
-        toolbar.addAction(unicode_polyglot_toolbar_action)
         
         # Settings button
         settings_action = QAction("⚙️ Settings", self)
@@ -879,9 +775,8 @@ class MainWindow(QMainWindow):
             "keyfile": 1,
             "twofactor": 2,
             "decoy": 3,
-            "self_executing": 4,
-            "analysis": 5,
-            "settings": 6
+            "analysis": 4,
+            "settings": 5
         }
         
         if operation_key in operation_map:
@@ -934,14 +829,6 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to open decoy dialog:\n{str(e)}")
     
-    def show_self_executing_dialog(self):
-        """Show the self-executing images dialog."""
-        try:
-            from ui.dialogs.self_executing_dialog import SelfExecutingDialog
-            dialog = SelfExecutingDialog(self)
-            dialog.exec()
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to open self-executing dialog:\n{str(e)}")
     
     def show_unicode_polyglot_dialog(self):
         """Show the Unicode RTL polyglot dialog."""

@@ -110,18 +110,6 @@ This project was developed as an advanced learning journey into:
 - 📊 **Smart Image Analysis**: Entropy-based capacity calculation and suitability scoring
 - 🛡️ **Anti-Detection Mode**: Advanced steganography designed to evade steganalysis tools
 - 🎲 **Hybrid LSB Randomization**: Combines randomized positioning with anti-detection techniques
-- 🚀 **Self-Executing Images**: Create images that can execute embedded code when triggered
-
-### 🔄 **Revolutionary Polyglot Technology**
-- 🎯 **ICO/EXE Polyglot Creation**: Revolutionary dual-format files that work as both icons AND executables
-- ✨ **True Simultaneous Format**: Files where multiple formats coexist in perfect harmony
-- 🧠 **Intelligent Format Selection**: Automatic method selection based on file characteristics
-- 🛡️ **Encrypted Polyglot Embedding**: PE executables protected with AES-256 encryption
-- 🎭 **Unicode RTL Polyglots**: Executables disguised as PNG images using Unicode tricks
-- 🔍 **Anti-Detection Polyglots**: Designed to evade security scanners and detection tools
-- 📊 **Cross-Platform Support**: Windows PE, Linux ELF, macOS Mach-O compatibility
-- ⚡ **Native Execution**: Run directly as executables without extraction
-- 🖥️ **Perfect Image Display**: Works with all major image viewers and browsers
 
 ### 🛡️ **Advanced Security**
 - 🔐 **AES-256-CBC Encryption**: Military-grade encryption with PBKDF2 key derivation
@@ -464,277 +452,7 @@ test_with_external_tools.bat
 - **🛡️ Privacy Protection**: Maximum security for sensitive data hiding
 - **🧪 Security Testing**: Validating steganalysis tool effectiveness
 
----
 
-## 🔄 **NEW: Revolutionary ICO/EXE Polyglot Technology**
-
-<div align="center">
-
-### 🎯 **True Dual-Format Files: One File, Two Formats**
-
-*Create files that function perfectly as BOTH ICO icons AND Windows executables simultaneously*
-
-</div>
-
-**🚀 Breakthrough Innovation: True Simultaneous Format Technology**
-
-InVisioVault includes a revolutionary polyglot file creation feature that solves the age-old problem of format conflicts. Instead of choosing between icon OR executable, InVisioVault's advanced polyglot engine creates files where ICO and EXE formats **coexist in perfect harmony**.
-
-This cutting-edge capability is fully integrated into the InVisioVault steganography suite, combining the power of advanced steganography with innovative dual-format technology.
-
-### 🎯 **Polyglot Features Overview**
-
-#### **🔧 Multiple Creation Methods**
-- **🎯 EXE-First Polyglot**: Maximum execution compatibility, PNG as overlay data
-- **🖼️ PNG-First Polyglot**: Perfect image compatibility, PE embedded in PNG chunks
-- **⚡ True Simultaneous**: Revolutionary technique where both formats occupy the same bytes
-- **🧠 Hybrid Approaches**: Intelligent method selection based on file characteristics
-
-#### **🛡️ Advanced Polyglot Security**
-- **🔐 Encrypted PE Embedding**: Executables protected with AES-256 encryption
-- **📊 Resource Integration**: Native Windows PE resource embedding
-- **✅ Integrity Verification**: CRC validation ensures data integrity
-- **🔍 Anti-Detection**: Polyglots designed to evade security scanners
-
-#### **⚡ Professional Compatibility**
-- **🖼️ Perfect PNG Display**: Works with all major image viewers (Photos, browsers, Paint)
-- **💻 Native Execution**: Runs directly as Windows executables without extraction
-- **🔄 Cross-Platform Support**: Windows PE, Linux ELF, macOS Mach-O polyglots
-- **📊 Format Validation**: Built-in verification for both PNG and PE structures
-
-### 🚀 **Quick Polyglot Creation**
-
-#### **🎯 Method 1: Using InVisioVault GUI (Recommended)**
-```bash
-# Launch InVisioVault application
-python main.py
-
-# Navigate to "Self-Executing" in the sidebar
-# Select "Polyglot File Creation"
-# Choose your image and executable files
-# Result: Professional polyglot with dual-format compatibility
-```
-
-#### **🖼️ Method 2: Direct Module Usage (Advanced)**
-```python
-# Using the ICO/EXE polyglot engine directly
-from core.self_executing_engine import SelfExecutingEngine
-
-# Create ICO/EXE polyglot using the engine
-engine = SelfExecutingEngine()
-engine.create_ico_exe_polyglot(
-    executable_path="program.exe", 
-    output_path="polyglot_output.exe",
-    icon_sizes=[16, 32, 48],
-    icon_colors="blue"
-)
-```
-
-#### **⚡ Method 3: Command-Line Verification**
-```bash
-# Verify and test existing polyglot files
-python polyglot_verifier.py polyglot_file.exe
-
-# Test dual-format compatibility
-# 1. Run as executable: polyglot_file.exe
-# 2. View as image: copy and rename to .png extension
-```
-
-### 📊 **Polyglot Comparison Matrix**
-
-| **🎯 Method** | **🖼️ PNG Compatibility** | **💻 EXE Compatibility** | **📏 File Size** | **🛡️ Security** | **🎯 Best For** |
-|---------------|--------------------------|---------------------------|-------------------|------------------|------------------|
-| **⚡ EXE-First** | ⚠️ (requires renaming) | ✅ **Perfect** | 🔥 Minimal overhead | ⭐⭐⭐ | Direct execution needed |
-| **🖼️ PNG-First** | ✅ **Perfect** | ⚠️ (requires extraction) | 🔥🔥 Compressed | ⭐⭐⭐⭐⭐ | Image sharing, security |
-| **🚀 True Simultaneous** | ✅ **Excellent** | ✅ **Excellent** | 🔥🔥🔥 Optimized | ⭐⭐⭐⭐ | **Ultimate dual-use** |
-| **🧠 Hybrid Auto** | ✅ **Smart Selection** | ✅ **Smart Selection** | 🔥🔥 Adaptive | ⭐⭐⭐⭐ | Automated optimization |
-
-### 🔍 **How Polyglot Technology Works**
-
-#### **🎯 Revolutionary Simultaneous Format Technique**
-```
-🚀 BREAKTHROUGH: Same bytes, different meanings
-
-📊 Traditional Approach (BROKEN):
-[PNG Headers][PNG Data] → Can't execute
-[PE Headers][PE Data] → Can't display as image
-
-✨ InvisioVault Innovation (PERFECT):
-[Hybrid Structure where PNG and PE coexist]
-├── PNG parsers see: Valid image with special chunks
-└── PE loaders see: Valid executable with overlay data
-```
-
-#### **🧠 Intelligent Format Engineering**
-1. **🔬 Parser Analysis**: Exploits differences in how PNG and PE parsers work
-2. **📍 Strategic Positioning**: Places data where both formats can access it
-3. **🎭 Dual-Purpose Bytes**: Same bytes serve different functions for different parsers
-4. **🛡️ Bridge Sections**: Navigation aids help both formats find their data
-
-### 🧪 **Testing Your Polyglots**
-
-#### **🔍 Verification Commands**
-```bash
-# Comprehensive polyglot verification
-python polyglot_verifier.py your_polyglot_file
-
-# Test PNG compatibility
-copy polyglot.exe test.png
-# Open test.png in any image viewer
-
-# Test EXE functionality
-polyglot.exe
-# Should execute normally
-```
-
-#### **📊 Advanced Analysis**
-```bash
-# Analyze polyglot structure
-python core/advanced_polyglot.py --analyze polyglot_file
-
-# Test with different image viewers
-python polyglot_verifier.py --test-viewers polyglot.png
-
-# Benchmark polyglot performance
-python polyglot_verifier.py --benchmark polyglot.exe
-```
-
-### 🛡️ **Polyglot Security Applications**
-
-#### **🎭 Steganographic Distribution**
-- **📧 Email Attachments**: Send executables disguised as harmless images
-- **🌐 Web Hosting**: Host executables on image-sharing platforms
-- **💾 Backup Storage**: Store programs in image galleries
-- **🔐 Covert Operations**: Educational security research and testing
-
-#### **⚠️ Ethical Usage Guidelines**
-| ✅ **Legitimate Uses** | ❌ **Prohibited Uses** |
-|------------------------|------------------------|
-| 🎓 Security research and education | 🚫 Malware distribution |
-| 🧪 Digital forensics training | 🚫 Bypassing security controls |
-| 🛡️ Penetration testing (authorized) | 🚫 Unauthorized system access |
-| 📚 Academic research | 🚫 Illegal activities |
-| 🔐 Legitimate software distribution | 🚫 Copyright infringement |
-
-### 📚 **Complete Polyglot Documentation**
-
-| 📄 **Document** | 📝 **Description** | 🎯 **Focus** | 🔗 **Link** |
-|-------------|----------------|------------|--------|
-| **🔄 Polyglot Guide** | Complete creation and usage guide | All Methods | [`docs/POLYGLOT_GUIDE.md`](docs/POLYGLOT_GUIDE.md) |
-| **⚡ PNG/EXE Technical Guide** | Advanced technical implementation | Technical Details | [`docs/PNG_EXE_POLYGLOT_GUIDE.md`](docs/PNG_EXE_POLYGLOT_GUIDE.md) |
-| **🚀 Implementation Details** | Revolutionary simultaneous format | Advanced Theory | [`docs/POLYGLOT_IMPLEMENTATION.md`](docs/POLYGLOT_IMPLEMENTATION.md) |
-| **🧪 Testing & Verification** | How to test and verify polyglots | Quality Assurance | [`docs/POLYGLOT_TESTING.md`](docs/POLYGLOT_TESTING.md) |
-
-### 🔥 **Key Polyglot Innovations**
-
-#### **✅ Solved Problems:**
-- **🐛 "This PC can't run this app" Error**: Revolutionary header alignment fixes
-- **🖼️ "File format not supported" Error**: Perfect PNG structure preservation
-- **⚖️ Format Priority Conflicts**: True simultaneous format coexistence
-- **📏 File Size Issues**: Advanced compression reduces overhead
-
-#### **🆕 Breakthrough Features:**
-- **🔄 Automatic Method Selection**: AI chooses optimal polyglot method
-- **🛡️ Enhanced Security**: Encrypted PE embedding with anti-detection
-- **⚡ Performance Optimization**: Minimal impact on file size and speed
-- **🧪 Comprehensive Testing**: Validates both formats automatically
-
-#### **🎯 Perfect For:**
-- **🎓 Educational Demonstrations**: Show advanced file format techniques
-- **🔬 Security Research**: Study polyglot detection and creation methods
-- **🛡️ Penetration Testing**: Authorized security assessments
-- **📚 Digital Forensics**: Training analysts to detect sophisticated techniques
-- **🧪 Software Development**: Understanding file format specifications
-
----
-
-## 🚀 **NEW: Self-Executing Images**
-
-<div align="center">
-
-### 🕵️ **Advanced Steganographic Payloads**
-
-*Create images that can execute embedded code when triggered - for educational and security research purposes*
-
-</div>
-
-**🎓 Educational Security Research Feature**
-
-InVisioVault now includes an advanced self-executing images feature designed for educational purposes and security research. This sophisticated steganographic technique allows researchers and educators to explore polyglot files and script embedding.
-
-### 🎯 **Feature Highlights**
-
-#### **🔧 Polyglot File Creation**
-- **Dual-Nature Files**: Create files that function as both images AND executables
-- **Cross-Platform Support**: Windows PE, Linux ELF, macOS Mach-O compatibility
-- **Invisible Embedding**: Executables hidden within normal-looking images
-- **Educational Analysis**: Perfect for malware research and forensics training
-
-#### **📜 Script-Executing Images**
-- **Multi-Language Support**: Python, JavaScript, PowerShell, Batch, Bash, VBScript
-- **Steganographic Hiding**: Scripts embedded using advanced LSB techniques
-- **Encrypted Payloads**: Password-protected script content with AES-256
-- **Execution Controls**: Safe analysis, interactive, and auto-execution modes
-
-#### **🔍 Professional Analysis Tools**
-- **Standalone Viewer**: Independent tool for analyzing suspicious images
-- **Safe Analysis Mode**: Detect content without executing (recommended)
-- **Interactive Execution**: User-controlled execution with security warnings
-- **Command-Line Interface**: Automated analysis and batch processing
-
-### 🛡️ **Security & Ethical Usage**
-
-| ⚠️ **Important Security Notice** |
-|-----------------------------------|
-| This feature is designed for **educational and research purposes ONLY**. Users must: |
-| • Only analyze images from trusted, known sources |
-| • Use isolated environments (VMs, sandboxes) for testing |
-| • Follow responsible disclosure practices for security research |
-| • Never create or distribute malicious content |
-| • Comply with all applicable laws and regulations |
-
-### 🚀 **Quick Start Guide**
-
-#### **Creating Educational Examples**
-1. 🚀 Launch InVisioVault
-2. 📄 Navigate to "🚀 Self-Executing" in the sidebar  
-3. 🖼️ Select creation method (Polyglot or Script)
-4. ⚙️ Configure your educational payload
-5. 🔐 Set security options and passwords
-6. ✨ Create your research specimen!
-
-#### **Safe Analysis Workflow**
-1. 🔍 Use "Analysis & Execution" tab
-2. 📂 Select image to analyze
-3. 🛡️ Always start with "Safe Mode" analysis
-4. 📊 Review detailed analysis results
-5. ⚠️ Only proceed with execution in isolated environments
-
-### 📚 **Educational Applications**
-
-- **🎓 Cybersecurity Education**: Demonstrate steganographic techniques and detection
-- **🔬 Malware Research**: Study polyglot file techniques and evasion methods
-- **🕵️ Digital Forensics**: Training for analysts to detect and analyze suspicious images
-- **🛡️ Security Testing**: Validate detection capabilities of security tools
-- **📖 Academic Research**: Explore advanced steganography and file format research
-
-### 🔧 **Technical Specifications**
-
-| **Component** | **Description** | **Formats Supported** |
-|---------------|-----------------|----------------------|
-| **Image Carriers** | Lossless image formats | PNG, BMP, TIFF |
-| **Script Languages** | Embedded script support | .py, .js, .ps1, .bat, .sh, .vbs |
-| **Executable Types** | Polyglot file creation | Windows PE, Linux ELF, macOS Mach-O |
-| **Encryption** | Payload protection | AES-256 with PBKDF2 key derivation |
-| **Analysis Modes** | Security levels | Safe, Interactive, Auto-execution |
-
-### 📖 **Complete Documentation**
-
-For detailed technical documentation, security guidelines, and educational examples:
-
-**📘 [Self-Executing Images Guide](docs/SELF_EXECUTING_IMAGES.md)**
-
-*Comprehensive 386-line documentation covering creation, analysis, security considerations, examples, and troubleshooting.*
 
 ---
 
@@ -762,11 +480,8 @@ For detailed technical documentation, security guidelines, and educational examp
 |-------------|----------------|------------|--------|
 | **⚡ Performance Analysis** | Speed optimization breakdown | Performance | [`docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md`](docs/PERFORMANCE_OPTIMIZATION_SUMMARY.md) |
 | **🎭 Multi-Decoy Guide** | Advanced decoy features | Security | [`docs/MULTI_DECOY_IMPLEMENTATION.md`](docs/MULTI_DECOY_IMPLEMENTATION.md) |
-| **🚀 Self-Executing Images** | Polyglot files and script execution | Educational Research | [`docs/SELF_EXECUTING_IMAGES.md`](docs/SELF_EXECUTING_IMAGES.md) |
 | **📂 Project Structure** | Codebase organization | Development | [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) |
 | **🔒 Security Framework** | Advanced security features | Security Architecture | [`docs/SECURITY.md`](docs/SECURITY.md) |
-| **🔄 ICO/EXE Polyglot Guide** | Complete polyglot creation guide | File Format Innovation | [`docs/POLYGLOT_GUIDE.md`](docs/POLYGLOT_GUIDE.md) |
-| **🚀 True Simultaneous Format** | Revolutionary polyglot technology | Breakthrough Research | [`docs/POLYGLOT_IMPLEMENTATION.md`](docs/POLYGLOT_IMPLEMENTATION.md) |
 
 ### 📅 **Release Information**
 
@@ -808,12 +523,8 @@ python test_extraction_msg.py
 # Final decoy implementation test
 python test_final_decoy.py
 
-# PNG/EXE Polyglot creation and testing (NEW!)
-# Use InVisioVault GUI: python main.py -> "Self-Executing" -> "Polyglot File Creation"
-# Or verify existing polyglots:
-python polyglot_verifier.py polyglot_file
-# Or use direct module access (advanced):
-# from core.self_executing_engine import SelfExecutingEngine
+# Advanced functionality testing
+# Use InVisioVault GUI for comprehensive features
 ```
 
 ### 🛠️ **Development Tools**
@@ -911,7 +622,6 @@ For complete build instructions, troubleshooting, and advanced options:
 ├── 🚀 main.py                            # Launch the application
 ├── 📋 requirements.txt                   # Python dependencies  
 ├── ⚙️ setup.py                           # Package configuration
-├── 🔍 self_executing_viewer.py           # Self-executing image viewer
 ├── 📄 InvisioVault.spec                  # PyInstaller build specification
 ├── 📋 MANIFEST.in                        # Package manifest
 ├── 📜 LICENSE                            # MIT License
@@ -934,10 +644,6 @@ For complete build instructions, troubleshooting, and advanced options:
 │   ├── 🎭 multi_decoy_engine.py         # Multi-layer security
 │   ├── 🔑 two_factor_engine.py          # 2FA authentication
 │   ├── 👻 decoy_engine.py               # Plausible deniability
-│   ├── 🚀 self_executing_engine.py      # Self-executing images & polyglots
-│   ├── 🔄 ico_exe_polyglot.py           # ICO/EXE polyglot creation
-│   ├── 🎯 unicode_polyglot_engine.py    # Unicode RTL polyglot engine
-│   ├── 🏗️ working_polyglot.py           # Production-ready polyglots
 │   ├── 🔍 image_analyzer.py             # Image analysis and suitability
 │   ├── 📁 file_manager.py               # File management utilities
 │   ├── 🛡️ security_service.py          # Security service layer
@@ -950,22 +656,19 @@ For complete build instructions, troubleshooting, and advanced options:
 │   ├── 🏗️ PROJECT_STRUCTURE.md         # Architecture details
 │   ├── ⚡ PERFORMANCE_OPTIMIZATION_SUMMARY.md # Performance analysis
 │   ├── 🎭 MULTI_DECOY_IMPLEMENTATION.md # Multi-decoy features
-│   ├── 🚀 SELF_EXECUTING_IMAGES.md     # Self-executing image guide
 │   ├── 🛡️ SECURITY.md                  # Security framework
 │   ├── 🕵️ ANTI_DETECTION_IMPLEMENTATION_SUMMARY.md # Anti-detection guide
 │   ├── 📊 ANTI_DETECTION_TEST_REPORT.md # Steganalysis test results
 │   ├── 🎲 LSB_RANDOMIZATION_IMPLEMENTATION.md # LSB randomization
 │   ├── 🧪 TESTING_GUIDE.md             # Testing methodology
 │   ├── 🛡️ anti_detection_techniques.md # Technical anti-detection details
-│   ├── 🔄 POLYGLOT_IMPLEMENTATION.md   # Polyglot technology guide
 │   ├── 📈 SECURITY_IMPROVEMENTS.md     # Security enhancement details
 │   ├── 🏗️ TECHNICAL_ARCHITECTURE.md   # System architecture
 │   ├── 📊 STATISTICAL_MASKING_DOCUMENTATION.md # Statistical techniques
 │   └── 📋 INSTALLATION.md              # Installation guide
 ├── 🧪 examples/                         # Example implementations
 │   ├── 🛡️ anti_detection_integration.py # Anti-detection examples
-│   ├── 🔍 image_analysis_example.py    # Image analysis examples
-│   └── 🚀 self_executing_demo.py       # Self-executing demos
+│   └── 🔍 image_analysis_example.py    # Image analysis examples
 ├── 🗂️ my_keys/                          # Keyfile storage directory
 ├── ⚡ operations/                        # Core operation handlers
 │   ├── 🔒 hide_operation.py            # File hiding logic
@@ -992,8 +695,6 @@ For complete build instructions, troubleshooting, and advanced options:
 │   │   ├── 🔑 keyfile_dialog.py        # Keyfile management
 │   │   ├── 🛡️ two_factor_dialog.py     # Two-factor authentication
 │   │   ├── 👻 decoy_dialog.py          # Decoy mode operations
-│   │   ├── 🚀 self_executing_dialog.py # Self-executing image creation
-│   │   ├── 🎯 unicode_polyglot_dialog.py # Unicode RTL polyglot dialog
 │   │   └── 📊 analysis_dialog.py       # Image analysis dialog
 │   ├── 🔧 components/                   # Reusable UI components
 │   │   ├── 📄 file_drop_zone.py        # Drag & drop file handling
@@ -1007,7 +708,6 @@ For complete build instructions, troubleshooting, and advanced options:
 │   │   ├── ☀️ light_theme.py           # Light mode theme
 │   │   └── 🎨 theme_manager.py         # Theme management
 │   └── 🔗 integrations/                 # Feature integrations
-│       └── 🎯 unicode_polyglot_integration.py # Unicode polyglot integration
 └── 🔧 utils/                            # Core utility modules
     ├── ⚙️ config_manager.py            # Configuration management
     ├── 📝 logger.py                    # Secure logging system
