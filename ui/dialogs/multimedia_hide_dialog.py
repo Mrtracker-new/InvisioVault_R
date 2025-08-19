@@ -684,12 +684,10 @@ class MultimediaHideDialog(QDialog):
     
     def update_hide_button_state(self):
         """Update the state of the hide button."""
-        can_hide = (
-            self.carrier_file is not None and
-            self.files_to_hide and
-            self.password_input.text().strip() and
-            self.output_path_input.text().strip()
-        )
+        can_hide = (self.carrier_file is not None and
+                    bool(self.files_to_hide) and
+                    bool(self.password_input.text().strip()) and
+                    bool(self.output_path_input.text().strip()))
         
         self.hide_button.setEnabled(can_hide)
     
