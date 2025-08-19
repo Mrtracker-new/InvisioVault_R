@@ -63,12 +63,16 @@ class FileDropZone(QWidget):
         layout.addLayout(browse_layout)
         
         # Selected files list
-        files_label = QLabel("Selected Files:")
-        files_label.setFont(QFont("Arial", 10, QFont.Weight.Bold))
-        layout.addWidget(files_label)
+        self.files_label = QLabel("Selected Files:")
+        self.files_label.setFont(QFont("Arial", 10, QFont.Weight.Bold))
+        self.files_label.setObjectName("files_label")
+        layout.addWidget(self.files_label)
         
         self.files_list = QListWidget()
         self.files_list.setMaximumHeight(150)
+        # Initially hide the files list
+        self.files_list.setVisible(False)
+        self.files_label.setVisible(False)
         layout.addWidget(self.files_list)
         
         # Clear button
@@ -269,14 +273,24 @@ class FileDropZone(QWidget):
         """Update the files list display."""
         self.files_list.clear()
         
-        for file_path in self.files:
-            item = QListWidgetItem(f"📄 {file_path.name}")
-            item.setToolTip(str(file_path))
-            self.files_list.addItem(item)
-        
-        # Update button states
+        # Update button states and visibility
         has_files = len(self.files) > 0
         self.clear_btn.setEnabled(has_files)
+        
+        # Show/hide files list and label based on whether we have files
+        if has_files:
+            # Show files list and populate it
+            self.files_list.setVisible(True)
+            self.files_label.setVisible(True)
+                
+            for file_path in self.files:
+                item = QListWidgetItem(f"📄 {file_path.name}")
+                item.setToolTip(str(file_path))
+                self.files_list.addItem(item)
+        else:
+            # Hide files list when empty
+            self.files_list.setVisible(False)
+            self.files_label.setVisible(False)
         
         # Update drop area text
         if has_files:
