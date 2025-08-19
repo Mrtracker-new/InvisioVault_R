@@ -754,7 +754,7 @@ class MultimediaHideDialog(QDialog):
             
             # Connect worker signals
             self.hide_worker.progress_updated.connect(self.progress_dialog.update_progress)
-            self.hide_worker.status_updated.connect(self.progress_dialog.update_status)
+            self.hide_worker.status_updated.connect(self.progress_dialog.set_status)
             self.hide_worker.finished_successfully.connect(self.on_hiding_finished)
             self.hide_worker.error_occurred.connect(self.on_hiding_error)
             
