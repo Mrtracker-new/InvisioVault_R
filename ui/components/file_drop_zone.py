@@ -46,7 +46,8 @@ class FileDropZone(QWidget):
         # Drop area
         self.drop_area = QLabel()
         self.drop_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.drop_area.setMinimumHeight(120)
+        self.drop_area.setMinimumHeight(160)
+        self.drop_area.setWordWrap(True)
         self.update_drop_area_style()
         layout.addWidget(self.drop_area)
         
@@ -96,28 +97,56 @@ class FileDropZone(QWidget):
                     border: 3px dashed #4CAF50;
                     border-radius: 8px;
                     background-color: #E8F5E8;
-                    color: #2E7D32;
+                    color: #1B5E20;
                     font-size: 14px;
                     font-weight: bold;
                     padding: 20px;
+                    text-align: center;
                 }
             """
-            text = f"💾 Drop files here\n{self.title}"
+            text = f"💾 Drop files here\n\n{self.title}"
         else:
             style = """
                 QLabel {
-                    border: 2px dashed #ccc;
+                    border: 2px dashed #888;
                     border-radius: 8px;
-                    background-color: #f9f9f9;
-                    color: #666;
-                    font-size: 14px;
+                    background-color: #f5f5f5;
+                    color: #333;
+                    font-size: 13px;
                     padding: 20px;
+                    text-align: center;
                 }
             """
-            text = f"📁 {self.title}\nDrag and drop files here or click Browse"
+            # Create multi-line text with proper spacing
+            lines = []
+            lines.append(f"📁 {self.title}")
+            lines.append("")
+            lines.append("Drag and drop files here or click Browse")
             
             if self.file_types:
-                text += f"\nSupported: {', '.join(self.file_types)}"
+                lines.append("")
+                # Split long supported formats list
+                formats = ', '.join(self.file_types)
+                if len(formats) > 40:  # If too long, split into multiple lines
+                    words = formats.split(', ')
+                    line1_words = []
+                    line2_words = []
+                    current_length = 0
+                    for word in words:
+                        if current_length + len(word) + 2 < 40:  # +2 for ", "
+                            line1_words.append(word)
+                            current_length += len(word) + 2
+                        else:
+                            line2_words.append(word)
+                    
+                    if line1_words:
+                        lines.append(f"Supported: {', '.join(line1_words)}")
+                    if line2_words:
+                        lines.append(f"           {', '.join(line2_words)}")
+                else:
+                    lines.append(f"Supported: {formats}")
+            
+            text = '\n'.join(lines)
         
         self.drop_area.setStyleSheet(style)
         self.drop_area.setText(text)
@@ -254,6 +283,26 @@ class FileDropZone(QWidget):
             count_text = f"{len(self.files)} file(s) selected"
             if self.max_files > 0:
                 count_text += f" (max {self.max_files})"
-            self.drop_area.setText(f"📁 {count_text}\nDrop more files or click Browse")
+            
+            # Create properly spaced text
+            lines = []
+            lines.append(f"📁 {count_text}")
+            lines.append("")
+            lines.append("Drop more files or click Browse")
+            
+            # Apply similar styling but with different content
+            style = """
+                QLabel {
+                    border: 2px solid #4CAF50;
+                    border-radius: 8px;
+                    background-color: #f0f8f0;
+                    color: #1B5E20;
+                    font-size: 13px;
+                    padding: 20px;
+                    text-align: center;
+                }
+            """
+            self.drop_area.setStyleSheet(style)
+            self.drop_area.setText('\n'.join(lines))
         else:
             self.update_drop_area_style()
