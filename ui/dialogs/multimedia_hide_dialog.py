@@ -464,8 +464,9 @@ class MultimediaHideDialog(QDialog):
         # Update video quality label when slider changes
         self.video_quality_slider.valueChanged.connect(self.update_video_quality_label)
         
-        # Update UI when files change
+        # Update UI when inputs change
         self.password_input.textChanged.connect(self.update_hide_button_state)
+        self.output_path_input.textChanged.connect(self.update_hide_button_state)
     
     def update_video_quality_label(self, value):
         """Update video quality label based on slider value."""
