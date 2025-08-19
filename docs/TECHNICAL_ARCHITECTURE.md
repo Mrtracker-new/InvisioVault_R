@@ -10,13 +10,13 @@ InVisioVault follows a modular, layered architecture designed for security, main
 
 ```
 ┌─────────────────────────────────────┐
-│              UI Layer               │  ← Qt-based user interface
+│              UI Layer               │  ← Qt-based user interface + multimedia dialogs
 ├─────────────────────────────────────┤
-│           Operations Layer          │  ← File processing & workflows
+│           Operations Layer          │  ← File processing & multimedia workflows
 ├─────────────────────────────────────┤
-│              Core Layer             │  ← Steganography algorithms
+│              Core Layer             │  ← Steganography algorithms + multimedia engines
 ├─────────────────────────────────────┤
-│            Utilities Layer          │  ← Config, logging, helpers
+│            Utilities Layer          │  ← Config, logging, helpers, multimedia analysis
 └─────────────────────────────────────┘
 ```
 
@@ -133,6 +133,11 @@ core/
 │   ├── lsb_encoder.py      # LSB steganography
 │   ├── dct_encoder.py      # DCT-based methods
 │   └── statistical_mask.py # Statistical masking
+├── multimedia/             # 🆕 MULTIMEDIA STEGANOGRAPHY
+│   ├── __init__.py
+│   ├── video_steganography_engine.py  # Video processing with OpenCV/FFmpeg
+│   ├── audio_steganography_engine.py  # Audio processing with multiple techniques
+│   └── multimedia_analyzer.py         # Format analysis and capacity assessment
 ├── security/
 │   ├── __init__.py
 │   ├── encryption.py       # Encryption utilities
@@ -147,6 +152,9 @@ core/
 ```python
 # ✅ CORRECT - Absolute imports
 from core.steganography.lsb_encoder import LSBEncoder
+from core.multimedia.video_steganography_engine import VideoSteganographyEngine
+from core.multimedia.audio_steganography_engine import AudioSteganographyEngine
+from core.multimedia.multimedia_analyzer import MultimediaAnalyzer
 from utils.config_manager import ConfigManager, ConfigSection
 from utils.logger import Logger
 
@@ -310,6 +318,265 @@ class SteganographyWorker(QThread):
             logger.error(f"Worker thread error: {e}")
 ```
 
+## 🎬 Multimedia Steganography Architecture
+
+### Core Multimedia Engines
+
+#### **VideoSteganographyEngine**
+```python
+class VideoSteganographyEngine:
+    """
+    Advanced video steganography using frame-based LSB embedding.
+    Integrates OpenCV for video processing and FFmpeg for encoding.
+    """
+    
+    def __init__(self):
+        self.supported_formats = ['.mp4', '.avi', '.mkv', '.mov']
+        self.frame_selection_ratio = 0.1  # Use 10% of frames
+        self.quality_threshold = 0.8      # Minimum quality preservation
+    
+    def hide_data_in_video(self, video_path, data, output_path, password):
+        # 1. Extract frames using OpenCV
+        # 2. Select frames using password-seeded randomization
+        # 3. Apply LSB embedding to selected frames
+        # 4. Reconstruct video with FFmpeg
+        pass
+```
+
+#### **AudioSteganographyEngine**
+```python
+class AudioSteganographyEngine:
+    """
+    Multi-technique audio steganography supporting:
+    - LSB embedding in audio samples
+    - Spread spectrum in frequency domain
+    - Phase coding for high-fidelity hiding
+    """
+    
+    def __init__(self):
+        self.supported_formats = ['.wav', '.flac', '.mp3', '.aac']
+        self.techniques = ['lsb', 'spread_spectrum', 'phase_coding']
+    
+    def select_optimal_technique(self, audio_path):
+        # Analyze audio characteristics
+        # Return recommended technique based on:
+        # - Dynamic range, frequency content, compression level
+        pass
+```
+
+#### **MultimediaAnalyzer**
+```python
+class MultimediaAnalyzer:
+    """
+    Comprehensive multimedia file analysis for:
+    - Format compatibility assessment
+    - Capacity calculation
+    - Quality prediction
+    - Technique recommendation
+    """
+    
+    def analyze_multimedia_file(self, file_path):
+        # Return detailed analysis including:
+        # - Format specifications
+        # - Hiding capacity estimates
+        # - Quality preservation predictions
+        # - Recommended techniques
+        pass
+```
+
+### Multimedia UI Architecture
+
+#### **Multimedia Dialog Structure**
+```python
+# Enhanced dialog system for multimedia operations
+class MultimediaHideDialog(QDialog):
+    """Professional multimedia file hiding interface."""
+    
+    def __init__(self):
+        super().__init__()
+        self.file_drop_zone = FileDropZone()  # Drag-and-drop with preview
+        self.analysis_panel = AnalysisPanel()  # Real-time capacity analysis
+        self.progress_tracker = ProgressDialog()  # Cancellable progress
+    
+    def setup_multimedia_preview(self):
+        # Video thumbnail generation
+        # Audio waveform visualization
+        # Format-specific metadata display
+        pass
+
+class MultimediaExtractDialog(QDialog):
+    """Multimedia extraction with format auto-detection."""
+    
+    def auto_detect_multimedia_format(self, file_path):
+        # Detect if file contains:
+        # - Video steganography
+        # - Audio steganography  
+        # - Legacy image steganography
+        # - Multi-decoy datasets
+        pass
+```
+
+### Multimedia Processing Patterns
+
+#### **Memory Management for Large Media**
+```python
+# ✅ CORRECT - Streaming processing for large multimedia files
+def process_large_video_file(video_path):
+    """Process video in chunks to manage memory usage."""
+    try:
+        cap = cv2.VideoCapture(str(video_path))
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        
+        # Process in batches of 100 frames
+        batch_size = 100
+        for start_frame in range(0, frame_count, batch_size):
+            frames_batch = extract_frame_batch(cap, start_frame, batch_size)
+            process_frame_batch(frames_batch)
+            
+            # Clear processed frames from memory
+            del frames_batch
+            gc.collect()
+            
+    finally:
+        cap.release()
+        cv2.destroyAllWindows()
+```
+
+#### **Quality Preservation Guidelines**
+```python
+# ✅ CORRECT - Quality-aware multimedia steganography
+def embed_with_quality_control(media_file, data, quality_threshold=0.8):
+    """Ensure multimedia quality stays above threshold."""
+    
+    # Pre-embedding quality assessment
+    original_quality = assess_media_quality(media_file)
+    
+    # Embedding with quality monitoring
+    embedded_media = perform_embedding(media_file, data)
+    final_quality = assess_media_quality(embedded_media)
+    
+    # Quality validation
+    quality_ratio = final_quality / original_quality
+    if quality_ratio < quality_threshold:
+        raise QualityDegradationError(
+            f"Quality dropped to {quality_ratio:.2%}, below {quality_threshold:.2%} threshold"
+        )
+    
+    return embedded_media
+```
+
+### Multimedia Security Architecture
+
+#### **Format-Specific Security Measures**
+```python
+# Video steganography security
+class VideoSecurityMeasures:
+    def apply_anti_detection(self, video_frames):
+        # Randomize frame selection patterns
+        # Apply statistical masking across frames
+        # Preserve video codec characteristics
+        pass
+    
+    def validate_video_integrity(self, original, embedded):
+        # Check codec preservation
+        # Verify frame rate consistency
+        # Validate metadata integrity
+        pass
+
+# Audio steganography security  
+class AudioSecurityMeasures:
+    def apply_frequency_masking(self, audio_data):
+        # Hide data in perceptually masked frequencies
+        # Preserve audio dynamics and timbre
+        # Apply psychoacoustic modeling
+        pass
+```
+
+### Multimedia Dependencies Architecture
+
+#### **Dependency Integration Patterns**
+```python
+# ✅ CORRECT - Graceful multimedia dependency handling
+try:
+    import cv2
+    VIDEO_SUPPORT = True
+except ImportError:
+    VIDEO_SUPPORT = False
+    logger.warning("OpenCV not available - video steganography disabled")
+
+try:
+    import librosa
+    AUDIO_ANALYSIS_SUPPORT = True
+except ImportError:
+    AUDIO_ANALYSIS_SUPPORT = False
+    logger.warning("Librosa not available - advanced audio analysis disabled")
+
+# Feature availability checking
+def check_multimedia_capabilities():
+    capabilities = {
+        'video_processing': VIDEO_SUPPORT,
+        'audio_analysis': AUDIO_ANALYSIS_SUPPORT,
+        'ffmpeg_available': check_ffmpeg_installation(),
+        'scipy_available': check_scipy_installation()
+    }
+    
+    return capabilities
+```
+
+#### **FFmpeg Integration Architecture**
+```python
+# ✅ CORRECT - Secure FFmpeg integration
+class FFmpegWrapper:
+    """Safe wrapper for FFmpeg operations."""
+    
+    def __init__(self):
+        self.validate_ffmpeg_installation()
+        self.setup_secure_temp_directories()
+    
+    def convert_video_safely(self, input_path, output_path, codec_params):
+        # Input validation and sanitization
+        # Secure temporary file handling
+        # Error handling with cleanup
+        # Progress monitoring with cancellation
+        pass
+    
+    def validate_ffmpeg_installation(self):
+        # Verify FFmpeg is properly installed
+        # Check for required codecs
+        # Validate version compatibility
+        pass
+```
+
+### Performance Optimization for Multimedia
+
+#### **Parallel Processing Architecture**
+```python
+# ✅ CORRECT - Multi-threaded multimedia processing
+from concurrent.futures import ThreadPoolExecutor
+
+class MultimediaProcessor:
+    def __init__(self, max_workers=None):
+        self.max_workers = max_workers or min(4, os.cpu_count())
+        self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
+    
+    def process_multiple_files(self, file_list, operation):
+        """Process multiple multimedia files in parallel."""
+        futures = []
+        
+        for file_path in file_list:
+            future = self.executor.submit(operation, file_path)
+            futures.append(future)
+        
+        # Collect results with progress tracking
+        results = []
+        for i, future in enumerate(futures):
+            result = future.result()
+            results.append(result)
+            self.update_progress((i + 1) / len(futures) * 100)
+        
+        return results
+```
+
 ## 🚨 Critical Implementation Rules
 
 ### Absolute Prohibitions
@@ -353,5 +620,5 @@ class SteganographyWorker(QThread):
 
 **This architecture document must be followed strictly to maintain InVisioVault's security, consistency, and quality standards.**
 
-**Last Updated**: 2025-01-13
-**Version**: 1.0
+**Last Updated**: 2025-08-19
+**Version**: 1.1 - Multimedia Steganography Architecture

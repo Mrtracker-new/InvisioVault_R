@@ -1,7 +1,7 @@
 # 📚 InvisioVault API Reference
 ### *Complete Technical Documentation for Developers*
 
-**Version**: 1.0.0  
+**Version**: 1.1.0  
 **Author**: Rolan (RNR)  
 **Purpose**: Your complete API guide for building with InvisioVault  
 **Last Updated**: August 2025
@@ -19,7 +19,7 @@
 ## 🗺️ Quick API Navigation
 
 ### 🔧 **Core APIs**
-- [🔍 Core Engines](#-core-engines) • [🎨 UI Components](#-ui-components) • [🔧 Utilities](#-utilities)
+- [🔍 Core Engines](#-core-engines) • [🎬 Multimedia Engines](#-multimedia-engines) • [🎨 UI Components](#-ui-components) • [🔧 Utilities](#-utilities)
 
 ### ⚙️ **Operations & Config**
 - [⚡ Operations](#-operations) • [📝 Configuration](#-configuration) • [🚫 Error Handling](#-error-handling)
@@ -32,12 +32,13 @@
 ## 📋 Table of Contents
 
 1. [🔧 **Core Engines**](#-core-engines) - Steganography and encryption APIs
-2. [🎨 **UI Components**](#-ui-components) - Interface building blocks
-3. [🔧 **Utilities**](#-utilities) - Helper functions and tools
-4. [⚡ **Operations**](#-operations) - High-level operation APIs
-5. [📝 **Configuration**](#-configuration) - Settings and preferences
-6. [🚫 **Error Handling**](#-error-handling) - Exception management
-7. [🚀 **Examples**](#-examples) - Practical code examples
+2. [🎬 **Multimedia Engines**](#-multimedia-engines) - Video and audio steganography APIs
+3. [🎨 **UI Components**](#-ui-components) - Interface building blocks
+4. [🔧 **Utilities**](#-utilities) - Helper functions and tools
+5. [⚡ **Operations**](#-operations) - High-level operation APIs
+6. [📝 **Configuration**](#-configuration) - Settings and preferences
+7. [🚫 **Error Handling**](#-error-handling) - Exception management
+8. [🚀 **Examples**](#-examples) - Practical code examples
 
 ---
 
@@ -261,6 +262,266 @@ def create_automatic_decoy_datasets(self, user_files: List[str],
                 'files': user_files
             }
         ]
+    """
+```
+
+---
+
+## 🎬 Multimedia Engines
+
+### **VideoSteganographyEngine** ⭐ *NEW*
+
+#### **Class Overview**
+```python
+class VideoSteganographyEngine:
+    """Advanced video steganography using frame-based LSB embedding."""
+    
+    def __init__(self):
+        self.supported_formats = ['.mp4', '.avi', '.mkv', '.mov']
+        self.frame_selection_ratio = 0.1  # Use 10% of frames
+        self.quality_threshold = 0.8      # Minimum quality preservation
+        self.logger = Logger()
+```
+
+#### **Key Methods**
+
+##### **`hide_data_in_video(video_path, data, output_path, password)`**
+```python
+def hide_data_in_video(self, video_path: Path, data: bytes, 
+                      output_path: Path, password: str) -> bool:
+    """
+    Hide data in video using frame-based LSB steganography.
+    
+    Args:
+        video_path: Path to input video file
+        data: Binary data to hide
+        output_path: Path for output video with hidden data
+        password: Password for seeded randomization
+    
+    Returns:
+        bool: Success status
+        
+    Raises:
+        FileNotFoundError: Video file not found
+        ValueError: Unsupported video format or insufficient capacity
+        MultimediaError: Video processing failed
+    """
+```
+
+##### **`extract_data_from_video(video_path, password)`**
+```python
+def extract_data_from_video(self, video_path: Path, password: str) -> bytes:
+    """
+    Extract hidden data from steganographic video.
+    
+    Args:
+        video_path: Path to steganographic video
+        password: Password for extraction
+    
+    Returns:
+        bytes: Extracted data or None if extraction failed
+        
+    Raises:
+        FileNotFoundError: Video file not found
+        MultimediaError: Extraction failed or no data found
+    """
+```
+
+##### **`analyze_video_capacity(video_path)`**
+```python
+def analyze_video_capacity(self, video_path: Path) -> Dict[str, Any]:
+    """
+    Analyze video file for steganography capacity.
+    
+    Args:
+        video_path: Path to video file
+    
+    Returns:
+        dict: {
+            'total_frames': int,
+            'usable_frames': int,
+            'capacity_bytes': int,
+            'duration_seconds': float,
+            'resolution': tuple,
+            'fps': float,
+            'codec': str,
+            'quality_score': float  # 0.0-1.0
+        }
+    """
+```
+
+### **AudioSteganographyEngine** ⭐ *NEW*
+
+#### **Class Overview**
+```python
+class AudioSteganographyEngine:
+    """Multi-technique audio steganography engine."""
+    
+    def __init__(self):
+        self.supported_formats = ['.wav', '.flac', '.mp3', '.aac']
+        self.techniques = ['lsb', 'spread_spectrum', 'phase_coding']
+        self.logger = Logger()
+```
+
+#### **Audio Techniques**
+```python
+class AudioTechnique(Enum):
+    LSB = "lsb"                    # Least Significant Bit embedding
+    SPREAD_SPECTRUM = "spread_spectrum"  # Frequency domain spreading
+    PHASE_CODING = "phase_coding"       # Phase relationship manipulation
+```
+
+#### **Key Methods**
+
+##### **`hide_data_lsb(audio_path, data, output_path, password)`**
+```python
+def hide_data_lsb(self, audio_path: Path, data: bytes, 
+                 output_path: Path, password: str) -> bool:
+    """
+    Hide data in audio using LSB embedding technique.
+    
+    Args:
+        audio_path: Path to input audio file
+        data: Binary data to hide
+        output_path: Path for output audio with hidden data
+        password: Password for seeded randomization
+    
+    Returns:
+        bool: Success status
+        
+    Raises:
+        FileNotFoundError: Audio file not found
+        ValueError: Unsupported audio format or insufficient capacity
+        MultimediaError: Audio processing failed
+    """
+```
+
+##### **`hide_data_spread_spectrum(audio_path, data, output_path, password)`**
+```python
+def hide_data_spread_spectrum(self, audio_path: Path, data: bytes, 
+                             output_path: Path, password: str) -> bool:
+    """
+    Hide data using spread spectrum technique in frequency domain.
+    
+    Args:
+        audio_path: Path to input audio file
+        data: Binary data to hide
+        output_path: Path for output audio with hidden data
+        password: Password for frequency selection
+    
+    Returns:
+        bool: Success status
+    """
+```
+
+##### **`extract_data_from_audio(audio_path, password, technique=None)`**
+```python
+def extract_data_from_audio(self, audio_path: Path, password: str, 
+                           technique: AudioTechnique = None) -> bytes:
+    """
+    Extract hidden data from steganographic audio.
+    
+    Args:
+        audio_path: Path to steganographic audio
+        password: Password for extraction
+        technique: Specific technique to use (auto-detected if None)
+    
+    Returns:
+        bytes: Extracted data or None if extraction failed
+        
+    Raises:
+        FileNotFoundError: Audio file not found
+        MultimediaError: Extraction failed or no data found
+    """
+```
+
+##### **`select_optimal_technique(audio_path)`**
+```python
+def select_optimal_technique(self, audio_path: Path) -> AudioTechnique:
+    """
+    Analyze audio and recommend optimal steganography technique.
+    
+    Args:
+        audio_path: Path to audio file
+    
+    Returns:
+        AudioTechnique: Recommended technique based on audio characteristics
+    """
+```
+
+### **MultimediaAnalyzer** ⭐ *NEW*
+
+#### **Class Overview**
+```python
+class MultimediaAnalyzer:
+    """Comprehensive multimedia file analysis and capacity assessment."""
+    
+    def __init__(self):
+        self.supported_video_formats = ['.mp4', '.avi', '.mkv', '.mov']
+        self.supported_audio_formats = ['.wav', '.flac', '.mp3', '.aac']
+        self.logger = Logger()
+```
+
+#### **Key Methods**
+
+##### **`analyze_multimedia_file(file_path)`**
+```python
+def analyze_multimedia_file(self, file_path: Path) -> Dict[str, Any]:
+    """
+    Comprehensive analysis of multimedia file for steganography.
+    
+    Args:
+        file_path: Path to multimedia file
+    
+    Returns:
+        dict: {
+            'file_type': str,           # 'video' or 'audio'
+            'format': str,              # File format (mp4, wav, etc.)
+            'size_bytes': int,          # File size
+            'capacity_bytes': int,      # Steganography capacity
+            'quality_score': float,     # Quality assessment (0.0-1.0)
+            'recommended_technique': str, # Optimal technique
+            'processing_time_estimate': float, # Estimated processing time
+            'metadata': dict           # Format-specific metadata
+        }
+        
+    Raises:
+        FileNotFoundError: File not found
+        ValueError: Unsupported file format
+    """
+```
+
+##### **`batch_analyze_files(file_paths)`**
+```python
+def batch_analyze_files(self, file_paths: List[Path]) -> List[Dict[str, Any]]:
+    """
+    Analyze multiple multimedia files for batch processing.
+    
+    Args:
+        file_paths: List of paths to multimedia files
+    
+    Returns:
+        List[Dict]: Analysis results for each file
+    """
+```
+
+##### **`calculate_total_capacity(file_paths)`**
+```python
+def calculate_total_capacity(self, file_paths: List[Path]) -> Dict[str, Any]:
+    """
+    Calculate total steganography capacity across multiple files.
+    
+    Args:
+        file_paths: List of multimedia file paths
+    
+    Returns:
+        dict: {
+            'total_capacity_bytes': int,
+            'total_files': int,
+            'video_files': int,
+            'audio_files': int,
+            'estimated_processing_time': float
+        }
     """
 ```
 
@@ -602,9 +863,223 @@ except FragmentLossError as e:
     print("🔴 DATA RECOVERY IMPOSSIBLE - PERMANENT DATA LOSS")
 ```
 
+### **🎬 Multimedia Steganography Examples** ⭐ *NEW*
+
+#### **Video Steganography Example**
+```python
+from core.video_steganography_engine import VideoSteganographyEngine
+from pathlib import Path
+
+# Initialize video steganography engine
+video_engine = VideoSteganographyEngine()
+
+# Analyze video capacity first
+video_path = Path("vacation_video.mp4")
+analysis = video_engine.analyze_video_capacity(video_path)
+
+print(f"Video Analysis:")
+print(f"- Total frames: {analysis['total_frames']}")
+print(f"- Usable frames: {analysis['usable_frames']}")
+print(f"- Capacity: {analysis['capacity_bytes']} bytes")
+print(f"- Quality score: {analysis['quality_score']:.2f}")
+
+# Hide data in video
+secret_files = [Path("document.pdf"), Path("photo.jpg")]
+password = "VideoPassword123"
+
+# Prepare data (compress and encrypt files)
+from core.file_operations import FileOperations
+file_ops = FileOperations()
+compressed_data = file_ops.compress_files(secret_files)
+
+# Hide in video
+success = video_engine.hide_data_in_video(
+    video_path=video_path,
+    data=compressed_data,
+    output_path=Path("hidden_vacation.mp4"),
+    password=password
+)
+
+if success:
+    print("✅ Files hidden in video successfully!")
+    
+    # Extract from video
+    extracted_data = video_engine.extract_data_from_video(
+        video_path=Path("hidden_vacation.mp4"),
+        password=password
+    )
+    
+    if extracted_data:
+        # Decompress and restore files
+        file_ops.decompress_files(extracted_data, Path("extracted_from_video"))
+        print("✅ Files extracted from video successfully!")
+```
+
+#### **Audio Steganography Example**
+```python
+from core.audio_steganography_engine import AudioSteganographyEngine, AudioTechnique
+from pathlib import Path
+
+# Initialize audio steganography engine
+audio_engine = AudioSteganographyEngine()
+
+# Analyze audio file and select optimal technique
+audio_path = Path("music.wav")
+optimal_technique = audio_engine.select_optimal_technique(audio_path)
+
+print(f"Optimal technique for {audio_path.name}: {optimal_technique.value}")
+
+# Hide data using recommended technique
+secret_message = b"This is a secret message hidden in audio!"
+password = "AudioPassword456"
+
+if optimal_technique == AudioTechnique.LSB:
+    success = audio_engine.hide_data_lsb(
+        audio_path=audio_path,
+        data=secret_message,
+        output_path=Path("hidden_music.wav"),
+        password=password
+    )
+elif optimal_technique == AudioTechnique.SPREAD_SPECTRUM:
+    success = audio_engine.hide_data_spread_spectrum(
+        audio_path=audio_path,
+        data=secret_message,
+        output_path=Path("hidden_music.wav"),
+        password=password
+    )
+
+if success:
+    print(f"✅ Data hidden using {optimal_technique.value} technique!")
+    
+    # Extract data (auto-detects technique)
+    extracted_data = audio_engine.extract_data_from_audio(
+        audio_path=Path("hidden_music.wav"),
+        password=password
+    )
+    
+    if extracted_data:
+        print(f"✅ Extracted: {extracted_data.decode()}")
+```
+
+#### **Multimedia Analysis Example**
+```python
+from core.multimedia_analyzer import MultimediaAnalyzer
+from pathlib import Path
+
+# Initialize multimedia analyzer
+analyzer = MultimediaAnalyzer()
+
+# Analyze multiple multimedia files
+files_to_analyze = [
+    Path("video1.mp4"),
+    Path("video2.avi"),
+    Path("audio1.wav"),
+    Path("audio2.flac")
+]
+
+# Batch analysis
+analysis_results = analyzer.batch_analyze_files(files_to_analyze)
+
+for result in analysis_results:
+    print(f"\n{result['file_path']}:")
+    print(f"  Type: {result['file_type']}")
+    print(f"  Format: {result['format']}")
+    print(f"  Size: {result['size_bytes']:,} bytes")
+    print(f"  Capacity: {result['capacity_bytes']:,} bytes")
+    print(f"  Quality: {result['quality_score']:.2f}")
+    print(f"  Recommended: {result['recommended_technique']}")
+    print(f"  Est. processing: {result['processing_time_estimate']:.1f}s")
+
+# Calculate total capacity
+total_capacity = analyzer.calculate_total_capacity(files_to_analyze)
+
+print(f"\nὌa TOTAL ANALYSIS:")
+print(f"Total capacity: {total_capacity['total_capacity_bytes']:,} bytes")
+print(f"Total files: {total_capacity['total_files']}")
+print(f"Video files: {total_capacity['video_files']}")
+print(f"Audio files: {total_capacity['audio_files']}")
+print(f"Est. total processing: {total_capacity['estimated_processing_time']:.1f}s")
+```
+
+#### **Combined Multimedia + Multi-Decoy Example**
+```python
+from core.multi_decoy_engine import MultiDecoyEngine
+from core.multimedia_analyzer import MultimediaAnalyzer
+from pathlib import Path
+
+# 🎉 ADVANCED: Multimedia files with multi-decoy protection
+engine = MultiDecoyEngine()
+analyzer = MultimediaAnalyzer()
+
+# Define datasets using multimedia carriers
+video_carrier = Path("family_vacation.mp4")
+audio_carrier = Path("favorite_song.wav")
+
+# Analyze carriers first
+video_analysis = analyzer.analyze_multimedia_file(video_carrier)
+audio_analysis = analyzer.analyze_multimedia_file(audio_carrier)
+
+print(f"Video capacity: {video_analysis['capacity_bytes']:,} bytes")
+print(f"Audio capacity: {audio_analysis['capacity_bytes']:,} bytes")
+
+# Create sophisticated multi-layer datasets
+multimedia_datasets = [
+    {
+        "name": "Travel Photos",
+        "password": "vacation2024",
+        "priority": 1,  # Outer layer
+        "decoy_type": "innocent",
+        "files": ["beach1.jpg", "beach2.jpg"],
+        "carrier": video_carrier,  # Use video as carrier
+        "carrier_type": "video"
+    },
+    {
+        "name": "Personal Documents",
+        "password": "secure_docs_789",
+        "priority": 5,  # Inner layer
+        "decoy_type": "personal",
+        "files": ["passport_scan.pdf", "bank_statement.pdf"],
+        "carrier": audio_carrier,  # Use audio as carrier
+        "carrier_type": "audio"
+    }
+]
+
+# Hide datasets in multimedia carriers
+for dataset in multimedia_datasets:
+    if dataset['carrier_type'] == 'video':
+        from core.video_steganography_engine import VideoSteganographyEngine
+        video_engine = VideoSteganographyEngine()
+        
+        # Prepare and hide data in video
+        success = video_engine.hide_data_in_video(
+            video_path=dataset['carrier'],
+            data=prepare_dataset_data(dataset['files']),
+            output_path=Path(f"hidden_{dataset['name'].lower().replace(' ', '_')}.mp4"),
+            password=dataset['password']
+        )
+        
+    elif dataset['carrier_type'] == 'audio':
+        from core.audio_steganography_engine import AudioSteganographyEngine
+        audio_engine = AudioSteganographyEngine()
+        
+        # Prepare and hide data in audio
+        success = audio_engine.hide_data_lsb(
+            audio_path=dataset['carrier'],
+            data=prepare_dataset_data(dataset['files']),
+            output_path=Path(f"hidden_{dataset['name'].lower().replace(' ', '_')}.wav"),
+            password=dataset['password']
+        )
+    
+    if success:
+        print(f"✅ {dataset['name']} hidden in {dataset['carrier_type']}!")
+
+print("Ὂa Multi-layer multimedia steganography complete!")
+print("ὑ0 Different passwords will reveal different datasets from different media types!")
+```
+
 ---
 
-**Last Updated**: January 2025  
-**Version**: 1.0.0  
+**Last Updated**: August 2025  
+**Version**: 1.1.0 - Multimedia Steganography Edition  
 **Author**: Rolan (RNR)  
 **License**: MIT Educational License
