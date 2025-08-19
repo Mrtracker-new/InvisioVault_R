@@ -115,6 +115,7 @@ class MainWindow(QMainWindow):
         # Navigation items
         nav_items = [
             ("🏠 Basic Operations", "basic", "Hide and extract files with standard encryption"),
+            ("🎬 Multimedia", "multimedia", "Video and audio steganography operations"),
             ("🔐 Keyfile Mode", "keyfile", "Two-factor authentication with keyfiles"),
             ("🛡️ Two-Factor", "twofactor", "Distribute data across multiple images"),
             ("👻 Decoy Mode", "decoy", "Hide multiple datasets with plausible deniability"),
@@ -140,6 +141,7 @@ class MainWindow(QMainWindow):
         
         # Create functional widgets for each operation
         self.basic_widget = self.create_basic_operations_widget()
+        self.multimedia_widget = self.create_multimedia_operations_widget()
         self.keyfile_widget = self.create_keyfile_operations_widget()
         self.twofactor_widget = self.create_twofactor_operations_widget()
         self.decoy_widget = self.create_decoy_operations_widget()
@@ -148,11 +150,12 @@ class MainWindow(QMainWindow):
         
         # Add widgets to stack
         self.content_stack.addWidget(self.basic_widget)      # Index 0
-        self.content_stack.addWidget(self.keyfile_widget)    # Index 1
-        self.content_stack.addWidget(self.twofactor_widget)  # Index 2
-        self.content_stack.addWidget(self.decoy_widget)      # Index 3
-        self.content_stack.addWidget(self.analysis_widget)   # Index 4
-        self.content_stack.addWidget(self.settings_widget)   # Index 5
+        self.content_stack.addWidget(self.multimedia_widget) # Index 1
+        self.content_stack.addWidget(self.keyfile_widget)    # Index 2
+        self.content_stack.addWidget(self.twofactor_widget)  # Index 3
+        self.content_stack.addWidget(self.decoy_widget)      # Index 4
+        self.content_stack.addWidget(self.analysis_widget)   # Index 5
+        self.content_stack.addWidget(self.settings_widget)   # Index 6
         
         return self.content_stack
     
@@ -240,6 +243,130 @@ class MainWindow(QMainWindow):
             "• Randomized LSB positioning for enhanced security",
             "• Image capacity analysis and validation",
             "• Secure file compression and integrity checking"
+        ]
+        
+        for feature in features:
+            feature_label = QLabel(feature)
+            feature_label.setStyleSheet("margin-left: 10px; color: #444;")
+            layout.addWidget(feature_label)
+        
+        # Spacer to push content to top
+        layout.addStretch()
+        
+        return widget
+    
+    def create_multimedia_operations_widget(self) -> QWidget:
+        """Create the multimedia operations widget."""
+        
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(20)
+        
+        # Title
+        title = QLabel("Multimedia Steganography Operations")
+        title_font = QFont()
+        title_font.setBold(True)
+        title_font.setPointSize(18)
+        title.setFont(title_font)
+        layout.addWidget(title)
+        
+        # Description
+        desc = QLabel("Hide and extract files in video and audio files using advanced multimedia steganography techniques with AES-256 encryption.")
+        desc.setWordWrap(True)
+        desc.setStyleSheet("color: #666; font-size: 14px;")
+        layout.addWidget(desc)
+        
+        # Operation buttons
+        button_layout = QHBoxLayout()
+        
+        # Row 1 - Hide and Extract
+        hide_btn = QPushButton("🎬 Hide in Multimedia")
+        hide_btn.setMinimumHeight(60)
+        hide_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #E91E63;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: bold;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #C2185B;
+            }
+            QPushButton:pressed {
+                background-color: #AD1457;
+            }
+        """)
+        hide_btn.clicked.connect(self.show_multimedia_hide_dialog)
+        
+        extract_btn = QPushButton("🔓 Extract from Multimedia")
+        extract_btn.setMinimumHeight(60)
+        extract_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #3F51B5;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: bold;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #303F9F;
+            }
+            QPushButton:pressed {
+                background-color: #1A237E;
+            }
+        """)
+        extract_btn.clicked.connect(self.show_multimedia_extract_dialog)
+        
+        button_layout.addWidget(hide_btn)
+        button_layout.addWidget(extract_btn)
+        layout.addLayout(button_layout)
+        
+        # Row 2 - Analysis
+        analysis_layout = QHBoxLayout()
+        
+        analysis_btn = QPushButton("📊 Multimedia Analysis")
+        analysis_btn.setMinimumHeight(60)
+        analysis_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #FF5722;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: bold;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #E64A19;
+            }
+            QPushButton:pressed {
+                background-color: #D84315;
+            }
+        """)
+        analysis_btn.clicked.connect(self.show_multimedia_analysis_dialog)
+        
+        analysis_layout.addWidget(analysis_btn)
+        layout.addLayout(analysis_layout)
+        
+        # Feature list
+        features_label = QLabel("Features:")
+        features_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        layout.addWidget(features_label)
+        
+        features = [
+            "• Video steganography: MP4, AVI, MKV, MOV support",
+            "• Audio steganography: MP3, WAV, FLAC, AAC support",
+            "• LSB, spread spectrum, and phase coding techniques",
+            "• Quality-preserving multimedia processing",
+            "• Advanced capacity analysis and optimization",
+            "• Batch processing for multiple files",
+            "• Professional multimedia format support"
         ]
         
         for feature in features:
@@ -772,11 +899,12 @@ class MainWindow(QMainWindow):
         # Map operation keys to stack indices
         operation_map = {
             "basic": 0,
-            "keyfile": 1,
-            "twofactor": 2,
-            "decoy": 3,
-            "analysis": 4,
-            "settings": 5
+            "multimedia": 1,
+            "keyfile": 2,
+            "twofactor": 3,
+            "decoy": 4,
+            "analysis": 5,
+            "settings": 6
         }
         
         if operation_key in operation_map:
@@ -847,6 +975,33 @@ class MainWindow(QMainWindow):
             dialog.exec()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to open analysis dialog:\n{str(e)}")
+    
+    def show_multimedia_hide_dialog(self):
+        """Show the multimedia hide dialog."""
+        try:
+            from ui.dialogs.multimedia_hide_dialog import MultimediaHideDialog
+            dialog = MultimediaHideDialog(self)
+            dialog.exec()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to open multimedia hide dialog:\n{str(e)}")
+    
+    def show_multimedia_extract_dialog(self):
+        """Show the multimedia extract dialog."""
+        try:
+            from ui.dialogs.multimedia_extract_dialog import MultimediaExtractDialog
+            dialog = MultimediaExtractDialog(self)
+            dialog.exec()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to open multimedia extract dialog:\n{str(e)}")
+    
+    def show_multimedia_analysis_dialog(self):
+        """Show the multimedia analysis dialog."""
+        try:
+            from ui.dialogs.multimedia_analysis_dialog import MultimediaAnalysisDialog
+            dialog = MultimediaAnalysisDialog(self)
+            dialog.exec()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to open multimedia analysis dialog:\n{str(e)}")
     
     def show_settings_panel(self):
         """Show the settings panel dialog."""

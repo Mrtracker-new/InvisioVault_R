@@ -8,3 +8,10 @@ pytest>=7.4.0
 black>=23.7.0
 flake8>=6.0.0
 sphinx>=7.1.0
+
+# Multimedia steganography dependencies
+ffmpeg-python>=0.2.0
+pydub>=0.25.1
+moviepy>=1.0.3
+librosa>=0.10.0
+scipy>=1.11.0

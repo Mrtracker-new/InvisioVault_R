@@ -46,6 +46,7 @@ Imagine being able to hide **any file** - documents, photos, videos, or entire f
 | Feature | Description | Benefit |
 |---------|-------------|----------|
 | 🖼️ **File Hiding** | Hide files inside images without detection | Complete invisibility |
+| 🎬 **Multimedia Steganography** | Hide files in video and audio files | Advanced multimedia protection |
 | 🔐 **Military Encryption** | AES-256 encryption with PBKDF2 key derivation | Bank-level security |
 | ⚡ **Lightning Speed** | Up to 100x faster than traditional methods | Professional productivity |
 | 🛡️ **Privacy Protection** | Advanced security with plausible deniability | Ultimate peace of mind |
@@ -150,6 +151,15 @@ For legitimate educational or research purposes, contact the development team th
 - 📊 **Smart Image Analysis**: Entropy-based capacity calculation and suitability scoring
 - 🛡️ **Anti-Detection Mode**: Advanced steganography designed to evade steganalysis tools
 - 🎲 **Hybrid LSB Randomization**: Combines randomized positioning with anti-detection techniques
+
+### 🎬 **NEW: Multimedia Steganography**
+- 🎥 **Video Steganography**: Hide files in MP4, AVI, MKV, MOV formats using frame-based LSB embedding
+- 🎵 **Audio Steganography**: Support for MP3, WAV, FLAC, AAC with multiple techniques (LSB, spread spectrum, phase coding)
+- 📊 **Multimedia Analysis**: Advanced capacity assessment and quality optimization for video/audio files
+- 🎨 **Quality Preservation**: Professional multimedia processing maintaining original quality
+- ⚡ **Batch Processing**: Process multiple multimedia files efficiently
+- 🔄 **Format Flexibility**: Support for various codecs and container formats
+- 🎭 **Drag-and-Drop Interface**: Professional UI with multimedia file preview and validation
 
 ### 🛡️ **Advanced Security**
 - 🔐 **AES-256-CBC Encryption**: Military-grade encryption with PBKDF2 key derivation

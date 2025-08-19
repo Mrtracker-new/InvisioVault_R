@@ -37,9 +37,10 @@ python main.py
 ### **Minimum Requirements**
 - **Operating System**: Windows 10+, macOS 12+, Ubuntu 20.04+
 - **Python**: 3.8 or higher
-- **RAM**: 4GB minimum
-- **Storage**: 100MB for installation
+- **RAM**: 4GB minimum (6GB+ recommended for multimedia operations)
+- **Storage**: 200MB for installation (including multimedia dependencies)
 - **Display**: 1024x768 minimum resolution
+- **FFmpeg**: Required for video steganography operations
 
 ### **Recommended Specifications**
 - **Python**: 3.11+ (latest stable)
@@ -310,6 +311,61 @@ brew install libffi openssl
 
 # CentOS/RHEL:
 sudo yum install gcc openssl-devel libffi-devel
+```
+
+#### **NEW: Multimedia Dependencies Issues**
+
+InVisioVault now includes multimedia steganography features that require additional dependencies:
+
+**Required Multimedia Packages:**
+- `opencv-python` - Computer vision and video processing
+- `ffmpeg-python` - Python wrapper for FFmpeg
+- `librosa` - Audio analysis and processing
+- `pydub` - Audio manipulation
+- `moviepy` - Video editing
+- `scipy` - Scientific computing (audio signals)
+
+**FFmpeg Installation:**
+```bash
+# Windows (using chocolatey):
+choco install ffmpeg
+
+# macOS:
+brew install ffmpeg
+
+# Ubuntu/Debian:
+sudo apt update
+sudo apt install ffmpeg
+
+# CentOS/RHEL:
+sudo yum install epel-release
+sudo yum install ffmpeg
+```
+
+**Audio Processing Dependencies:**
+```bash
+# Ubuntu/Debian - audio processing libraries:
+sudo apt install libsndfile1 libasound2-dev portaudio19-dev
+
+# macOS:
+brew install libsndfile portaudio
+
+# CentOS/RHEL:
+sudo yum install libsndfile-devel alsa-lib-devel portaudio-devel
+```
+
+**Troubleshooting Multimedia Issues:**
+```bash
+# If multimedia dependencies fail to install:
+pip install opencv-python ffmpeg-python librosa pydub moviepy scipy --upgrade
+
+# For ARM-based systems (Apple Silicon, Raspberry Pi):
+pip install opencv-python-headless ffmpeg-python librosa pydub moviepy scipy
+
+# If librosa installation fails:
+conda install librosa  # or use conda-forge
+# OR
+pip install librosa --no-cache-dir
 ```
 
 ---

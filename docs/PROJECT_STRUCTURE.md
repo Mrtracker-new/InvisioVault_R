@@ -75,6 +75,9 @@ InvisioVault follows a modular, professional architecture designed for maintaina
 │   ├── 🔑 two_factor_engine.py   # 2FA authentication
 │   ├── 🛡️ decoy_engine.py        # Plausible deniability
 │   ├── 📊 image_analyzer.py      # Image suitability analysis
+│   ├── 🎬 video_steganography_engine.py # Video steganography operations
+│   ├── 🎵 audio_steganography_engine.py # Audio steganography operations
+│   ├── 📺 multimedia_analyzer.py # Multimedia capacity and quality analysis
 │   ├── 🔐 advanced_encryption.py # Enhanced crypto features
 │   ├── 🛠️ crypto_utils.py        # Cryptographic utilities
 │   ├── 📁 file_manager.py        # File handling operations
@@ -121,9 +124,12 @@ InvisioVault follows a modular, professional architecture designed for maintaina
 │   │
 │   ├── 💬 dialogs/               # User interaction dialogs
 │   │   ├── 📦 __init__.py        # Dialogs package initialization
-│   │   ├── 📥 hide_files_dialog.py # File hiding configuration
-│   │   ├── 📤 extract_files_dialog.py # File extraction interface
+│   │   ├── 📅 hide_files_dialog.py # File hiding configuration
+│   │   ├── 📄 extract_files_dialog.py # File extraction interface
 │   │   ├── 🔍 analysis_dialog.py # Image analysis interface
+│   │   ├── 🎬 multimedia_hide_dialog.py # Multimedia steganography hiding
+│   │   ├── 🎬 multimedia_extract_dialog.py # Multimedia steganography extraction
+│   │   ├── 📊 multimedia_analysis_dialog.py # Multimedia analysis interface
 │   │   ├── 🎭 decoy_dialog.py    # Advanced decoy configuration
 │   │   ├── 🔑 keyfile_dialog.py  # Keyfile management
 │   │   └── 🔐 two_factor_dialog.py # Two-factor authentication
@@ -190,6 +196,22 @@ The heart of InvisioVault's functionality, containing all steganography and cryp
   - Unlimited dataset hiding with priority levels (1-5)
   - Independent encryption for each dataset
   - Universal extraction compatible with any password
+
+#### **Multimedia Engines** (NEW)
+- **`video_steganography_engine.py`**: Advanced video steganography system
+  - Frame-based LSB embedding for MP4, AVI, MKV, MOV formats
+  - Quality-preserving video processing with OpenCV and FFmpeg
+  - Support for various codecs and container formats
+
+- **`audio_steganography_engine.py`**: Comprehensive audio steganography
+  - Multiple techniques: LSB, spread spectrum, phase coding
+  - Support for MP3, WAV, FLAC, AAC formats
+  - Professional audio processing with librosa and pydub
+
+- **`multimedia_analyzer.py`**: Multimedia capacity and quality analysis
+  - Advanced capacity assessment for video and audio files
+  - Quality scoring and suitability analysis
+  - Batch processing capabilities for multiple files
 
 #### **Specialized Components**
 - **`two_factor_engine.py`**: Two-factor authentication implementation
