@@ -195,7 +195,7 @@ class VideoSteganographyEngine:
         """Encrypt and prepare data with header for hiding."""
         try:
             # Encrypt the data
-            encrypted_data = self.encryption_engine.encrypt_data(data, password)
+            encrypted_data = self.encryption_engine.encrypt_with_metadata(data, password)
             
             # Create header: magic + version + size + checksum
             data_size = len(encrypted_data)
@@ -505,7 +505,7 @@ class VideoSteganographyEngine:
         """Decrypt extracted data."""
         try:
             # Decrypt the data
-            original_data = self.encryption_engine.decrypt_data(encrypted_data, password)
+            original_data = self.encryption_engine.decrypt_with_metadata(encrypted_data, password)
             
             self.logger.debug(f"Data decrypted successfully: {len(original_data)} bytes")
             return original_data
