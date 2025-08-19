@@ -82,6 +82,8 @@ class FileDropZone(QWidget):
         self.clear_btn = QPushButton("🗑️ Clear All")
         self.clear_btn.clicked.connect(self.clear_files)
         self.clear_btn.setEnabled(False)
+        # Initially hide the clear button
+        self.clear_btn.setVisible(False)
         clear_layout.addWidget(self.clear_btn)
         
         layout.addLayout(clear_layout)
@@ -275,22 +277,24 @@ class FileDropZone(QWidget):
         
         # Update button states and visibility
         has_files = len(self.files) > 0
-        self.clear_btn.setEnabled(has_files)
         
-        # Show/hide files list and label based on whether we have files
+        # Show/hide files list, label, and clear button based on whether we have files
         if has_files:
             # Show files list and populate it
             self.files_list.setVisible(True)
             self.files_label.setVisible(True)
+            self.clear_btn.setVisible(True)
+            self.clear_btn.setEnabled(True)
                 
             for file_path in self.files:
                 item = QListWidgetItem(f"📄 {file_path.name}")
                 item.setToolTip(str(file_path))
                 self.files_list.addItem(item)
         else:
-            # Hide files list when empty
+            # Hide files list, label, and clear button when empty
             self.files_list.setVisible(False)
             self.files_label.setVisible(False)
+            self.clear_btn.setVisible(False)
         
         # Update drop area text
         if has_files:
