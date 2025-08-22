@@ -384,12 +384,13 @@ class AudioSteganographyEngine:
     
     def _extract_data_lsb(self, audio_data: np.ndarray, password: str, 
                           sample_rate: int) -> Optional[bytes]:
-        """Extract data using LSB technique."""
+        """Extract data using LSB technique - exactly mirrors hiding process."""
         try:
+            self.logger.info(f"Starting LSB extraction from audio file")
+            
             # Generate same random sequence used for hiding
             seed = int(hashlib.sha256(password.encode()).hexdigest()[:8], 16)
-            self.logger.info(f"LSB extraction - using seed: {seed}")
-            rng = np.random.RandomState(seed)
+            self.logger.info(f"Using seed: {seed}")
             
             # Convert to integer representation (same as hiding)
             audio_int = (audio_data * 32767).astype(np.int16)
@@ -402,106 +403,84 @@ class AudioSteganographyEngine:
             flat_audio = audio_int.flatten()
             self.logger.info(f"Total samples: {total_samples}, Available positions: {len(all_positions)}")
             
-            # We need to try different sizes since we don't know the data size yet
-            # Start with a reasonable estimate and work up
-            header_size = 34  # bytes
-            header_bits = header_size * 8  # 272 bits
-            
-            if len(all_positions) < header_bits:
-                self.logger.error(f"Not enough positions for header: {len(all_positions)} < {header_bits}")
+            # Try to extract maximum possible data to find header
+            if len(all_positions) < 272:  # Minimum header size
+                self.logger.error(f"Not enough positions for header: {len(all_positions)} < 272")
                 return None
             
-            # Try increasing sizes to find the right data
-            for attempt_multiplier in [2, 5, 10, 20, 50]:
-                try:
-                    self.logger.info(f"Attempting extraction with multiplier {attempt_multiplier}")
-                    
-                    # Reset RNG for each attempt
-                    rng = np.random.RandomState(seed)
-                    
-                    # Estimate total bits needed (header + some data)
-                    estimated_bits = min(header_bits * attempt_multiplier, len(all_positions))
-                    self.logger.debug(f"Estimated bits needed: {estimated_bits}")
-                    
-                    # Generate positions for this attempt
-                    selected_positions = rng.choice(all_positions, size=estimated_bits, replace=False)
-                    self.logger.debug(f"Generated {len(selected_positions)} positions")
-                    
-                    # Extract header bits
-                    header_bits_data = []
-                    for i in range(header_bits):
-                        pos = selected_positions[i]
-                        bit = flat_audio[pos] & 1
-                        header_bits_data.append(bit)
-                    
-                    # Convert header bits to bytes
-                    header_bit_array = np.array(header_bits_data, dtype=np.uint8)
-                    header_bytes = np.packbits(header_bit_array)
-                    
-                    # Parse header
-                    magic = bytes(header_bytes[:8])
-                    self.logger.debug(f"Magic bytes found: {magic} (expected: {self.MAGIC_HEADER})")
-                    
-                    if magic != self.MAGIC_HEADER:
-                        self.logger.debug(f"Magic mismatch for attempt {attempt_multiplier}")
-                        continue  # Try next size
-                    
-                    version = bytes(header_bytes[8:10])
-                    data_size = struct.unpack('<Q', bytes(header_bytes[10:18]))[0]
-                    checksum = bytes(header_bytes[18:34])
-                    
-                    self.logger.info(f"Found valid header - data size: {data_size} bytes")
-                    
-                    # Calculate actual total bits needed
-                    data_bits_needed = data_size * 8
-                    total_bits_needed = header_bits + data_bits_needed
-                    
-                    self.logger.debug(f"Total bits needed: {total_bits_needed}")
-                    
-                    if total_bits_needed > len(all_positions):
-                        self.logger.debug(f"Not enough positions: {total_bits_needed} > {len(all_positions)}")
-                        continue  # Not enough space, try next size
-                    
-                    if total_bits_needed > estimated_bits:
-                        # We need more bits, reset and get the correct amount
-                        self.logger.debug(f"Re-generating with exact size: {total_bits_needed}")
-                        rng = np.random.RandomState(seed)
-                        selected_positions = rng.choice(all_positions, size=total_bits_needed, replace=False)
-                    
-                    # Extract all bits
-                    extracted_bits = []
-                    for i in range(total_bits_needed):
-                        pos = selected_positions[i]
-                        extracted_bits.append(flat_audio[pos] & 1)
-                    
-                    # Convert to bytes
-                    bit_array = np.array(extracted_bits, dtype=np.uint8)
-                    all_bytes = np.packbits(bit_array)
-                    
-                    # Get encrypted data (skip header)
-                    encrypted_data = bytes(all_bytes[header_size:header_size + data_size])
-                    
-                    # Verify checksum
-                    actual_checksum = hashlib.md5(encrypted_data).digest()
-                    self.logger.debug(f"Checksum - expected: {checksum.hex()}, actual: {actual_checksum.hex()}")
-                    
-                    if actual_checksum != checksum:
-                        self.logger.debug(f"Checksum mismatch for attempt {attempt_multiplier}")
-                        continue  # Try next size
-                    
-                    self.logger.info(f"Successfully extracted data on attempt {attempt_multiplier}")
-                    return encrypted_data
-                    
-                except Exception as e:
-                    self.logger.debug(f"Attempt {attempt_multiplier} failed: {e}")
-                    continue
+            # Start with a large extraction to be safe - use 80% of available positions
+            max_extract_bits = int(len(all_positions) * 0.8)
+            self.logger.info(f"Attempting to extract {max_extract_bits} bits")
             
-            # If all attempts failed
-            self.logger.error("All extraction attempts failed - no valid data found")
-            return None
+            # Generate positions using same algorithm as hiding
+            rng = np.random.RandomState(seed)
+            selected_positions = rng.choice(all_positions, size=max_extract_bits, replace=False)
+            
+            # Extract all bits
+            extracted_bits = []
+            for pos in selected_positions:
+                extracted_bits.append(flat_audio[pos] & 1)
+            
+            # Convert to bytes
+            bit_array = np.array(extracted_bits, dtype=np.uint8)
+            all_bytes = np.packbits(bit_array)
+            
+            self.logger.info(f"Extracted {len(all_bytes)} bytes, searching for header...")
+            
+            # Look for magic header in the extracted data
+            header_found = False
+            data_start_offset = 0
+            
+            # Try different starting offsets in case there's alignment issues
+            for offset in range(0, min(100, len(all_bytes) - 34)):  # Check first 100 bytes for header
+                potential_magic = bytes(all_bytes[offset:offset + 8])
+                self.logger.debug(f"Offset {offset}: checking magic {potential_magic} vs {self.MAGIC_HEADER}")
+                
+                if potential_magic == self.MAGIC_HEADER:
+                    self.logger.info(f"Found magic header at offset {offset}")
+                    header_found = True
+                    data_start_offset = offset
+                    break
+            
+            if not header_found:
+                self.logger.error("Magic header not found in extracted data")
+                # Log first few bytes for debugging
+                first_bytes = bytes(all_bytes[:50]) if len(all_bytes) >= 50 else bytes(all_bytes)
+                self.logger.debug(f"First 50 bytes: {first_bytes.hex()}")
+                return None
+            
+            # Parse header starting from found offset
+            header_start = data_start_offset
+            magic = bytes(all_bytes[header_start:header_start + 8])
+            version = bytes(all_bytes[header_start + 8:header_start + 10])
+            data_size = struct.unpack('<Q', bytes(all_bytes[header_start + 10:header_start + 18]))[0]
+            checksum = bytes(all_bytes[header_start + 18:header_start + 34])
+            
+            self.logger.info(f"Header parsed - version: {version.hex()}, data size: {data_size} bytes")
+            
+            # Extract the actual encrypted data
+            data_start = header_start + 34
+            data_end = data_start + data_size
+            
+            if data_end > len(all_bytes):
+                self.logger.error(f"Not enough data extracted: need {data_end}, have {len(all_bytes)}")
+                return None
+            
+            encrypted_data = bytes(all_bytes[data_start:data_end])
+            
+            # Verify checksum
+            actual_checksum = hashlib.md5(encrypted_data).digest()
+            if actual_checksum != checksum:
+                self.logger.error(f"Checksum mismatch: expected {checksum.hex()}, got {actual_checksum.hex()}")
+                return None
+            
+            self.logger.info(f"Successfully extracted and verified {len(encrypted_data)} bytes of encrypted data")
+            return encrypted_data
             
         except Exception as e:
             self.logger.error(f"LSB extraction failed: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             return None
     
     def _extract_data_spread_spectrum(self, audio_data: np.ndarray, password: str,
