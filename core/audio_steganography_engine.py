@@ -222,14 +222,21 @@ class AudioSteganographyEngine:
         try:
             # Generate deterministic random sequence from password
             seed = int(hashlib.sha256(password.encode()).hexdigest()[:8], 16)
+            self.logger.info(f"LSB hiding - using seed: {seed}")
             rng = np.random.RandomState(seed)
             
             # Convert data to bit array
             data_bits = np.unpackbits(np.frombuffer(data, dtype=np.uint8))
             total_bits = len(data_bits)
+            self.logger.info(f"Hiding {len(data)} bytes ({total_bits} bits)")
+            
+            # Log first few bytes of data for debugging
+            first_bytes = data[:20] if len(data) >= 20 else data
+            self.logger.debug(f"First 20 bytes of data to hide: {first_bytes.hex()}")
             
             # Prepare audio data for modification
             channels, samples = audio_data.shape
+            self.logger.info(f"Audio shape for hiding: {channels} channels, {samples} samples")
             modified_audio = audio_data.copy()
             
             # Convert to integer representation (16-bit)
@@ -238,6 +245,7 @@ class AudioSteganographyEngine:
             # Calculate available positions (use every nth sample)
             total_samples = channels * samples
             usable_samples = total_samples // self.sample_skip
+            self.logger.info(f"Total samples: {total_samples}, Usable samples: {usable_samples}")
             
             if total_bits > usable_samples:
                 raise ValueError(f"Not enough samples for data: {total_bits} > {usable_samples}")
@@ -245,12 +253,22 @@ class AudioSteganographyEngine:
             # Generate random positions
             all_positions = np.arange(0, total_samples, self.sample_skip)
             selected_positions = rng.choice(all_positions, size=total_bits, replace=False)
+            self.logger.debug(f"Generated {len(selected_positions)} positions for hiding")
             
             # Hide bits in LSBs
             flat_audio = audio_int.flatten()
+            bits_hidden = 0
             for i, pos in enumerate(selected_positions):
                 bit_to_hide = data_bits[i]
+                original_value = flat_audio[pos]
                 flat_audio[pos] = (flat_audio[pos] & 0xFFFE) | bit_to_hide
+                bits_hidden += 1
+                
+                # Log first few bit modifications for debugging
+                if i < 10:
+                    self.logger.debug(f"Position {pos}: {original_value} -> {flat_audio[pos]} (bit: {bit_to_hide})")
+            
+            self.logger.info(f"Successfully hid {bits_hidden} bits in audio")
             
             # Reshape and convert back to float
             modified_int = flat_audio.reshape(channels, samples)
@@ -261,6 +279,8 @@ class AudioSteganographyEngine:
             
         except Exception as e:
             self.logger.error(f"LSB hiding failed: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             return None
     
     def _hide_data_spread_spectrum(self, audio_data: np.ndarray, data: bytes,
