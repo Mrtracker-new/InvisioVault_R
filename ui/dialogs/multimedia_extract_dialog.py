@@ -435,7 +435,7 @@ class MultimediaExtractDialog(QDialog):
         except Exception as e:
             self.info_text.setPlainText(f"Error reading file information: {e}")
     
-    def update_extract_button_state(self):
+    def update_extract_button_state(self, text=None):
         """Update the state of the extract button."""
         can_extract = (
             self.multimedia_file is not None and
