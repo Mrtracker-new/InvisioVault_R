@@ -498,7 +498,7 @@ class MultimediaExtractDialog(QDialog):
             
             # Connect worker signals
             self.extract_worker.progress_updated.connect(self.progress_dialog.update_progress)
-            self.extract_worker.status_updated.connect(self.progress_dialog.update_status)
+            self.extract_worker.status_updated.connect(self.progress_dialog.set_status)
             self.extract_worker.finished_successfully.connect(self.on_extraction_finished)
             self.extract_worker.error_occurred.connect(self.on_extraction_error)
             
