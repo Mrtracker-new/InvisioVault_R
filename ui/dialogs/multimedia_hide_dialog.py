@@ -22,6 +22,7 @@ from PySide6.QtGui import QFont, QPixmap, QDragEnterEvent, QDropEvent
 from utils.logger import Logger
 from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler
+from utils.performance_profiler import PerformanceProfiler
 from core.video_steganography_engine import VideoSteganographyEngine
 from core.audio_steganography_engine import AudioSteganographyEngine
 from core.multimedia_analyzer import MultimediaAnalyzer
@@ -155,23 +156,31 @@ class MultimediaHideDialog(QDialog):
     """Professional dialog for hiding files in multimedia."""
     
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.logger = Logger()
-        self.config = ConfigManager()
-        self.error_handler = ErrorHandler()
-        self.analyzer = MultimediaAnalyzer()
+        profiler = PerformanceProfiler()
         
-        # Dialog state
-        self.carrier_file = None
-        self.files_to_hide = []
-        self.analysis_worker = None
-        self.hide_worker = None
-        
-        # Initialize UI
-        self.init_ui()
-        self.setup_connections()
-        
-        self.logger.info("Multimedia hide dialog initialized")
+        with profiler.timer("multimedia_hide_dialog_total_init"):
+            super().__init__(parent)
+            
+            with profiler.timer("multimedia_hide_dialog_core_init"):
+                self.logger = Logger()
+                self.config = ConfigManager()
+                self.error_handler = ErrorHandler()
+                self.analyzer = MultimediaAnalyzer()
+            
+            # Dialog state
+            self.carrier_file = None
+            self.files_to_hide = []
+            self.analysis_worker = None
+            self.hide_worker = None
+            
+            # Initialize UI
+            with profiler.timer("multimedia_hide_dialog_ui_init"):
+                self.init_ui()
+            
+            with profiler.timer("multimedia_hide_dialog_connections"):
+                self.setup_connections()
+            
+            self.logger.info("Multimedia hide dialog initialized")
     
     def init_ui(self):
         """Initialize the user interface."""
@@ -340,8 +349,14 @@ class MultimediaHideDialog(QDialog):
         self.analysis_text = QTextEdit()
         self.analysis_text.setReadOnly(True)
         self.analysis_text.setMaximumHeight(200)
-        self.analysis_text.setPlainText("Select a multimedia file to see analysis...")
+        self.analysis_text.setPlainText("Select a multimedia file then click 'Analyze File' to see detailed analysis...")
         analysis_layout.addWidget(self.analysis_text)
+        
+        # Add analyze button for on-demand analysis
+        self.analyze_button = QPushButton("📊 Analyze File")
+        self.analyze_button.setEnabled(False)
+        self.analyze_button.clicked.connect(self.start_analysis)
+        analysis_layout.addWidget(self.analyze_button)
         
         layout.addWidget(analysis_group)
         
@@ -554,8 +569,11 @@ class MultimediaHideDialog(QDialog):
             suggested_path = file_path.parent / suggested_name
             self.output_path_input.setText(str(suggested_path))
         
-        # Start analysis
-        self.start_analysis()
+        # Don't start analysis automatically - make it on-demand for better performance
+        # User can trigger analysis manually if needed
+        self.current_analysis = None  # Reset analysis
+        self.analyze_button.setEnabled(True)  # Enable analyze button
+        self.update_capacity_info()  # Update with basic info
         self.update_hide_button_state()
     
     def add_files_to_hide(self, file_paths: List[Path]):

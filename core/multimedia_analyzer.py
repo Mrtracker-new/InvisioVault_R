@@ -14,17 +14,84 @@ import numpy as np
 # Suppress warnings
 warnings.filterwarnings('ignore')
 
-try:
-    import cv2
-    import librosa
-    from pydub import AudioSegment
-    import ffmpeg
-except ImportError as e:
-    print(f"Warning: Multimedia dependencies not fully installed: {e}")
-    print("Please install: pip install opencv-python librosa pydub ffmpeg-python")
+# Lazy loading flags for heavy dependencies
+_cv2_loaded = False
+_librosa_loaded = False
+_pydub_loaded = False
+_ffmpeg_loaded = False
+
+# Global references for lazy-loaded modules
+_cv2 = None
+_librosa = None
+_AudioSegment = None
+_ffmpeg = None
 
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
+
+
+def _load_cv2():
+    """Lazy load OpenCV library."""
+    global _cv2, _cv2_loaded
+    if not _cv2_loaded:
+        try:
+            import cv2
+            _cv2 = cv2
+            _cv2_loaded = True
+        except ImportError as e:
+            raise ImportError(
+                f"OpenCV not available: {e}. "
+                "Please install: pip install opencv-python"
+            )
+    return _cv2
+
+
+def _load_librosa():
+    """Lazy load librosa library."""
+    global _librosa, _librosa_loaded
+    if not _librosa_loaded:
+        try:
+            import librosa
+            _librosa = librosa
+            _librosa_loaded = True
+        except ImportError as e:
+            raise ImportError(
+                f"Librosa not available: {e}. "
+                "Please install: pip install librosa"
+            )
+    return _librosa
+
+
+def _load_pydub():
+    """Lazy load pydub library."""
+    global _AudioSegment, _pydub_loaded
+    if not _pydub_loaded:
+        try:
+            from pydub import AudioSegment
+            _AudioSegment = AudioSegment
+            _pydub_loaded = True
+        except ImportError as e:
+            raise ImportError(
+                f"Pydub not available: {e}. "
+                "Please install: pip install pydub"
+            )
+    return _AudioSegment
+
+
+def _load_ffmpeg():
+    """Lazy load ffmpeg library."""
+    global _ffmpeg, _ffmpeg_loaded
+    if not _ffmpeg_loaded:
+        try:
+            import ffmpeg
+            _ffmpeg = ffmpeg
+            _ffmpeg_loaded = True
+        except ImportError as e:
+            raise ImportError(
+                f"FFmpeg not available: {e}. "
+                "Please install: pip install ffmpeg-python"
+            )
+    return _ffmpeg
 
 
 class MultimediaAnalyzer:
@@ -34,9 +101,22 @@ class MultimediaAnalyzer:
     VIDEO_FORMATS = {'.mp4', '.avi', '.mkv', '.mov', '.wmv', '.flv', '.webm', '.m4v'}
     AUDIO_FORMATS = {'.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a', '.wma'}
     
+    # Singleton instance
+    _instance = None
+    _initialized = False
+    
+    def __new__(cls):
+        """Implement singleton pattern for performance."""
+        if cls._instance is None:
+            cls._instance = super(MultimediaAnalyzer, cls).__new__(cls)
+        return cls._instance
+    
     def __init__(self):
-        self.logger = Logger()
-        self.error_handler = ErrorHandler()
+        # Only initialize once to avoid repeated overhead
+        if not self._initialized:
+            self.logger = Logger()
+            self.error_handler = ErrorHandler()
+            MultimediaAnalyzer._initialized = True
     
     def analyze_video_file(self, video_path: Path) -> Dict[str, Any]:
         """
@@ -56,7 +136,8 @@ class MultimediaAnalyzer:
             if video_path.suffix.lower() not in self.VIDEO_FORMATS:
                 raise ValueError(f"Unsupported video format: {video_path.suffix}")
             
-            # Use OpenCV for video analysis
+            # Lazy load OpenCV for video analysis
+            cv2 = _load_cv2()
             cap = cv2.VideoCapture(str(video_path))
             
             if not cap.isOpened():
@@ -143,7 +224,8 @@ class MultimediaAnalyzer:
             if audio_path.suffix.lower() not in self.AUDIO_FORMATS:
                 raise ValueError(f"Unsupported audio format: {audio_path.suffix}")
             
-            # Load audio with pydub for format compatibility
+            # Lazy load pydub for audio analysis
+            AudioSegment = _load_pydub()
             audio = AudioSegment.from_file(str(audio_path))
             
             # Get basic properties
@@ -208,6 +290,9 @@ class MultimediaAnalyzer:
     def _analyze_video_quality(self, cap, frame_count: int) -> Dict[str, float]:
         """Analyze video quality metrics from sample frames."""
         try:
+            # Get cv2 reference from lazy loading
+            cv2 = _load_cv2()
+            
             # Sample frames at different points
             sample_points = [0.1, 0.3, 0.5, 0.7, 0.9]
             brightness_values = []
@@ -255,6 +340,9 @@ class MultimediaAnalyzer:
     def _analyze_audio_quality(self, audio_path: Path, sample_rate: int) -> Dict[str, float]:
         """Analyze audio quality metrics."""
         try:
+            # Get librosa reference from lazy loading
+            librosa = _load_librosa()
+            
             # Load audio with librosa for analysis
             y, sr = librosa.load(str(audio_path), sr=sample_rate, duration=30.0)  # Analyze first 30 seconds
             
