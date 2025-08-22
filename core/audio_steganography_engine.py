@@ -390,66 +390,94 @@ class AudioSteganographyEngine:
             seed = int(hashlib.sha256(password.encode()).hexdigest()[:8], 16)
             rng = np.random.RandomState(seed)
             
-            # Convert to integer representation
+            # Convert to integer representation (same as hiding)
             audio_int = (audio_data * 32767).astype(np.int16)
             channels, samples = audio_int.shape
             
-            # Try to extract header first to determine data size
-            header_bits = (8 + 2 + 8 + 16) * 8  # 34 bytes * 8 bits
+            # Calculate available positions (same logic as hiding)
             total_samples = channels * samples
             all_positions = np.arange(0, total_samples, self.sample_skip)
+            flat_audio = audio_int.flatten()
+            
+            # We need to try different sizes since we don't know the data size yet
+            # Start with a reasonable estimate and work up
+            header_size = 34  # bytes
+            header_bits = header_size * 8  # 272 bits
             
             if len(all_positions) < header_bits:
                 return None
             
-            # Extract header bits
-            header_positions = rng.choice(all_positions, size=header_bits, replace=False)
-            flat_audio = audio_int.flatten()
+            # Try increasing sizes to find the right data
+            for attempt_multiplier in [2, 5, 10, 20, 50]:
+                try:
+                    # Reset RNG for each attempt
+                    rng = np.random.RandomState(seed)
+                    
+                    # Estimate total bits needed (header + some data)
+                    estimated_bits = min(header_bits * attempt_multiplier, len(all_positions))
+                    
+                    # Generate positions for this attempt
+                    selected_positions = rng.choice(all_positions, size=estimated_bits, replace=False)
+                    
+                    # Extract header bits
+                    header_bits_data = []
+                    for i in range(header_bits):
+                        pos = selected_positions[i]
+                        header_bits_data.append(flat_audio[pos] & 1)
+                    
+                    # Convert header bits to bytes
+                    header_bit_array = np.array(header_bits_data, dtype=np.uint8)
+                    header_bytes = np.packbits(header_bit_array)
+                    
+                    # Parse header
+                    magic = bytes(header_bytes[:8])
+                    if magic != self.MAGIC_HEADER:
+                        continue  # Try next size
+                    
+                    version = bytes(header_bytes[8:10])
+                    data_size = struct.unpack('<Q', bytes(header_bytes[10:18]))[0]
+                    checksum = bytes(header_bytes[18:34])
+                    
+                    # Calculate actual total bits needed
+                    data_bits_needed = data_size * 8
+                    total_bits_needed = header_bits + data_bits_needed
+                    
+                    if total_bits_needed > len(all_positions):
+                        continue  # Not enough space, try next size
+                    
+                    if total_bits_needed > estimated_bits:
+                        # We need more bits, reset and get the correct amount
+                        rng = np.random.RandomState(seed)
+                        selected_positions = rng.choice(all_positions, size=total_bits_needed, replace=False)
+                    
+                    # Extract all bits
+                    extracted_bits = []
+                    for i in range(total_bits_needed):
+                        pos = selected_positions[i]
+                        extracted_bits.append(flat_audio[pos] & 1)
+                    
+                    # Convert to bytes
+                    bit_array = np.array(extracted_bits, dtype=np.uint8)
+                    all_bytes = np.packbits(bit_array)
+                    
+                    # Get encrypted data (skip header)
+                    encrypted_data = bytes(all_bytes[header_size:header_size + data_size])
+                    
+                    # Verify checksum
+                    actual_checksum = hashlib.md5(encrypted_data).digest()
+                    if actual_checksum != checksum:
+                        self.logger.debug(f"Checksum mismatch for attempt {attempt_multiplier}")
+                        continue  # Try next size
+                    
+                    self.logger.info(f"Successfully extracted data on attempt {attempt_multiplier}")
+                    return encrypted_data
+                    
+                except Exception as e:
+                    self.logger.debug(f"Attempt {attempt_multiplier} failed: {e}")
+                    continue
             
-            header_bits_data = []
-            for pos in header_positions:
-                header_bits_data.append(flat_audio[pos] & 1)
-            
-            # Convert header bits to bytes
-            header_bit_array = np.array(header_bits_data, dtype=np.uint8)
-            header_bytes = np.packbits(header_bit_array)
-            
-            # Parse header
-            magic = bytes(header_bytes[:8])
-            if magic != self.MAGIC_HEADER:
-                return None
-            
-            version = bytes(header_bytes[8:10])
-            data_size = struct.unpack('<Q', bytes(header_bytes[10:18]))[0]
-            checksum = bytes(header_bytes[18:34])
-            
-            # Calculate total bits needed
-            data_bits_needed = data_size * 8
-            total_bits_needed = header_bits + data_bits_needed
-            
-            if len(all_positions) < total_bits_needed:
-                raise Exception("Not enough samples to extract complete data")
-            
-            # Extract all bits (header + data)
-            all_positions_needed = rng.choice(all_positions, size=total_bits_needed, replace=False)
-            
-            extracted_bits = []
-            for pos in all_positions_needed:
-                extracted_bits.append(flat_audio[pos] & 1)
-            
-            # Convert to bytes and skip header
-            bit_array = np.array(extracted_bits, dtype=np.uint8)
-            all_bytes = np.packbits(bit_array)
-            
-            # Get encrypted data (skip header)
-            encrypted_data = bytes(all_bytes[34:34 + data_size])
-            
-            # Verify checksum
-            actual_checksum = hashlib.md5(encrypted_data).digest()
-            if actual_checksum != checksum:
-                raise Exception("Data corruption detected - checksum mismatch")
-            
-            return encrypted_data
+            # If all attempts failed
+            return None
             
         except Exception as e:
             self.logger.error(f"LSB extraction failed: {e}")
