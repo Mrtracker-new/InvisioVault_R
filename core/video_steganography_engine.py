@@ -289,6 +289,7 @@ class VideoSteganographyEngine:
             total_bits = len(data_bits)
             
             bits_hidden = 0
+            modified_frames = []
             
             for frame_idx, frame_file in enumerate(frame_files):
                 if bits_hidden >= total_bits:
@@ -297,9 +298,11 @@ class VideoSteganographyEngine:
                 # Load frame
                 img = cv2.imread(str(frame_file))
                 if img is None:
+                    self.logger.warning(f"Could not load frame: {frame_file}")
                     continue
                 
                 height, width, channels = img.shape
+                original_img = img.copy()  # Keep original for verification
                 
                 # Calculate how many bits to hide in this frame
                 remaining_bits = total_bits - bits_hidden
@@ -321,18 +324,29 @@ class VideoSteganographyEngine:
                 
                 # Reshape and save modified frame
                 modified_img = flat_img.reshape(height, width, channels)
-                cv2.imwrite(str(frame_file), modified_img)
                 
+                # Write frame with verification
+                write_success = cv2.imwrite(str(frame_file), modified_img)
+                if not write_success:
+                    self.logger.error(f"Failed to write modified frame: {frame_file}")
+                    raise Exception(f"Could not write frame {frame_file}")
+                
+                # Verify the frame was written correctly
+                if not self._verify_frame_write(frame_file, original_img, modified_img):
+                    self.logger.error(f"Frame verification failed: {frame_file}")
+                    raise Exception(f"Frame verification failed for {frame_file}")
+                
+                modified_frames.append(frame_file)
                 bits_hidden += bits_to_hide
                 
                 if frame_idx % 50 == 0:  # Progress logging
                     progress = (bits_hidden / total_bits) * 100
-                    self.logger.debug(f"Hiding progress: {progress:.1f}%")
+                    self.logger.debug(f"Hiding progress: {progress:.1f}% ({len(modified_frames)} frames modified)")
             
             if bits_hidden < total_bits:
                 raise Exception(f"Could not hide all data: {bits_hidden}/{total_bits} bits")
             
-            self.logger.info("Data successfully hidden in video frames")
+            self.logger.info(f"Data successfully hidden in {len(modified_frames)} video frames")
             
         except Exception as e:
             self.logger.error(f"Failed to hide data in frames: {e}")
@@ -467,38 +481,79 @@ class VideoSteganographyEngine:
             video_stream = next(s for s in probe['streams'] if s['codec_type'] == 'video')
             fps = eval(video_stream['r_frame_rate'])  # Convert fraction to float
             
-            # Use ffmpeg to create video from frames
+            self.logger.debug(f"Video properties: FPS={fps}, Total frames={video_stream.get('nb_frames', 'unknown')}")
+            
+            # Verify extracted frames exist
+            frame_files = list(frames_path.glob("frame_*.png"))
+            if not frame_files:
+                raise Exception("No frames found for reassembly")
+            
+            self.logger.info(f"Reassembling video from {len(frame_files)} frames")
+            
+            # Use ffmpeg to create video from frames - with proper frame handling
             input_pattern = str(frames_path / "frame_%06d.png")
             
-            # Build ffmpeg command
-            stream = ffmpeg.input(input_pattern, framerate=fps)
+            # Build ffmpeg command with additional options for stability
+            stream = ffmpeg.input(
+                input_pattern, 
+                framerate=fps,
+                start_number=0  # Start from frame 0
+            )
             
             # Copy audio from original video if present
             audio_streams = [s for s in probe['streams'] if s['codec_type'] == 'audio']
             if audio_streams:
+                self.logger.debug("Including audio stream from original video")
                 audio_input = ffmpeg.input(str(original_path))
                 stream = ffmpeg.output(
                     stream, audio_input['a'],
                     str(output_path),
                     vcodec='libx264',
                     crf=quality,
-                    acodec='copy'
+                    acodec='copy',
+                    pix_fmt='yuv420p',  # Ensure compatibility
+                    movflags='faststart'  # Optimize for web playback
                 )
             else:
+                self.logger.debug("Video has no audio stream")
                 stream = ffmpeg.output(
                     stream,
                     str(output_path),
                     vcodec='libx264',
-                    crf=quality
+                    crf=quality,
+                    pix_fmt='yuv420p',  # Ensure compatibility
+                    movflags='faststart'  # Optimize for web playback
                 )
             
-            # Run ffmpeg
-            ffmpeg.run(stream, overwrite_output=True, quiet=True)
+            # Run ffmpeg with better error handling
+            self.logger.debug(f"Running ffmpeg command: {' '.join(ffmpeg.compile(stream))}")
             
-            return output_path.exists()
+            try:
+                ffmpeg.run(stream, overwrite_output=True, capture_stdout=True, capture_stderr=True)
+            except ffmpeg.Error as e:
+                error_output = e.stderr.decode() if e.stderr else "Unknown ffmpeg error"
+                self.logger.error(f"FFmpeg error: {error_output}")
+                raise Exception(f"Video encoding failed: {error_output}")
+            
+            # Verify output file was created and has content
+            if not output_path.exists():
+                raise Exception("Output video file was not created")
+            
+            output_size = output_path.stat().st_size
+            if output_size == 0:
+                raise Exception("Output video file is empty")
+            
+            self.logger.info(f"Video reassembly completed: {output_path.name} ({output_size:,} bytes)")
+            return True
             
         except Exception as e:
             self.logger.error(f"Video reassembly failed: {e}")
+            # Clean up failed output file
+            if output_path.exists():
+                try:
+                    output_path.unlink()
+                except:
+                    pass
             return False
     
     def _extract_and_decrypt_data(self, encrypted_data: bytes, password: str) -> bytes:
@@ -525,3 +580,40 @@ class VideoSteganographyEngine:
     def validate_video_format(self, video_path: Path) -> bool:
         """Validate if video format is supported."""
         return self.analyzer.is_video_file(video_path)
+    
+    def _verify_frame_write(self, frame_path: Path, original_img: np.ndarray, 
+                           expected_img: np.ndarray) -> bool:
+        """Verify that a frame was written correctly to disk."""
+        try:
+            # Read the frame back from disk
+            written_img = cv2.imread(str(frame_path))
+            if written_img is None:
+                self.logger.error(f"Could not read back written frame: {frame_path}")
+                return False
+            
+            # Check basic properties match
+            if written_img.shape != expected_img.shape:
+                self.logger.error(f"Frame shape mismatch: expected {expected_img.shape}, got {written_img.shape}")
+                return False
+            
+            # Check that the data is actually different from original (modifications were applied)
+            diff_count = np.sum(written_img != original_img)
+            if diff_count == 0:
+                self.logger.warning(f"Frame appears unchanged from original (this may be normal for small data)")
+            
+            # Check that written frame matches what we expected to write
+            exact_match = np.array_equal(written_img, expected_img)
+            if not exact_match:
+                # Allow for small differences due to compression/encoding
+                max_diff = np.max(np.abs(written_img.astype(int) - expected_img.astype(int)))
+                if max_diff > 2:  # Allow up to 2 pixel value difference
+                    self.logger.error(f"Frame content mismatch: max difference {max_diff}")
+                    return False
+                else:
+                    self.logger.debug(f"Frame verification passed with minor differences (max diff: {max_diff})")
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Frame verification failed with exception: {e}")
+            return False
