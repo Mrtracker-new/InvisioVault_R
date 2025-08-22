@@ -439,11 +439,11 @@ class MultimediaExtractDialog(QDialog):
         """Update the state of the extract button."""
         can_extract = (
             self.multimedia_file is not None and
-            self.password_input.text().strip() and
-            self.output_dir_input.text().strip()
+            bool(self.password_input.text().strip()) and
+            bool(self.output_dir_input.text().strip())
         )
         
-        self.extract_button.setEnabled(can_extract)
+        self.extract_button.setEnabled(bool(can_extract))
     
     def start_extraction(self):
         """Start the extraction operation."""
