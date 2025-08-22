@@ -581,17 +581,18 @@ class AudioSteganographyEngine:
             else:  # low
                 bitrate = "128k"
             
-            # Determine format from file extension
-            file_format = output_path.suffix.lower().lstrip('.')
-            if file_format == 'mp3':
-                audio_segment.export(str(output_path), format="mp3", bitrate=bitrate)
-            elif file_format == 'wav':
-                audio_segment.export(str(output_path), format="wav")
-            elif file_format == 'flac':
-                audio_segment.export(str(output_path), format="flac")
-            else:
-                # Default to wav for unknown formats
-                audio_segment.export(str(output_path), format="wav")
+            # CRITICAL: Always use WAV format for steganography!
+            # Lossy formats like MP3 will destroy LSB data
+            self.logger.warning("Forcing WAV format to preserve LSB steganography data")
+            
+            # Change extension to .wav if it's not already
+            if output_path.suffix.lower() != '.wav':
+                original_path = output_path
+                output_path = output_path.with_suffix('.wav')
+                self.logger.info(f"Changed output format from {original_path.suffix} to .wav to preserve steganography data")
+            
+            # Always export as WAV (uncompressed)
+            audio_segment.export(str(output_path), format="wav")
             
             return output_path.exists()
             
