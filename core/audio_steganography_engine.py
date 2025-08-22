@@ -412,6 +412,11 @@ class AudioSteganographyEngine:
             seed = int(hashlib.sha256(password.encode()).hexdigest()[:8], 16)
             self.logger.info(f"Using seed: {seed}")
             
+            # Ensure audio data is in the right format
+            if audio_data.ndim == 1:
+                # Convert mono to 2D format
+                audio_data = audio_data.reshape(1, -1)
+            
             # Convert to integer representation (same as hiding)
             audio_int = (audio_data * 32767).astype(np.int16)
             channels, samples = audio_int.shape
@@ -423,79 +428,159 @@ class AudioSteganographyEngine:
             flat_audio = audio_int.flatten()
             self.logger.info(f"Total samples: {total_samples}, Available positions: {len(all_positions)}")
             
-            # Try to extract maximum possible data to find header
-            if len(all_positions) < 272:  # Minimum header size
-                self.logger.error(f"Not enough positions for header: {len(all_positions)} < 272")
+            # Check minimum requirements for header (34 bytes = 272 bits)
+            min_header_bits = 34 * 8  # 272 bits
+            if len(all_positions) < min_header_bits:
+                self.logger.error(f"Not enough positions for header: {len(all_positions)} < {min_header_bits}")
                 return None
             
-            # Start with a large extraction to be safe - use 80% of available positions
-            max_extract_bits = int(len(all_positions) * 0.8)
-            self.logger.info(f"Attempting to extract {max_extract_bits} bits")
+            # Try multiple extraction strategies for robustness
+            extraction_strategies = [
+                int(len(all_positions) * 0.9),   # 90% of available positions
+                int(len(all_positions) * 0.8),   # 80% of available positions
+                int(len(all_positions) * 0.7),   # 70% of available positions
+                len(all_positions)                # All available positions
+            ]
             
-            # Generate positions using same algorithm as hiding
-            rng = np.random.RandomState(seed)
-            selected_positions = rng.choice(all_positions, size=max_extract_bits, replace=False)
+            for strategy_idx, max_extract_bits in enumerate(extraction_strategies):
+                try:
+                    self.logger.info(f"Trying extraction strategy {strategy_idx + 1}: {max_extract_bits} bits")
+                    
+                    if max_extract_bits < min_header_bits:
+                        continue
+                    
+                    # Generate positions using same algorithm as hiding
+                    rng = np.random.RandomState(seed)
+                    
+                    # Ensure we don't try to extract more positions than available
+                    actual_extract_bits = min(max_extract_bits, len(all_positions))
+                    selected_positions = rng.choice(all_positions, size=actual_extract_bits, replace=False)
+                    
+                    # Extract all bits
+                    extracted_bits = []
+                    for pos in selected_positions:
+                        if pos < len(flat_audio):  # Bounds check
+                            extracted_bits.append(flat_audio[pos] & 1)
+                        else:
+                            self.logger.warning(f"Position {pos} out of bounds for audio length {len(flat_audio)}")
+                    
+                    if len(extracted_bits) < min_header_bits:
+                        self.logger.warning(f"Not enough bits extracted: {len(extracted_bits)} < {min_header_bits}")
+                        continue
+                    
+                    # Convert to bytes with proper padding
+                    bit_array = np.array(extracted_bits, dtype=np.uint8)
+                    
+                    # Ensure bit array length is multiple of 8 for proper byte packing
+                    padding_needed = (8 - (len(bit_array) % 8)) % 8
+                    if padding_needed > 0:
+                        bit_array = np.append(bit_array, np.zeros(padding_needed, dtype=np.uint8))
+                    
+                    all_bytes = np.packbits(bit_array)
+                    
+                    self.logger.info(f"Extracted {len(all_bytes)} bytes, searching for header...")
+                    
+                    # Look for magic header in the extracted data
+                    header_found = False
+                    data_start_offset = 0
+                    
+                    # Try different starting offsets in case there's alignment issues
+                    search_range = min(200, len(all_bytes) - 34)  # Increased search range
+                    for offset in range(0, max(1, search_range)):
+                        if offset + 34 > len(all_bytes):
+                            break
+                            
+                        potential_magic = bytes(all_bytes[offset:offset + 8])
+                        
+                        if potential_magic == self.MAGIC_HEADER:
+                            self.logger.info(f"Found magic header at offset {offset}")
+                            header_found = True
+                            data_start_offset = offset
+                            break
+                    
+                    if not header_found:
+                        self.logger.debug(f"Strategy {strategy_idx + 1}: Magic header not found")
+                        # Log first few bytes for debugging on last strategy
+                        if strategy_idx == len(extraction_strategies) - 1:
+                            first_bytes = bytes(all_bytes[:50]) if len(all_bytes) >= 50 else bytes(all_bytes)
+                            self.logger.debug(f"First 50 bytes: {first_bytes.hex()}")
+                        continue
+                    
+                    # Parse header starting from found offset
+                    header_start = data_start_offset
+                    try:
+                        magic = bytes(all_bytes[header_start:header_start + 8])
+                        version = bytes(all_bytes[header_start + 8:header_start + 10])
+                        
+                        # Safely unpack data size
+                        if header_start + 18 > len(all_bytes):
+                            self.logger.warning(f"Header incomplete at offset {header_start}")
+                            continue
+                            
+                        data_size_bytes = bytes(all_bytes[header_start + 10:header_start + 18])
+                        if len(data_size_bytes) != 8:
+                            self.logger.warning(f"Invalid data size bytes: {len(data_size_bytes)} != 8")
+                            continue
+                            
+                        data_size = struct.unpack('<Q', data_size_bytes)[0]
+                        
+                        # Validate data size is reasonable
+                        if data_size <= 0 or data_size > 100 * 1024 * 1024:  # Max 100MB
+                            self.logger.warning(f"Suspicious data size: {data_size} bytes")
+                            continue
+                        
+                        if header_start + 34 > len(all_bytes):
+                            self.logger.warning(f"Checksum incomplete at offset {header_start}")
+                            continue
+                            
+                        checksum = bytes(all_bytes[header_start + 18:header_start + 34])
+                        
+                        self.logger.info(f"Header parsed - version: {version.hex()}, data size: {data_size} bytes")
+                        
+                        # Extract the actual encrypted data
+                        data_start = header_start + 34
+                        data_end = data_start + data_size
+                        
+                        if data_end > len(all_bytes):
+                            self.logger.warning(
+                                f"Not enough data extracted for payload: need {data_end}, have {len(all_bytes)}. "
+                                f"May need to extract more bits."
+                            )
+                            continue
+                        
+                        encrypted_data = bytes(all_bytes[data_start:data_end])
+                        
+                        # Verify checksum
+                        actual_checksum = hashlib.md5(encrypted_data).digest()
+                        if actual_checksum != checksum:
+                            self.logger.warning(
+                                f"Checksum mismatch: expected {checksum.hex()}, got {actual_checksum.hex()}"
+                            )
+                            continue
+                        
+                        self.logger.info(
+                            f"Successfully extracted and verified {len(encrypted_data)} bytes "
+                            f"of encrypted data using strategy {strategy_idx + 1}"
+                        )
+                        return encrypted_data
+                        
+                    except (struct.error, ValueError) as parse_error:
+                        self.logger.warning(f"Header parsing error at offset {header_start}: {parse_error}")
+                        continue
+                        
+                except Exception as strategy_error:
+                    self.logger.warning(f"Strategy {strategy_idx + 1} failed: {strategy_error}")
+                    continue
             
-            # Extract all bits
-            extracted_bits = []
-            for pos in selected_positions:
-                extracted_bits.append(flat_audio[pos] & 1)
-            
-            # Convert to bytes
-            bit_array = np.array(extracted_bits, dtype=np.uint8)
-            all_bytes = np.packbits(bit_array)
-            
-            self.logger.info(f"Extracted {len(all_bytes)} bytes, searching for header...")
-            
-            # Look for magic header in the extracted data
-            header_found = False
-            data_start_offset = 0
-            
-            # Try different starting offsets in case there's alignment issues
-            for offset in range(0, min(100, len(all_bytes) - 34)):  # Check first 100 bytes for header
-                potential_magic = bytes(all_bytes[offset:offset + 8])
-                self.logger.debug(f"Offset {offset}: checking magic {potential_magic} vs {self.MAGIC_HEADER}")
-                
-                if potential_magic == self.MAGIC_HEADER:
-                    self.logger.info(f"Found magic header at offset {offset}")
-                    header_found = True
-                    data_start_offset = offset
-                    break
-            
-            if not header_found:
-                self.logger.error("Magic header not found in extracted data")
-                # Log first few bytes for debugging
-                first_bytes = bytes(all_bytes[:50]) if len(all_bytes) >= 50 else bytes(all_bytes)
-                self.logger.debug(f"First 50 bytes: {first_bytes.hex()}")
-                return None
-            
-            # Parse header starting from found offset
-            header_start = data_start_offset
-            magic = bytes(all_bytes[header_start:header_start + 8])
-            version = bytes(all_bytes[header_start + 8:header_start + 10])
-            data_size = struct.unpack('<Q', bytes(all_bytes[header_start + 10:header_start + 18]))[0]
-            checksum = bytes(all_bytes[header_start + 18:header_start + 34])
-            
-            self.logger.info(f"Header parsed - version: {version.hex()}, data size: {data_size} bytes")
-            
-            # Extract the actual encrypted data
-            data_start = header_start + 34
-            data_end = data_start + data_size
-            
-            if data_end > len(all_bytes):
-                self.logger.error(f"Not enough data extracted: need {data_end}, have {len(all_bytes)}")
-                return None
-            
-            encrypted_data = bytes(all_bytes[data_start:data_end])
-            
-            # Verify checksum
-            actual_checksum = hashlib.md5(encrypted_data).digest()
-            if actual_checksum != checksum:
-                self.logger.error(f"Checksum mismatch: expected {checksum.hex()}, got {actual_checksum.hex()}")
-                return None
-            
-            self.logger.info(f"Successfully extracted and verified {len(encrypted_data)} bytes of encrypted data")
-            return encrypted_data
+            # If all strategies failed
+            self.logger.error(
+                "All extraction strategies failed. Possible reasons:\n"
+                "- Wrong password\n"
+                "- File doesn't contain hidden data\n"
+                "- Audio format was changed after hiding (e.g., compressed)\n"
+                "- Different extraction technique needed"
+            )
+            return None
             
         except Exception as e:
             self.logger.error(f"LSB extraction failed: {e}")
@@ -573,28 +658,64 @@ class AudioSteganographyEngine:
                     channels=1
                 )
             
-            # Set export parameters based on quality
-            if quality == 'high':
-                bitrate = "320k"
-            elif quality == 'medium':
-                bitrate = "192k"
-            else:  # low
-                bitrate = "128k"
+            # Get the requested output format
+            output_format = output_path.suffix.lower().lstrip('.')
             
-            # CRITICAL: Always use WAV format for steganography!
-            # Lossy formats like MP3 will destroy LSB data
-            self.logger.warning("Forcing WAV format to preserve LSB steganography data")
+            # Define lossless and lossy formats
+            lossless_formats = {'.wav', '.flac', '.aiff', '.au'}
+            lossy_formats = {'.mp3', '.aac', '.ogg', '.m4a', '.wma'}
             
-            # Change extension to .wav if it's not already
-            if output_path.suffix.lower() != '.wav':
-                original_path = output_path
-                output_path = output_path.with_suffix('.wav')
-                self.logger.info(f"Changed output format from {original_path.suffix} to .wav to preserve steganography data")
+            # Warn about format choice for steganography
+            if output_path.suffix.lower() not in lossless_formats:
+                if output_path.suffix.lower() in lossy_formats:
+                    self.logger.warning(
+                        f"WARNING: Saving to lossy format {output_format.upper()}. "
+                        "LSB steganography data may be corrupted or lost during compression. "
+                        "For best results, use lossless formats like WAV or FLAC."
+                    )
+                else:
+                    # Unknown format, default to WAV for safety
+                    self.logger.warning(
+                        f"Unknown audio format '{output_format}'. "
+                        "Defaulting to WAV format to preserve steganography data."
+                    )
+                    output_path = output_path.with_suffix('.wav')
+                    output_format = 'wav'
+            else:
+                self.logger.info(f"Using lossless format {output_format.upper()} - good choice for steganography!")
             
-            # Always export as WAV (uncompressed)
-            audio_segment.export(str(output_path), format="wav")
+            # Set export parameters based on format and quality
+            export_params = {}
             
-            return output_path.exists()
+            if output_format in ['wav', 'flac', 'aiff', 'au']:
+                # Lossless formats - no compression parameters needed
+                if output_format == 'flac':
+                    # FLAC specific parameters
+                    if quality == 'high':
+                        export_params['parameters'] = ["-compression_level", "8"]
+                    elif quality == 'medium':
+                        export_params['parameters'] = ["-compression_level", "5"]
+                    else:  # low (faster compression)
+                        export_params['parameters'] = ["-compression_level", "0"]
+            else:
+                # Lossy formats - set bitrate
+                if quality == 'high':
+                    export_params['bitrate'] = "320k"
+                elif quality == 'medium':
+                    export_params['bitrate'] = "192k"
+                else:  # low
+                    export_params['bitrate'] = "128k"
+            
+            # Export in the requested format
+            audio_segment.export(str(output_path), format=output_format, **export_params)
+            
+            # Verify file was created
+            if output_path.exists():
+                self.logger.info(f"Audio successfully saved as {output_format.upper()}: {output_path.name}")
+                return True
+            else:
+                self.logger.error(f"Failed to create output file: {output_path}")
+                return False
             
         except Exception as e:
             self.logger.error(f"Failed to save audio file: {e}")

@@ -517,13 +517,30 @@ class MultimediaHideDialog(QDialog):
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Select Multimedia Carrier File",
             "",
-            "Multimedia Files (*.mp4 *.avi *.mkv *.mov *.wmv *.flv *.mp3 *.wav *.flac *.aac *.ogg *.m4a);;All Files (*)"
+            "Lossless Audio (*.wav *.flac *.aiff *.au);;Lossy Audio (*.mp3 *.aac *.ogg *.m4a);;Video Files (*.mp4 *.avi *.mkv *.mov *.wmv *.flv);;All Files (*)"
         )
         
         if file_path:
             carrier_path = Path(file_path)
             if self.analyzer.is_multimedia_file(carrier_path):
-                self.set_carrier_file(carrier_path)
+                # Check if it's a lossy audio format and warn
+                if self.analyzer.is_audio_file(carrier_path) and self._is_lossy_audio(carrier_path):
+                    reply = QMessageBox.warning(
+                        self, "Lossy Audio Format Warning",
+                        f"You've selected a {carrier_path.suffix.upper()} file as a carrier, which is a lossy format.\n\n"
+                        "This is NOT recommended for steganography. When using lossy formats:\n\n"
+                        "1. The hidden data may already be damaged in the source file\n"
+                        "2. You MUST choose a lossless format like WAV or FLAC for the output file\n"
+                        "3. Extraction may still fail due to the lossy compression artifacts\n\n"
+                        "For best results, please use WAV or FLAC files as carriers.\n\n"
+                        "Do you want to continue with this file anyway?",
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                        QMessageBox.StandardButton.No
+                    )
+                    if reply == QMessageBox.StandardButton.Yes:
+                        self.set_carrier_file(carrier_path)
+                else:
+                    self.set_carrier_file(carrier_path)
             else:
                 QMessageBox.warning(
                     self, "Invalid File",
@@ -548,15 +565,34 @@ class MultimediaHideDialog(QDialog):
             suggested_name = self.carrier_file.stem + "_hidden" + self.carrier_file.suffix
             suggested_path = self.carrier_file.parent / suggested_name
             
-            file_path, _ = QFileDialog.getSaveFileName(
-                self, "Save Hidden Multimedia File",
-                str(suggested_path),
-                f"Multimedia Files (*{self.carrier_file.suffix});;All Files (*)"
-            )
+            # Determine if this is audio or video
+            is_audio = self.analyzer.is_audio_file(self.carrier_file)
+            
+            if is_audio:
+                # For audio files, show format warning and recommendations
+                file_path, selected_filter = QFileDialog.getSaveFileName(
+                    self, "Save Hidden Audio File",
+                    str(suggested_path),
+                    "Lossless Audio (*.wav *.flac *.aiff);;Lossy Audio (*.mp3 *.aac *.ogg *.m4a);;All Files (*)"
+                )
+            else:
+                # For video files
+                file_path, selected_filter = QFileDialog.getSaveFileName(
+                    self, "Save Hidden Video File",
+                    str(suggested_path),
+                    f"Video Files (*{self.carrier_file.suffix});;All Files (*)"
+                )
             
             if file_path:
-                self.output_path_input.setText(file_path)
-                self.update_hide_button_state()
+                output_path = Path(file_path)
+                
+                # Show format warning for audio files
+                if is_audio and self._show_audio_format_warning(output_path):
+                    self.output_path_input.setText(file_path)
+                    self.update_hide_button_state()
+                elif not is_audio:
+                    self.output_path_input.setText(file_path)
+                    self.update_hide_button_state()
     
     def set_carrier_file(self, file_path: Path):
         """Set the carrier file and analyze it."""
@@ -803,6 +839,60 @@ class MultimediaHideDialog(QDialog):
             self, "Hiding Failed",
             f"Failed to hide files in multimedia:\n\n{error_msg}"
         )
+    
+    def _is_lossy_audio(self, file_path: Path) -> bool:
+        """Check if the audio file is in a lossy format."""
+        lossy_formats = {'.mp3', '.aac', '.ogg', '.m4a', '.wma'}
+        return file_path.suffix.lower() in lossy_formats
+    
+    def _show_audio_format_warning(self, output_path: Path) -> bool:
+        """Show warning about audio format choice and return True if user wants to proceed."""
+        output_format = output_path.suffix.lower()
+        
+        # Define format categories
+        lossless_formats = {'.wav', '.flac', '.aiff', '.au'}
+        lossy_formats = {'.mp3', '.aac', '.ogg', '.m4a', '.wma'}
+        
+        if output_format in lossless_formats:
+            # Good format - show positive message
+            QMessageBox.information(
+                self, "Excellent Format Choice!",
+                f"You've selected {output_format.upper()} format - a lossless audio format.\n\n"
+                "This is the ideal choice for audio steganography as it preserves all \n"
+                "audio data without compression, ensuring your hidden files can be \n"
+                "extracted successfully."
+            )
+            return True
+            
+        elif output_format in lossy_formats:
+            # Lossy format - show warning
+            reply = QMessageBox.warning(
+                self, "Lossy Format Warning",
+                f"Warning: You've selected {output_format.upper()} format - a lossy audio format.\n\n"
+                "Lossy compression may corrupt or destroy the hidden steganographic data, \n"
+                "making it impossible to extract your files later.\n\n"
+                "Recommended lossless formats: WAV, FLAC, AIFF\n\n"
+                "Do you want to continue with this format anyway?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No  # Default to No for safety
+            )
+            return reply == QMessageBox.StandardButton.Yes
+            
+        else:
+            # Unknown format - show warning and recommend alternatives
+            reply = QMessageBox.warning(
+                self, "Unknown Audio Format",
+                f"Unknown audio format: {output_format.upper()}\n\n"
+                "For audio steganography to work reliably, we recommend using \n"
+                "lossless formats that preserve all audio data:\n\n"
+                "• WAV - Uncompressed, universally supported\n"
+                "• FLAC - Lossless compression, smaller files\n"
+                "• AIFF - Apple's lossless format\n\n"
+                "Do you want to continue with this format anyway?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No  # Default to No for safety
+            )
+            return reply == QMessageBox.StandardButton.Yes
     
     def format_file_size(self, size: int) -> str:
         """Format file size in human-readable format."""
