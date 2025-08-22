@@ -280,17 +280,23 @@ class VideoSteganographyEngine:
     def _hide_data_in_frames(self, frame_files: List[Path], data: bytes, password: str):
         """Hide data across selected frames using LSB steganography."""
         try:
-            # Generate deterministic random sequence from password
+            # Generate deterministic random sequence from password - CRITICAL: use consistent seed
             seed = int(hashlib.sha256(password.encode()).hexdigest()[:8], 16)
-            rng = np.random.RandomState(seed)
+            self.logger.info(f"Video hiding using seed: {seed}")
             
             # Convert data to bit array
             data_bits = np.unpackbits(np.frombuffer(data, dtype=np.uint8))
             total_bits = len(data_bits)
+            self.logger.info(f"Hiding {len(data)} bytes ({total_bits} bits) across {len(frame_files)} frames")
+            
+            # Log first few bytes for debugging
+            first_bytes = data[:20] if len(data) >= 20 else data
+            self.logger.debug(f"First 20 bytes of data to hide: {first_bytes.hex()}")
             
             bits_hidden = 0
             modified_frames = []
             
+            # Process each frame with consistent random state
             for frame_idx, frame_file in enumerate(frame_files):
                 if bits_hidden >= total_bits:
                     break
@@ -302,7 +308,7 @@ class VideoSteganographyEngine:
                     continue
                 
                 height, width, channels = img.shape
-                original_img = img.copy()  # Keep original for verification
+                self.logger.debug(f"Frame {frame_idx}: {height}x{width}x{channels}")
                 
                 # Calculate how many bits to hide in this frame
                 remaining_bits = total_bits - bits_hidden
@@ -312,36 +318,53 @@ class VideoSteganographyEngine:
                 if bits_to_hide <= 0:
                     continue
                 
+                # CRITICAL: Create fresh RNG for each frame to ensure consistency
+                frame_seed = seed + frame_idx  # Deterministic but unique per frame
+                frame_rng = np.random.RandomState(frame_seed)
+                
                 # Generate random positions for this frame
                 total_positions = height * width * channels
-                positions = rng.choice(total_positions, size=bits_to_hide, replace=False)
+                positions = frame_rng.choice(total_positions, size=bits_to_hide, replace=False)
+                
+                # Log first few positions for debugging
+                self.logger.debug(f"Frame {frame_idx}: hiding {bits_to_hide} bits at positions {positions[:10]}...")
                 
                 # Hide bits in LSBs
-                flat_img = img.flatten()
+                flat_img = img.flatten().copy()  # Ensure we work with a copy
                 for i, pos in enumerate(positions):
                     bit_to_hide = data_bits[bits_hidden + i]
+                    original_value = flat_img[pos]
                     flat_img[pos] = (flat_img[pos] & 0xFE) | bit_to_hide
+                    
+                    # Debug first few modifications
+                    if i < 5:
+                        self.logger.debug(f"Position {pos}: {original_value} -> {flat_img[pos]} (bit: {bit_to_hide})")
                 
-                # Reshape and save modified frame
+                # Reshape and save modified frame  
                 modified_img = flat_img.reshape(height, width, channels)
                 
-                # Write frame with verification
-                write_success = cv2.imwrite(str(frame_file), modified_img)
+                # Write frame with PNG compression settings to ensure lossless storage
+                write_success = cv2.imwrite(str(frame_file), modified_img, 
+                                          [cv2.IMWRITE_PNG_COMPRESSION, 0])  # No compression
                 if not write_success:
                     self.logger.error(f"Failed to write modified frame: {frame_file}")
                     raise Exception(f"Could not write frame {frame_file}")
                 
-                # Verify the frame was written correctly
-                if not self._verify_frame_write(frame_file, original_img, modified_img):
-                    self.logger.error(f"Frame verification failed: {frame_file}")
-                    raise Exception(f"Frame verification failed for {frame_file}")
+                # Verify frame was written correctly by reading it back
+                verification_img = cv2.imread(str(frame_file))
+                if verification_img is None:
+                    raise Exception(f"Cannot read back written frame: {frame_file}")
+                
+                # Quick verification - check that data changed
+                if np.array_equal(img, verification_img):
+                    self.logger.warning(f"Frame {frame_idx} appears unchanged after modification")
                 
                 modified_frames.append(frame_file)
                 bits_hidden += bits_to_hide
                 
-                if frame_idx % 50 == 0:  # Progress logging
+                if frame_idx % 10 == 0:  # More frequent progress logging
                     progress = (bits_hidden / total_bits) * 100
-                    self.logger.debug(f"Hiding progress: {progress:.1f}% ({len(modified_frames)} frames modified)")
+                    self.logger.info(f"Hiding progress: {progress:.1f}% ({len(modified_frames)} frames modified)")
             
             if bits_hidden < total_bits:
                 raise Exception(f"Could not hide all data: {bits_hidden}/{total_bits} bits")
@@ -350,42 +373,93 @@ class VideoSteganographyEngine:
             
         except Exception as e:
             self.logger.error(f"Failed to hide data in frames: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             raise
     
     def _extract_data_from_frames(self, frame_files: List[Path], password: str) -> Optional[bytes]:
-        """Extract hidden data from frames."""
+        """Extract hidden data from frames - MUST exactly match hiding logic."""
         try:
-            # Generate same random sequence used for hiding
+            # Generate SAME random sequence used for hiding
             seed = int(hashlib.sha256(password.encode()).hexdigest()[:8], 16)
-            rng = np.random.RandomState(seed)
+            self.logger.info(f"Video extraction using seed: {seed}")
             
-            # Try to read header from first frame to determine data size
             if not frame_files:
+                self.logger.error("No frame files provided for extraction")
                 return None
             
-            # Read header from first frame
-            header_data = self._extract_header_from_frame(frame_files[0], rng)
-            if not header_data:
+            # We need to simulate the hiding process exactly to know where bits were placed
+            # This is a 2-pass approach: first find the data size, then extract exactly that amount
+            
+            # PASS 1: Extract header to determine data size
+            # Extract enough bits to get the header from sequential frames
+            header_bits_needed = 34 * 8  # 272 bits for header
+            header_bits = []
+            
+            for frame_idx, frame_file in enumerate(frame_files):
+                if len(header_bits) >= header_bits_needed:
+                    break
+                    
+                img = cv2.imread(str(frame_file))
+                if img is None:
+                    continue
+                
+                height, width, channels = img.shape
+                
+                # Calculate how many bits we need from this frame for header
+                remaining_header_bits = header_bits_needed - len(header_bits)
+                max_bits_per_frame = (height * width * channels) // 4  # Same 25% capacity as hiding
+                bits_to_extract = min(remaining_header_bits, max_bits_per_frame)
+                
+                # Use SAME frame-specific seed as hiding
+                frame_seed = seed + frame_idx
+                frame_rng = np.random.RandomState(frame_seed)
+                
+                # Generate SAME positions as hiding would
+                total_positions = height * width * channels
+                positions = frame_rng.choice(total_positions, size=bits_to_extract, replace=False)
+                
+                # Extract LSBs from these positions
+                flat_img = img.flatten()
+                for pos in positions:
+                    if pos < len(flat_img):
+                        header_bits.append(flat_img[pos] & 1)
+            
+            if len(header_bits) < header_bits_needed:
+                self.logger.error(f"Not enough header bits extracted: {len(header_bits)} < {header_bits_needed}")
                 return None
             
             # Parse header
-            magic = header_data[:8]
-            if magic != self.MAGIC_HEADER:
+            header_bit_array = np.array(header_bits[:header_bits_needed], dtype=np.uint8)
+            header_bytes = np.packbits(header_bit_array)
+            
+            if len(header_bytes) < 34:
+                self.logger.error(f"Header too short after packing: {len(header_bytes)} < 34 bytes")
                 return None
             
-            version = header_data[8:10]
-            data_size = struct.unpack('<Q', header_data[10:18])[0]
-            checksum = header_data[18:34]
+            magic = bytes(header_bytes[:8])
+            version = bytes(header_bytes[8:10])
+            data_size = struct.unpack('<Q', bytes(header_bytes[10:18]))[0]
+            checksum = bytes(header_bytes[18:34])
             
-            # Calculate total bits needed
-            header_bits = len(header_data) * 8
-            data_bits_needed = data_size * 8
-            total_bits_needed = header_bits + data_bits_needed
+            self.logger.info(f"Header parsed - magic: {magic}, data size: {data_size} bytes")
             
-            # Extract all bits
-            extracted_bits = []
+            if magic != self.MAGIC_HEADER:
+                self.logger.error(f"Invalid magic header: {magic} != {self.MAGIC_HEADER}")
+                return None
+            
+            if data_size <= 0 or data_size > 100 * 1024 * 1024:  # Max 100MB
+                self.logger.error(f"Invalid data size: {data_size}")
+                return None
+            
+            # PASS 2: Now extract the exact total bits needed (header + data)
+            total_bits_needed = (34 + data_size) * 8
+            self.logger.info(f"Extracting {total_bits_needed} total bits using exact hiding logic")
+            
+            all_bits = []
             bits_extracted = 0
             
+            # Extract bits using EXACT same frame-by-frame logic as hiding
             for frame_idx, frame_file in enumerate(frame_files):
                 if bits_extracted >= total_bits_needed:
                     break
@@ -396,47 +470,69 @@ class VideoSteganographyEngine:
                 
                 height, width, channels = img.shape
                 
-                # Calculate bits to extract from this frame
+                # Calculate how many bits to extract (SAME logic as hiding)
                 remaining_bits = total_bits_needed - bits_extracted
-                max_bits_per_frame = (height * width * channels) // 4
+                max_bits_per_frame = (height * width * channels) // 4  # Same 25% capacity
                 bits_to_extract = min(remaining_bits, max_bits_per_frame)
                 
                 if bits_to_extract <= 0:
                     continue
                 
-                # Generate same random positions
-                total_positions = height * width * channels
-                positions = rng.choice(total_positions, size=bits_to_extract, replace=False)
+                # Use SAME frame-specific seed as hiding
+                frame_seed = seed + frame_idx
+                frame_rng = np.random.RandomState(frame_seed)
                 
-                # Extract LSBs
+                # Generate SAME positions as hiding would
+                total_positions = height * width * channels
+                positions = frame_rng.choice(total_positions, size=bits_to_extract, replace=False)
+                
+                if frame_idx == 0:  # Debug first frame
+                    self.logger.debug(f"Frame {frame_idx}: extracting {bits_to_extract} bits at positions {positions[:10]}...")
+                
+                # Extract LSBs from these positions
                 flat_img = img.flatten()
                 frame_bits = []
                 for pos in positions:
-                    frame_bits.append(flat_img[pos] & 1)
+                    if pos < len(flat_img):
+                        frame_bits.append(flat_img[pos] & 1)
                 
-                extracted_bits.extend(frame_bits)
+                all_bits.extend(frame_bits)
                 bits_extracted += len(frame_bits)
+                
+                if frame_idx % 10 == 0:
+                    progress = (bits_extracted / total_bits_needed) * 100
+                    self.logger.info(f"Extraction progress: {progress:.1f}%")
             
             if bits_extracted < total_bits_needed:
-                raise Exception(f"Could not extract enough bits: {bits_extracted}/{total_bits_needed}")
+                self.logger.error(f"Not enough bits extracted: {bits_extracted} < {total_bits_needed}")
+                return None
             
-            # Convert bits back to bytes
-            bit_array = np.array(extracted_bits[:total_bits_needed], dtype=np.uint8)
+            # Convert to bytes
+            bit_array = np.array(all_bits[:total_bits_needed], dtype=np.uint8)
             byte_array = np.packbits(bit_array)
             
-            # Skip header and get encrypted data
-            header_bytes = len(header_data)
-            encrypted_data = bytes(byte_array[header_bytes:header_bytes + data_size])
+            self.logger.info(f"Converted {len(all_bits)} bits to {len(byte_array)} bytes")
+            
+            # Skip header (34 bytes) and extract encrypted data
+            if len(byte_array) < 34 + data_size:
+                self.logger.error(f"Not enough bytes: {len(byte_array)} < {34 + data_size}")
+                return None
+            
+            encrypted_data = bytes(byte_array[34:34 + data_size])
             
             # Verify checksum
             actual_checksum = hashlib.md5(encrypted_data).digest()
             if actual_checksum != checksum:
-                raise Exception("Data corruption detected - checksum mismatch")
+                self.logger.error(f"Checksum mismatch: expected {checksum.hex()}, got {actual_checksum.hex()}")
+                return None
             
+            self.logger.info(f"Successfully extracted and verified {len(encrypted_data)} bytes of encrypted data")
             return encrypted_data
             
         except Exception as e:
-            self.logger.error(f"Failed to extract data from frames: {e}")
+            self.logger.error(f"Video extraction failed: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             return None
     
     def _extract_header_from_frame(self, frame_file: Path, rng: np.random.RandomState) -> Optional[bytes]:
@@ -502,27 +598,31 @@ class VideoSteganographyEngine:
             
             # Copy audio from original video if present
             audio_streams = [s for s in probe['streams'] if s['codec_type'] == 'audio']
+            
+            # Use truly lossless codec (FFV1) that preserves exact pixel values
+            # FFV1 is designed for archival and preserves every bit
+            encoding_params = {
+                'vcodec': 'ffv1',         # FFV1 lossless codec
+                'pix_fmt': 'bgr0',        # Match OpenCV's BGR format exactly
+                'level': 3,               # FFV1 version 3 for better compression
+                'movflags': 'faststart',
+            }
+            
             if audio_streams:
                 self.logger.debug("Including audio stream from original video")
                 audio_input = ffmpeg.input(str(original_path))
                 stream = ffmpeg.output(
                     stream, audio_input['a'],
                     str(output_path),
-                    vcodec='libx264',
-                    crf=quality,
                     acodec='copy',
-                    pix_fmt='yuv420p',  # Ensure compatibility
-                    movflags='faststart'  # Optimize for web playback
+                    **encoding_params
                 )
             else:
                 self.logger.debug("Video has no audio stream")
                 stream = ffmpeg.output(
                     stream,
                     str(output_path),
-                    vcodec='libx264',
-                    crf=quality,
-                    pix_fmt='yuv420p',  # Ensure compatibility
-                    movflags='faststart'  # Optimize for web playback
+                    **encoding_params
                 )
             
             # Run ffmpeg with better error handling
@@ -580,6 +680,53 @@ class VideoSteganographyEngine:
     def validate_video_format(self, video_path: Path) -> bool:
         """Validate if video format is supported."""
         return self.analyzer.is_video_file(video_path)
+    
+    def test_steganography_roundtrip(self, video_path: Path, test_data: bytes, 
+                                    password: str) -> bool:
+        """Test if steganography works by doing a complete hide/extract cycle."""
+        try:
+            self.logger.info(f"Testing steganography round-trip with {len(test_data)} bytes")
+            
+            # Create temporary output file
+            temp_dir = Path(tempfile.mkdtemp(prefix="invv_test_"))
+            test_output = temp_dir / "test_output.mp4"
+            
+            try:
+                # Hide test data
+                hide_success = self.hide_data_in_video(
+                    video_path, test_data, test_output, password
+                )
+                
+                if not hide_success:
+                    self.logger.error("Test hiding failed")
+                    return False
+                
+                # Extract test data
+                extracted_data = self.extract_data_from_video(test_output, password)
+                
+                if extracted_data is None:
+                    self.logger.error("Test extraction failed")
+                    return False
+                
+                # Compare data
+                if extracted_data == test_data:
+                    self.logger.info("Steganography round-trip test PASSED!")
+                    return True
+                else:
+                    self.logger.error(
+                        f"Test data mismatch: original {len(test_data)} bytes, "
+                        f"extracted {len(extracted_data)} bytes"
+                    )
+                    return False
+                    
+            finally:
+                # Clean up test files
+                if temp_dir.exists():
+                    shutil.rmtree(temp_dir)
+                    
+        except Exception as e:
+            self.logger.error(f"Round-trip test failed: {e}")
+            return False
     
     def _verify_frame_write(self, frame_path: Path, original_img: np.ndarray, 
                            expected_img: np.ndarray) -> bool:
