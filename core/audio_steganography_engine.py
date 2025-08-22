@@ -388,16 +388,19 @@ class AudioSteganographyEngine:
         try:
             # Generate same random sequence used for hiding
             seed = int(hashlib.sha256(password.encode()).hexdigest()[:8], 16)
+            self.logger.info(f"LSB extraction - using seed: {seed}")
             rng = np.random.RandomState(seed)
             
             # Convert to integer representation (same as hiding)
             audio_int = (audio_data * 32767).astype(np.int16)
             channels, samples = audio_int.shape
+            self.logger.info(f"Audio shape: {channels} channels, {samples} samples")
             
             # Calculate available positions (same logic as hiding)
             total_samples = channels * samples
             all_positions = np.arange(0, total_samples, self.sample_skip)
             flat_audio = audio_int.flatten()
+            self.logger.info(f"Total samples: {total_samples}, Available positions: {len(all_positions)}")
             
             # We need to try different sizes since we don't know the data size yet
             # Start with a reasonable estimate and work up
@@ -405,25 +408,31 @@ class AudioSteganographyEngine:
             header_bits = header_size * 8  # 272 bits
             
             if len(all_positions) < header_bits:
+                self.logger.error(f"Not enough positions for header: {len(all_positions)} < {header_bits}")
                 return None
             
             # Try increasing sizes to find the right data
             for attempt_multiplier in [2, 5, 10, 20, 50]:
                 try:
+                    self.logger.info(f"Attempting extraction with multiplier {attempt_multiplier}")
+                    
                     # Reset RNG for each attempt
                     rng = np.random.RandomState(seed)
                     
                     # Estimate total bits needed (header + some data)
                     estimated_bits = min(header_bits * attempt_multiplier, len(all_positions))
+                    self.logger.debug(f"Estimated bits needed: {estimated_bits}")
                     
                     # Generate positions for this attempt
                     selected_positions = rng.choice(all_positions, size=estimated_bits, replace=False)
+                    self.logger.debug(f"Generated {len(selected_positions)} positions")
                     
                     # Extract header bits
                     header_bits_data = []
                     for i in range(header_bits):
                         pos = selected_positions[i]
-                        header_bits_data.append(flat_audio[pos] & 1)
+                        bit = flat_audio[pos] & 1
+                        header_bits_data.append(bit)
                     
                     # Convert header bits to bytes
                     header_bit_array = np.array(header_bits_data, dtype=np.uint8)
@@ -431,22 +440,31 @@ class AudioSteganographyEngine:
                     
                     # Parse header
                     magic = bytes(header_bytes[:8])
+                    self.logger.debug(f"Magic bytes found: {magic} (expected: {self.MAGIC_HEADER})")
+                    
                     if magic != self.MAGIC_HEADER:
+                        self.logger.debug(f"Magic mismatch for attempt {attempt_multiplier}")
                         continue  # Try next size
                     
                     version = bytes(header_bytes[8:10])
                     data_size = struct.unpack('<Q', bytes(header_bytes[10:18]))[0]
                     checksum = bytes(header_bytes[18:34])
                     
+                    self.logger.info(f"Found valid header - data size: {data_size} bytes")
+                    
                     # Calculate actual total bits needed
                     data_bits_needed = data_size * 8
                     total_bits_needed = header_bits + data_bits_needed
                     
+                    self.logger.debug(f"Total bits needed: {total_bits_needed}")
+                    
                     if total_bits_needed > len(all_positions):
+                        self.logger.debug(f"Not enough positions: {total_bits_needed} > {len(all_positions)}")
                         continue  # Not enough space, try next size
                     
                     if total_bits_needed > estimated_bits:
                         # We need more bits, reset and get the correct amount
+                        self.logger.debug(f"Re-generating with exact size: {total_bits_needed}")
                         rng = np.random.RandomState(seed)
                         selected_positions = rng.choice(all_positions, size=total_bits_needed, replace=False)
                     
@@ -465,6 +483,8 @@ class AudioSteganographyEngine:
                     
                     # Verify checksum
                     actual_checksum = hashlib.md5(encrypted_data).digest()
+                    self.logger.debug(f"Checksum - expected: {checksum.hex()}, actual: {actual_checksum.hex()}")
+                    
                     if actual_checksum != checksum:
                         self.logger.debug(f"Checksum mismatch for attempt {attempt_multiplier}")
                         continue  # Try next size
@@ -477,6 +497,7 @@ class AudioSteganographyEngine:
                     continue
             
             # If all attempts failed
+            self.logger.error("All extraction attempts failed - no valid data found")
             return None
             
         except Exception as e:
