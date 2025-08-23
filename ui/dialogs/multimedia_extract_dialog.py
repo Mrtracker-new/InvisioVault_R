@@ -44,11 +44,14 @@ class MultimediaExtractWorkerThread(QThread):
         self.technique = technique
         self.security_level = security_level
         
-        # Initialize engines
+        # Initialize appropriate engine based on media type
+        self.video_engine = None
+        self.audio_engine = None
+        
         if media_type == 'video':
-            self.engine = VideoSteganographyEngine(security_level)
+            self.video_engine = VideoSteganographyEngine(security_level)
         else:  # audio
-            self.engine = AudioSteganographyEngine(security_level)
+            self.audio_engine = AudioSteganographyEngine(security_level)
         
         self.logger = Logger()
     
@@ -61,12 +64,12 @@ class MultimediaExtractWorkerThread(QThread):
             # Extract data using appropriate engine
             if self.media_type == 'video':
                 self.status_updated.emit("Extracting data from video frames...")
-                extracted_data = self.engine.extract_data_from_video(
+                extracted_data = self.video_engine.extract_data_from_video(
                     self.multimedia_path, self.password
                 )
             else:  # audio
                 self.status_updated.emit("Extracting data from audio samples...")
-                extracted_data = self.engine.extract_data_from_audio(
+                extracted_data = self.audio_engine.extract_data_from_audio(
                     self.multimedia_path, self.password, technique=self.technique
                 )
             
@@ -484,7 +487,12 @@ class MultimediaExtractDialog(QDialog):
             security_level = getattr(SecurityLevel, self.security_combo.currentText())
             
             # Create and show progress dialog
-            self.progress_dialog = ProgressDialog(self, "Extracting Files from Multimedia")
+            self.progress_dialog = ProgressDialog(
+                title="Extracting Files from Multimedia",
+                message="Initializing extraction process...",
+                can_cancel=True,
+                parent=self
+            )
             
             # Start extraction worker
             self.extract_worker = MultimediaExtractWorkerThread(
