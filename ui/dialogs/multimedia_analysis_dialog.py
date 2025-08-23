@@ -871,7 +871,7 @@ class MultimediaAnalysisDialog(QDialog):
                         '; '.join(result.get('recommendations', []))
                     ])
     
-    def format_file_size(self, size: int) -> str:
+    def format_file_size(self, size: float) -> str:
         """Format file size in human-readable format."""
         for unit in ['B', 'KB', 'MB', 'GB']:
             if size < 1024:
