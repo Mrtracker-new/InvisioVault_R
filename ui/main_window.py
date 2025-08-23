@@ -958,15 +958,6 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Error", f"Failed to open decoy dialog:\n{str(e)}")
     
     
-    def show_unicode_polyglot_dialog(self):
-        """Show the Unicode RTL polyglot dialog."""
-        try:
-            from ui.dialogs.unicode_polyglot_dialog import UnicodePolyglotDialog
-            dialog = UnicodePolyglotDialog(self)
-            dialog.exec()
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to open Unicode RTL polyglot dialog:\n{str(e)}")
-    
     def show_analysis_dialog(self):
         """Show the image analysis dialog."""
         try:
