@@ -5,7 +5,7 @@ Utility for measuring and analyzing performance bottlenecks in InVisioVault.
 
 import time
 import functools
-from typing import Dict, List, Callable, Any
+from typing import Dict, List, Callable, Any, Optional
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -134,7 +134,7 @@ class PerformanceProfiler:
         self.active_timers.clear()
 
 
-def profile_function(operation_name: str = None):
+def profile_function(operation_name: Optional[str] = None):
     """Decorator for profiling function execution time."""
     def decorator(func: Callable) -> Callable:
         nonlocal operation_name
