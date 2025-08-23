@@ -145,7 +145,7 @@ class ProgressDialog(QDialog):
         """Setup signal connections."""
         pass
     
-    def update_progress(self, value: int, message: str = None):
+    def update_progress(self, value: int, message: Optional[str] = None):
         """Update progress bar and optional status message."""
         self.progress_bar.setValue(min(max(value, 0), 100))
         
@@ -197,7 +197,7 @@ class ProgressDialog(QDialog):
         
         self.logger.info("User cancelled operation")
     
-    def operation_completed(self, success: bool = True, message: str = None):
+    def operation_completed(self, success: bool = True, message: Optional[str] = None):
         """Mark operation as completed."""
         if success:
             self.progress_bar.setValue(100)
