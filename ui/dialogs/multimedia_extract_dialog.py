@@ -132,7 +132,7 @@ class MultimediaExtractWorkerThread(QThread):
             self.logger.error(f"Failed to extract files from archive: {e}")
             raise
     
-    def _format_file_size(self, size: int) -> str:
+    def _format_file_size(self, size: float) -> str:
         """Format file size in human-readable format."""
         for unit in ['B', 'KB', 'MB', 'GB']:
             if size < 1024:
@@ -484,7 +484,7 @@ class MultimediaExtractDialog(QDialog):
             security_level = getattr(SecurityLevel, self.security_combo.currentText())
             
             # Create and show progress dialog
-            self.progress_dialog = ProgressDialog("Extracting Files from Multimedia", self)
+            self.progress_dialog = ProgressDialog(self, "Extracting Files from Multimedia")
             
             # Start extraction worker
             self.extract_worker = MultimediaExtractWorkerThread(
@@ -567,7 +567,7 @@ class MultimediaExtractDialog(QDialog):
                 f"Failed to extract files from multimedia:\n\n{error_msg}"
             )
     
-    def format_file_size(self, size: int) -> str:
+    def format_file_size(self, size: float) -> str:
         """Format file size in human-readable format."""
         for unit in ['B', 'KB', 'MB', 'GB']:
             if size < 1024:
