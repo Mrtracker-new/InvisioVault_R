@@ -137,14 +137,13 @@ class PerformanceProfiler:
 def profile_function(operation_name: Optional[str] = None):
     """Decorator for profiling function execution time."""
     def decorator(func: Callable) -> Callable:
-        nonlocal operation_name
-        if operation_name is None:
-            operation_name = f"{func.__module__}.{func.__qualname__}"
+        # Resolve the operation name once
+        resolved_name = operation_name if operation_name is not None else f"{func.__module__}.{func.__qualname__}"
         
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> Any:
             profiler = PerformanceProfiler()
-            with profiler.timer(operation_name):
+            with profiler.timer(resolved_name):
                 return func(*args, **kwargs)
         
         return wrapper
