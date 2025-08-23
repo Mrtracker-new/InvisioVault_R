@@ -204,7 +204,8 @@ class MultimediaPlayerWidget(QWidget):
             self.media_player.setAudioOutput(self.audio_output)
             
             # Set video output
-            self.media_player.setVideoOutput(self.video_widget)
+            if self.video_widget:
+                self.media_player.setVideoOutput(self.video_widget)
             
             # Connect signals
             self.media_player.positionChanged.connect(self.on_position_changed)
@@ -271,8 +272,10 @@ class MultimediaPlayerWidget(QWidget):
             self.file_info_label.setText(f"{file_type}: {file_path.name} ({file_size:.1f} MB)")
             
             # Enable controls
-            self.play_button.setEnabled(True)
-            self.stop_button.setEnabled(True)
+            if self.play_button:
+                self.play_button.setEnabled(True)
+            if self.stop_button:
+                self.stop_button.setEnabled(True)
             
             # Emit signal
             self.file_loaded.emit(str(file_path))
@@ -285,14 +288,18 @@ class MultimediaPlayerWidget(QWidget):
     
     def show_video_mode(self):
         """Show video display and hide audio placeholder."""
-        self.video_widget.show()
-        self.audio_placeholder.hide()
+        if self.video_widget:
+            self.video_widget.show()
+        if self.audio_placeholder:
+            self.audio_placeholder.hide()
         
     def show_audio_mode(self):
         """Show audio placeholder and hide video display."""
-        self.video_widget.hide()
-        self.audio_placeholder.show()
-        self.audio_placeholder.setText(f"🎵 Audio Player\n\n{self.current_file.name if self.current_file else 'Select an audio file to play'}")
+        if self.video_widget:
+            self.video_widget.hide()
+        if self.audio_placeholder:
+            self.audio_placeholder.show()
+            self.audio_placeholder.setText(f"🎵 Audio Player\n\n{self.current_file.name if self.current_file else 'Select an audio file to play'}")
     
     def toggle_playback(self):
         """Toggle between play and pause."""
@@ -321,7 +328,8 @@ class MultimediaPlayerWidget(QWidget):
         if self.media_player:
             self.media_player.stop()
             self.position_timer.stop()
-            self.position_slider.setValue(0)
+            if self.position_slider:
+                self.position_slider.setValue(0)
             self.update_time_display(0, self.duration)
     
     def set_volume(self, volume: int):
@@ -339,7 +347,7 @@ class MultimediaPlayerWidget(QWidget):
     
     def on_position_changed(self, position: int):
         """Handle position change from media player."""
-        if self.duration > 0:
+        if self.duration > 0 and self.position_slider:
             # Update slider if not being dragged by user
             if not self.position_slider.isSliderDown():
                 percentage = (position / self.duration) * 100
@@ -366,13 +374,16 @@ class MultimediaPlayerWidget(QWidget):
     def on_playback_state_changed(self, state):
         """Handle playback state changes."""
         if state == QMediaPlayer.PlaybackState.PlayingState:
-            self.play_button.setText("⏸️")
+            if self.play_button:
+                self.play_button.setText("⏸️")
             self.playback_started.emit()
         elif state == QMediaPlayer.PlaybackState.PausedState:
-            self.play_button.setText("▶️")
+            if self.play_button:
+                self.play_button.setText("▶️")
             self.playback_paused.emit()
         elif state == QMediaPlayer.PlaybackState.StoppedState:
-            self.play_button.setText("▶️")
+            if self.play_button:
+                self.play_button.setText("▶️")
             self.playback_stopped.emit()
     
     def on_media_error(self, error, error_string):
@@ -385,10 +396,11 @@ class MultimediaPlayerWidget(QWidget):
     
     def on_position_slider_released(self):
         """Handle position slider release (seek to new position)."""
-        position = self.position_slider.value()
-        self.set_position(position)
-        if self.media_player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
-            self.position_timer.start(100)
+        if self.position_slider:
+            position = self.position_slider.value()
+            self.set_position(position)
+            if self.media_player and self.media_player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
+                self.position_timer.start(100)
     
     def update_position(self):
         """Update position display (called by timer)."""
@@ -398,9 +410,10 @@ class MultimediaPlayerWidget(QWidget):
     
     def update_time_display(self, position: int, duration: int):
         """Update the time display label."""
-        pos_time = self.format_time(position)
-        dur_time = self.format_time(duration)
-        self.time_label.setText(f"{pos_time} / {dur_time}")
+        if self.time_label:
+            pos_time = self.format_time(position)
+            dur_time = self.format_time(duration)
+            self.time_label.setText(f"{pos_time} / {dur_time}")
     
     def format_time(self, milliseconds: int) -> str:
         """Format time in MM:SS format."""
@@ -415,19 +428,26 @@ class MultimediaPlayerWidget(QWidget):
         self.audio_output = None
         
         # Update UI to show that playback is not available
-        self.play_button.setEnabled(False)
-        self.stop_button.setEnabled(False)
-        self.volume_slider.setEnabled(False)
-        self.position_slider.setEnabled(False)
+        if self.play_button:
+            self.play_button.setEnabled(False)
+        if self.stop_button:
+            self.stop_button.setEnabled(False)
+        if self.volume_slider:
+            self.volume_slider.setEnabled(False)
+        if self.position_slider:
+            self.position_slider.setEnabled(False)
         
         # Update placeholder text
-        self.audio_placeholder.setText(
-            "🎵 Multimedia Preview Not Available\n\n"
-            "Qt multimedia backend is not installed.\n"
-            "File information will still be displayed."
-        )
-        self.video_widget.hide()
-        self.audio_placeholder.show()
+        if self.audio_placeholder:
+            self.audio_placeholder.setText(
+                "🎵 Multimedia Preview Not Available\n\n"
+                "Qt multimedia backend is not installed.\n"
+                "File information will still be displayed."
+            )
+        if self.video_widget:
+            self.video_widget.hide()
+        if self.audio_placeholder:
+            self.audio_placeholder.show()
         
         print("Multimedia player running in fallback mode - preview not available")
     
@@ -445,11 +465,16 @@ class MultimediaPlayerWidget(QWidget):
         self.is_video = False
         self.duration = 0
         
-        self.file_info_label.setText("No file loaded")
-        self.play_button.setEnabled(False)
-        self.stop_button.setEnabled(False)
-        self.position_slider.setValue(0)
-        self.time_label.setText("00:00 / 00:00")
+        if self.file_info_label:
+            self.file_info_label.setText("No file loaded")
+        if self.play_button:
+            self.play_button.setEnabled(False)
+        if self.stop_button:
+            self.stop_button.setEnabled(False)
+        if self.position_slider:
+            self.position_slider.setValue(0)
+        if self.time_label:
+            self.time_label.setText("00:00 / 00:00")
         
         # Show audio placeholder
         self.show_audio_mode()
@@ -508,23 +533,27 @@ class MultimediaPlayerWidget(QWidget):
     
     def show_video_mode_fallback(self):
         """Show video mode in fallback (no actual video playback)."""
-        self.video_widget.hide()
-        self.audio_placeholder.show()
-        self.audio_placeholder.setText(
-            f"🎬 Video File Loaded\n\n"
-            f"{self.current_file.name if self.current_file else 'Video file'}\n\n"
-            "Playback not available - Qt multimedia backend missing"
-        )
+        if self.video_widget:
+            self.video_widget.hide()
+        if self.audio_placeholder:
+            self.audio_placeholder.show()
+            self.audio_placeholder.setText(
+                f"🎦 Video File Loaded\n\n"
+                f"{self.current_file.name if self.current_file else 'Video file'}\n\n"
+                "Playback not available - Qt multimedia backend missing"
+            )
     
     def show_audio_mode_fallback(self):
         """Show audio mode in fallback (no actual audio playback)."""
-        self.video_widget.hide()
-        self.audio_placeholder.show()
-        self.audio_placeholder.setText(
-            f"🎵 Audio File Loaded\n\n"
-            f"{self.current_file.name if self.current_file else 'Audio file'}\n\n"
-            "Playback not available - Qt multimedia backend missing"
-        )
+        if self.video_widget:
+            self.video_widget.hide()
+        if self.audio_placeholder:
+            self.audio_placeholder.show()
+            self.audio_placeholder.setText(
+                f"🎵 Audio File Loaded\n\n"
+                f"{self.current_file.name if self.current_file else 'Audio file'}\n\n"
+                "Playback not available - Qt multimedia backend missing"
+            )
 
 
 # Test function for standalone running
