@@ -20,6 +20,7 @@ from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler
 from core.multimedia_analyzer import MultimediaAnalyzer
 from ui.components.file_drop_zone import FileDropZone
+from ui.components.multimedia_player import MultimediaPlayerWidget
 
 
 class MultimediaBatchAnalysisWorker(QThread):
@@ -245,6 +246,10 @@ class MultimediaAnalysisDialog(QDialog):
         comparison_tab = self.create_comparison_tab()
         tab_widget.addTab(comparison_tab, "⚖️ Comparison")
         
+        # Preview tab with multimedia player
+        preview_tab = self.create_preview_tab()
+        tab_widget.addTab(preview_tab, "🎬 Preview")
+        
         return panel
     
     def create_summary_tab(self) -> QWidget:
@@ -332,6 +337,24 @@ class MultimediaAnalysisDialog(QDialog):
         self.comparison_text.setReadOnly(True)
         self.comparison_text.setPlainText("File comparison analysis will appear here after analyzing multiple files...")
         layout.addWidget(self.comparison_text)
+        
+        return widget
+    
+    def create_preview_tab(self) -> QWidget:
+        """Create the multimedia preview tab."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        
+        # Instructions label
+        instructions = QLabel("Select a multimedia file from the list to preview it here.")
+        instructions.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        instructions.setStyleSheet("color: #666; font-style: italic; padding: 10px;")
+        layout.addWidget(instructions)
+        
+        # Multimedia player widget
+        self.multimedia_player = MultimediaPlayerWidget()
+        self.multimedia_player.setMinimumHeight(400)
+        layout.addWidget(self.multimedia_player)
         
         return widget
     
@@ -462,8 +485,16 @@ class MultimediaAnalysisDialog(QDialog):
     
     def on_file_selection_changed(self, current, previous):
         """Handle file selection change in the list."""
-        # Could update a detailed view for the selected file
-        pass
+        if current:
+            # Get the file path from the selected item
+            file_path_str = current.data(Qt.ItemDataRole.UserRole)
+            if file_path_str:
+                file_path = Path(file_path_str)
+                if file_path.exists() and hasattr(self, 'multimedia_player'):
+                    # Load the file in the multimedia player
+                    success = self.multimedia_player.load_file(file_path)
+                    if not success:
+                        self.logger.warning(f"Failed to load multimedia file for preview: {file_path.name}")
     
     def start_analysis(self):
         """Start the analysis process."""
