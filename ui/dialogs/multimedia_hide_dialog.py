@@ -441,8 +441,9 @@ class MultimediaHideDialog(QDialog):
         self.video_technique_combo.setEnabled(False)
         multimedia_layout.addWidget(self.video_technique_combo, 1, 1)
         
-        # General output quality
-        multimedia_layout.addWidget(QLabel("Audio Quality:"), 2, 0)
+        # General output quality (Audio)
+        self.audio_quality_label = QLabel("Audio Quality:")
+        multimedia_layout.addWidget(self.audio_quality_label, 2, 0)
         self.quality_combo = QComboBox()
         self.quality_combo.addItems(["high", "medium", "low"])
         self.quality_combo.setCurrentText("high")
@@ -450,7 +451,8 @@ class MultimediaHideDialog(QDialog):
         multimedia_layout.addWidget(self.quality_combo, 2, 1)
         
         # Video quality (CRF for video files)
-        multimedia_layout.addWidget(QLabel("Video Quality (CRF):"), 3, 0)
+        self.video_quality_crf_label = QLabel("Video Quality (CRF):")
+        multimedia_layout.addWidget(self.video_quality_crf_label, 3, 0)
         self.video_quality_slider = QSlider(Qt.Orientation.Horizontal)
         self.video_quality_slider.setRange(18, 28)
         self.video_quality_slider.setValue(23)
@@ -769,12 +771,19 @@ class MultimediaHideDialog(QDialog):
         self.hide_button.setEnabled(can_hide)
     
     def update_technique_controls(self):
-        """Enable/disable technique controls based on carrier file type."""
+        """Enable/disable technique and quality controls based on carrier file type."""
         if not self.carrier_file:
-            # No carrier file - disable both
+            # No carrier file - disable both techniques and quality controls
             self.technique_combo.setEnabled(False)
             self.video_technique_combo.setEnabled(False)
             self.video_technique_label.setStyleSheet("color: #666;")
+            
+            # Hide both quality controls until a carrier is selected
+            self.audio_quality_label.setVisible(False)
+            self.quality_combo.setVisible(False)
+            self.video_quality_crf_label.setVisible(False)
+            self.video_quality_slider.setVisible(False)
+            self.video_quality_label.setVisible(False)
             return
         
         # Determine file type
@@ -787,6 +796,13 @@ class MultimediaHideDialog(QDialog):
             self.video_technique_combo.setEnabled(True)
             self.video_technique_label.setStyleSheet("")
             
+            # Show video quality controls, hide audio quality controls
+            self.audio_quality_label.setVisible(False)
+            self.quality_combo.setVisible(False)
+            self.video_quality_crf_label.setVisible(True)
+            self.video_quality_slider.setVisible(True)
+            self.video_quality_label.setVisible(True)
+            
             # Update tooltips to indicate current state
             self.technique_combo.setToolTip("Audio techniques are disabled for video files")
             self.video_technique_combo.setToolTip(
@@ -796,13 +812,20 @@ class MultimediaHideDialog(QDialog):
                 "✅ Video technique is ACTIVE for this video carrier file"
             )
             
-            self.logger.info(f"Video carrier detected: {self.carrier_file.name} - enabling video techniques")
+            self.logger.info(f"Video carrier detected: {self.carrier_file.name} - enabling video techniques and quality")
             
         elif is_audio:
             # Audio file - enable audio controls, disable video controls  
             self.technique_combo.setEnabled(True)
             self.video_technique_combo.setEnabled(False)
             self.video_technique_label.setStyleSheet("color: #666;")
+            
+            # Show audio quality controls, hide video quality controls
+            self.audio_quality_label.setVisible(True)
+            self.quality_combo.setVisible(True)
+            self.video_quality_crf_label.setVisible(False)
+            self.video_quality_slider.setVisible(False)
+            self.video_quality_label.setVisible(False)
             
             # Update tooltips to indicate current state
             self.technique_combo.setToolTip(
@@ -813,7 +836,7 @@ class MultimediaHideDialog(QDialog):
             )
             self.video_technique_combo.setToolTip("Video techniques are disabled for audio files")
             
-            self.logger.info(f"Audio carrier detected: {self.carrier_file.name} - enabling audio techniques")
+            self.logger.info(f"Audio carrier detected: {self.carrier_file.name} - enabling audio techniques and quality")
             
         else:
             # Unknown type - disable both for safety
@@ -821,7 +844,14 @@ class MultimediaHideDialog(QDialog):
             self.video_technique_combo.setEnabled(False)
             self.video_technique_label.setStyleSheet("color: #666;")
             
-            self.logger.warning(f"Unknown carrier type: {self.carrier_file.name} - disabling all techniques")
+            # Hide both quality controls for unknown types
+            self.audio_quality_label.setVisible(False)
+            self.quality_combo.setVisible(False)
+            self.video_quality_crf_label.setVisible(False)
+            self.video_quality_slider.setVisible(False)
+            self.video_quality_label.setVisible(False)
+            
+            self.logger.warning(f"Unknown carrier type: {self.carrier_file.name} - disabling all techniques and quality controls")
     
     def start_hiding(self):
         """Start the hiding operation."""
