@@ -300,12 +300,25 @@ class MultimediaExtractDialog(QDialog):
         self.technique_combo = QComboBox()
         self.technique_combo.addItems(["lsb", "spread_spectrum", "phase_coding"])
         self.technique_combo.setCurrentText("lsb")
+        self.technique_combo.setToolTip("LSB: Least Significant Bit (fastest, most compatible)\nSpread Spectrum: Advanced frequency domain hiding\nPhase Coding: Phase manipulation technique")
         layout.addWidget(self.technique_combo, 2, 1)
         
+        # Video technique (for video files)
+        self.video_technique_label = QLabel("Video Technique:")
+        layout.addWidget(self.video_technique_label, 3, 0)
+        self.video_technique_combo = QComboBox()
+        self.video_technique_combo.addItems(["frame_lsb", "dct_embedding", "motion_vector"])
+        self.video_technique_combo.setCurrentText("frame_lsb")
+        self.video_technique_combo.setToolTip("Frame LSB: Hide data in video frame pixels (current implementation)\nDCT Embedding: DCT coefficient modification (future)\nMotion Vector: Hide in motion vector data (future)")
+        # Initially disabled - will be enabled based on multimedia file type
+        self.video_technique_combo.setEnabled(False)
+        layout.addWidget(self.video_technique_combo, 3, 1)
+        
         # Note about technique
-        note_label = QLabel("Note: Use the same technique that was used for hiding.")
+        note_label = QLabel("Note: Use the same technique and settings that were used for hiding the data.")
+        note_label.setWordWrap(True)
         note_label.setStyleSheet("color: #666; font-size: 11px; font-style: italic;")
-        layout.addWidget(note_label, 3, 0, 1, 3)
+        layout.addWidget(note_label, 4, 0, 1, 2)
         
         return group
     
@@ -410,6 +423,9 @@ class MultimediaExtractDialog(QDialog):
             suggested_dir = file_path.parent / f"{file_path.stem}_extracted"
             self.output_dir_input.setText(str(suggested_dir))
         
+        # Update technique controls based on media type
+        self.update_technique_controls()
+        
         # Update file information
         self.update_file_info()
         self.update_extract_button_state()
@@ -437,6 +453,28 @@ class MultimediaExtractDialog(QDialog):
             
         except Exception as e:
             self.info_text.setPlainText(f"Error reading file information: {e}")
+    
+    def update_technique_controls(self):
+        """Enable/disable technique controls based on multimedia file type."""
+        if not self.multimedia_file:
+            # No file selected - disable both techniques
+            self.technique_combo.setEnabled(False)
+            self.video_technique_combo.setEnabled(False)
+            self.video_technique_label.setStyleSheet("color: #999;")
+            return
+        
+        is_video = self.analyzer.is_video_file(self.multimedia_file)
+        
+        if is_video:
+            # Video file - enable video technique, disable audio technique
+            self.technique_combo.setEnabled(False)
+            self.video_technique_combo.setEnabled(True)
+            self.video_technique_label.setStyleSheet("")
+        else:
+            # Audio file - enable audio technique, disable video technique
+            self.technique_combo.setEnabled(True)
+            self.video_technique_combo.setEnabled(False)
+            self.video_technique_label.setStyleSheet("color: #999;")
     
     def update_extract_button_state(self, text=None):
         """Update the state of the extract button."""
