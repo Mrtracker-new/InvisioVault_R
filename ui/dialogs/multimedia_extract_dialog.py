@@ -63,11 +63,15 @@ class MultimediaExtractWorkerThread(QThread):
             
             # Extract data using appropriate engine
             if self.media_type == 'video':
+                if self.video_engine is None:
+                    raise Exception("Video engine not initialized")
                 self.status_updated.emit("Extracting data from video frames...")
                 extracted_data = self.video_engine.extract_data_from_video(
                     self.multimedia_path, self.password
                 )
             else:  # audio
+                if self.audio_engine is None:
+                    raise Exception("Audio engine not initialized")
                 self.status_updated.emit("Extracting data from audio samples...")
                 extracted_data = self.audio_engine.extract_data_from_audio(
                     self.multimedia_path, self.password, technique=self.technique
