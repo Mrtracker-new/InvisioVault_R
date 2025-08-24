@@ -419,36 +419,56 @@ class MultimediaHideDialog(QDialog):
         layout.addWidget(security_group)
         
         # Multimedia settings
-        multimedia_group = QGroupBox("Multimedia Settings")
+        multimedia_group = QGroupBox("Multimedia Techniques & Quality")
         multimedia_layout = QGridLayout(multimedia_group)
         
-        # Technique (for audio)
+        # Audio techniques section
         multimedia_layout.addWidget(QLabel("Audio Technique:"), 0, 0)
         self.technique_combo = QComboBox()
         self.technique_combo.addItems(["lsb", "spread_spectrum", "phase_coding"])
         self.technique_combo.setCurrentText("lsb")
+        self.technique_combo.setToolTip("LSB: Least Significant Bit (fastest, most compatible)\nSpread Spectrum: Advanced frequency domain hiding\nPhase Coding: Phase manipulation technique")
         multimedia_layout.addWidget(self.technique_combo, 0, 1)
         
-        # Quality
-        multimedia_layout.addWidget(QLabel("Output Quality:"), 1, 0)
+        # Video techniques section
+        self.video_technique_label = QLabel("Video Technique:")
+        multimedia_layout.addWidget(self.video_technique_label, 1, 0)
+        self.video_technique_combo = QComboBox()
+        self.video_technique_combo.addItems(["frame_lsb", "dct_embedding", "motion_vector"])
+        self.video_technique_combo.setCurrentText("frame_lsb")
+        self.video_technique_combo.setToolTip("Frame LSB: Hide data in video frame pixels (current implementation)\nDCT Embedding: DCT coefficient modification (future)\nMotion Vector: Hide in motion vector data (future)")
+        # Initially disabled - will be enabled based on carrier file type
+        self.video_technique_combo.setEnabled(False)
+        multimedia_layout.addWidget(self.video_technique_combo, 1, 1)
+        
+        # General output quality
+        multimedia_layout.addWidget(QLabel("Audio Quality:"), 2, 0)
         self.quality_combo = QComboBox()
         self.quality_combo.addItems(["high", "medium", "low"])
         self.quality_combo.setCurrentText("high")
-        multimedia_layout.addWidget(self.quality_combo, 1, 1)
+        self.quality_combo.setToolTip("Output quality for audio files (affects compression settings)")
+        multimedia_layout.addWidget(self.quality_combo, 2, 1)
         
-        # Video quality (for video files)
-        multimedia_layout.addWidget(QLabel("Video Quality (CRF):"), 2, 0)
+        # Video quality (CRF for video files)
+        multimedia_layout.addWidget(QLabel("Video Quality (CRF):"), 3, 0)
         self.video_quality_slider = QSlider(Qt.Orientation.Horizontal)
         self.video_quality_slider.setRange(18, 28)
         self.video_quality_slider.setValue(23)
         self.video_quality_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.video_quality_slider.setTickInterval(2)
+        self.video_quality_slider.setToolTip("Lower values = higher quality (larger file size)\n18-20: Excellent\n21-23: Good\n24-26: Fair\n27-28: Low")
         self.video_quality_label = QLabel("23 (Good)")
         
         quality_layout = QHBoxLayout()
         quality_layout.addWidget(self.video_quality_slider)
         quality_layout.addWidget(self.video_quality_label)
-        multimedia_layout.addLayout(quality_layout, 2, 1)
+        multimedia_layout.addLayout(quality_layout, 3, 1)
+        
+        # Add note about techniques
+        note_label = QLabel("Note: Audio and Video techniques are automatically applied based on the selected carrier file type.")
+        note_label.setWordWrap(True)
+        note_label.setStyleSheet("color: #666; font-style: italic; font-size: 11px;")
+        multimedia_layout.addWidget(note_label, 4, 0, 1, 2)
         
         layout.addWidget(multimedia_group)
         
@@ -611,6 +631,9 @@ class MultimediaHideDialog(QDialog):
         self.analyze_button.setEnabled(True)  # Enable analyze button
         self.update_capacity_info()  # Update with basic info
         self.update_hide_button_state()
+        
+        # Update technique controls based on file type
+        self.update_technique_controls()
     
     def add_files_to_hide(self, file_paths: List[Path]):
         """Add files to the list of files to hide."""
@@ -744,6 +767,61 @@ class MultimediaHideDialog(QDialog):
                     bool(self.output_path_input.text().strip()))
         
         self.hide_button.setEnabled(can_hide)
+    
+    def update_technique_controls(self):
+        """Enable/disable technique controls based on carrier file type."""
+        if not self.carrier_file:
+            # No carrier file - disable both
+            self.technique_combo.setEnabled(False)
+            self.video_technique_combo.setEnabled(False)
+            self.video_technique_label.setStyleSheet("color: #666;")
+            return
+        
+        # Determine file type
+        is_video = self.analyzer.is_video_file(self.carrier_file)
+        is_audio = self.analyzer.is_audio_file(self.carrier_file)
+        
+        if is_video:
+            # Video file - enable video controls, disable audio controls
+            self.technique_combo.setEnabled(False)
+            self.video_technique_combo.setEnabled(True)
+            self.video_technique_label.setStyleSheet("")
+            
+            # Update tooltips to indicate current state
+            self.technique_combo.setToolTip("Audio techniques are disabled for video files")
+            self.video_technique_combo.setToolTip(
+                "Frame LSB: Hide data in video frame pixels (current implementation)\n"
+                "DCT Embedding: DCT coefficient modification (future)\n"
+                "Motion Vector: Hide in motion vector data (future)\n\n"
+                "✅ Video technique is ACTIVE for this video carrier file"
+            )
+            
+            self.logger.info(f"Video carrier detected: {self.carrier_file.name} - enabling video techniques")
+            
+        elif is_audio:
+            # Audio file - enable audio controls, disable video controls  
+            self.technique_combo.setEnabled(True)
+            self.video_technique_combo.setEnabled(False)
+            self.video_technique_label.setStyleSheet("color: #666;")
+            
+            # Update tooltips to indicate current state
+            self.technique_combo.setToolTip(
+                "LSB: Least Significant Bit (fastest, most compatible)\n"
+                "Spread Spectrum: Advanced frequency domain hiding\n"
+                "Phase Coding: Phase manipulation technique\n\n"
+                "✅ Audio technique is ACTIVE for this audio carrier file"
+            )
+            self.video_technique_combo.setToolTip("Video techniques are disabled for audio files")
+            
+            self.logger.info(f"Audio carrier detected: {self.carrier_file.name} - enabling audio techniques")
+            
+        else:
+            # Unknown type - disable both for safety
+            self.technique_combo.setEnabled(False)
+            self.video_technique_combo.setEnabled(False)
+            self.video_technique_label.setStyleSheet("color: #666;")
+            
+            self.logger.warning(f"Unknown carrier type: {self.carrier_file.name} - disabling all techniques")
     
     def start_hiding(self):
         """Start the hiding operation."""
