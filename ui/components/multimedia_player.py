@@ -7,21 +7,27 @@ import sys
 from pathlib import Path
 from typing import Optional, List
 
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QSlider, QPushButton, QLabel,
+    QFrame, QSizePolicy, QMessageBox, QApplication
+)
+from PySide6.QtCore import Qt, QUrl, QTimer, Signal, QSize
+from PySide6.QtGui import QIcon, QFont, QPalette
+
+# Try to import multimedia components with better error handling
+MULTIMEDIA_AVAILABLE = False
+QMediaPlayer = None
+QAudioOutput = None
+QVideoWidget = None
+
 try:
-    from PySide6.QtWidgets import (
-        QWidget, QVBoxLayout, QHBoxLayout, QSlider, QPushButton, QLabel,
-        QFrame, QSizePolicy, QMessageBox, QApplication
-    )
-    from PySide6.QtCore import Qt, QUrl, QTimer, Signal, QSize
-    from PySide6.QtGui import QIcon, QFont, QPalette
-    
-    # Import multimedia components
     from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
     from PySide6.QtMultimediaWidgets import QVideoWidget
-    
+    MULTIMEDIA_AVAILABLE = True
 except ImportError as e:
-    print(f"Warning: Multimedia components not available: {e}")
-    print("Please ensure PySide6-Addons is installed: pip install PySide6-Addons")
+    print(f"Warning: Qt multimedia components not available: {e}")
+    print("Media playback will be disabled. Install PySide6-Addons for media support: pip install PySide6-Addons")
+    MULTIMEDIA_AVAILABLE = False
 
 
 class MultimediaPlayerWidget(QWidget):
