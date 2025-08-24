@@ -72,17 +72,20 @@ class MultimediaPlayerWidget(QWidget):
         layout.setSpacing(5)
         
         # Video display area (will be hidden for audio files)
-        self.video_widget = QVideoWidget()
-        self.video_widget.setMinimumSize(400, 300)
-        self.video_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.video_widget.setStyleSheet("""
-            QVideoWidget {
-                background-color: #000000;
-                border: 2px solid #333333;
-                border-radius: 4px;
-            }
-        """)
-        layout.addWidget(self.video_widget)
+        if MULTIMEDIA_AVAILABLE and QVideoWidget:
+            self.video_widget = QVideoWidget()
+            self.video_widget.setMinimumSize(400, 300)
+            self.video_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            self.video_widget.setStyleSheet("""
+                QVideoWidget {
+                    background-color: #000000;
+                    border: 2px solid #333333;
+                    border-radius: 4px;
+                }
+            """)
+            layout.addWidget(self.video_widget)
+        else:
+            self.video_widget = None
         
         # Audio-only placeholder (for audio files)
         self.audio_placeholder = QLabel()
@@ -201,6 +204,10 @@ class MultimediaPlayerWidget(QWidget):
         
     def setup_media_player(self):
         """Initialize the media player components."""
+        if not MULTIMEDIA_AVAILABLE or not QMediaPlayer or not QAudioOutput:
+            self._setup_fallback_mode()
+            return
+            
         try:
             # Create media player
             self.media_player = QMediaPlayer()
@@ -312,7 +319,7 @@ class MultimediaPlayerWidget(QWidget):
         if not self.media_player:
             return
             
-        if self.media_player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
+        if self.media_player and MULTIMEDIA_AVAILABLE and QMediaPlayer and self.media_player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
             self.pause_playback()
         else:
             self.start_playback()
@@ -368,6 +375,9 @@ class MultimediaPlayerWidget(QWidget):
     
     def on_media_status_changed(self, status):
         """Handle media status changes."""
+        if not MULTIMEDIA_AVAILABLE or not QMediaPlayer:
+            return
+            
         if status == QMediaPlayer.MediaStatus.LoadedMedia:
             # Media is ready to play
             pass
@@ -379,6 +389,9 @@ class MultimediaPlayerWidget(QWidget):
     
     def on_playback_state_changed(self, state):
         """Handle playback state changes."""
+        if not MULTIMEDIA_AVAILABLE or not QMediaPlayer:
+            return
+            
         if state == QMediaPlayer.PlaybackState.PlayingState:
             if self.play_button:
                 self.play_button.setText("⏸️")
@@ -405,7 +418,7 @@ class MultimediaPlayerWidget(QWidget):
         if self.position_slider:
             position = self.position_slider.value()
             self.set_position(position)
-            if self.media_player and self.media_player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
+            if self.media_player and MULTIMEDIA_AVAILABLE and QMediaPlayer and self.media_player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
                 self.position_timer.start(100)
     
     def update_position(self):
