@@ -521,7 +521,13 @@ class MultimediaExtractDialog(QDialog):
             
             # Determine media type and settings
             media_type = 'video' if self.analyzer.is_video_file(self.multimedia_file) else 'audio'
-            technique = self.technique_combo.currentText()
+            
+            # Select the appropriate technique based on media type
+            if media_type == 'video':
+                technique = self.video_technique_combo.currentText()
+            else:  # audio
+                technique = self.technique_combo.currentText()
+            
             security_level = getattr(SecurityLevel, self.security_combo.currentText())
             
             # Create and show progress dialog

@@ -860,7 +860,12 @@ class MultimediaHideDialog(QDialog):
             
             # Determine media type and settings
             media_type = 'video' if self.analyzer.is_video_file(self.carrier_file) else 'audio'
-            technique = self.technique_combo.currentText()
+            
+            # Select the appropriate technique based on media type
+            if media_type == 'video':
+                technique = self.video_technique_combo.currentText()
+            else:  # audio
+                technique = self.technique_combo.currentText()
             
             if media_type == 'video':
                 quality = self.video_quality_slider.value()
