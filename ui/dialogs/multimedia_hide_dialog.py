@@ -79,11 +79,14 @@ class MultimediaHideWorkerThread(QThread):
         self.quality = quality
         self.security_level = security_level
         
-        # Initialize engines
+        # Initialize engines based on media type
+        self.video_engine = None
+        self.audio_engine = None
+        
         if media_type == 'video':
-            self.engine = VideoSteganographyEngine(security_level)
+            self.video_engine = VideoSteganographyEngine(security_level)
         else:  # audio
-            self.engine = AudioSteganographyEngine(security_level)
+            self.audio_engine = AudioSteganographyEngine(security_level)
         
         self.logger = Logger()
     
@@ -101,14 +104,18 @@ class MultimediaHideWorkerThread(QThread):
             
             # Hide data using appropriate engine
             if self.media_type == 'video':
+                if self.video_engine is None:
+                    raise Exception("Video engine not initialized")
                 self.status_updated.emit("Hiding data in video frames...")
-                success = self.engine.hide_data_in_video(
+                success = self.video_engine.hide_data_in_video(
                     self.carrier_path, archive_data, self.output_path,
                     self.password, compression_quality=self.quality
                 )
             else:  # audio
+                if self.audio_engine is None:
+                    raise Exception("Audio engine not initialized")
                 self.status_updated.emit("Hiding data in audio samples...")
-                success = self.engine.hide_data_in_audio(
+                success = self.audio_engine.hide_data_in_audio(
                     self.carrier_path, archive_data, self.output_path,
                     self.password, technique=self.technique, quality=self.quality
                 )
@@ -905,7 +912,7 @@ class MultimediaHideDialog(QDialog):
             security_level = getattr(SecurityLevel, self.security_combo.currentText())
             
             # Create and show progress dialog
-            self.progress_dialog = ProgressDialog("Hiding Files in Multimedia", self)
+            self.progress_dialog = ProgressDialog("Hiding Files in Multimedia", parent=self)
             
             # Start hiding worker
             self.hide_worker = MultimediaHideWorkerThread(
@@ -1009,11 +1016,12 @@ class MultimediaHideDialog(QDialog):
     
     def format_file_size(self, size: int) -> str:
         """Format file size in human-readable format."""
+        size_float = float(size)
         for unit in ['B', 'KB', 'MB', 'GB']:
-            if size < 1024:
-                return f"{size:.1f} {unit}"
-            size /= 1024
-        return f"{size:.1f} TB"
+            if size_float < 1024:
+                return f"{size_float:.1f} {unit}"
+            size_float /= 1024
+        return f"{size_float:.1f} TB"
     
     def closeEvent(self, event):
         """Handle dialog close event."""
