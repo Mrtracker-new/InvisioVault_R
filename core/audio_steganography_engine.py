@@ -164,6 +164,18 @@ class AudioSteganographyEngine:
             }
             self.logger.info(f"Audio file info: {file_info}")
             
+            # Warn about lossy format extraction
+            lossy_formats = ['.mp3', '.aac', '.ogg', '.m4a', '.wma']
+            if audio_path.suffix.lower() in lossy_formats:
+                self.logger.warning(
+                    f"WARNING: Attempting to extract from lossy format {audio_path.suffix.upper()}. "
+                    f"LSB steganography data is often destroyed by lossy compression. "
+                    f"If extraction fails, try:\n"
+                    f"1. Use spread_spectrum or phase_coding techniques (more resilient to compression)\n"
+                    f"2. Use the original lossless file (WAV/FLAC) if available\n"
+                    f"3. Verify the file wasn't converted to {audio_path.suffix.upper()} after hiding data"
+                )
+            
             # Extract data using appropriate technique
             if technique == 'lsb':
                 encrypted_data = self._extract_data_lsb(audio_data, password, sample_rate)
