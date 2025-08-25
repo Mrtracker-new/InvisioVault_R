@@ -133,16 +133,36 @@ class AudioSteganographyEngine:
         """
         try:
             self.logger.info(f"Starting audio data extraction: {audio_path.name}")
+            self.logger.info(f"Using technique: {technique.upper()}")
             
             # Validate input
             if not audio_path.exists():
+                self._log_extraction_error("File not found", {
+                    'file_path': str(audio_path),
+                    'technique': technique,
+                    'error_type': 'file_not_found'
+                })
                 raise FileNotFoundError(f"Audio file not found: {audio_path}")
             
             if not self.analyzer.is_audio_file(audio_path):
+                self._log_extraction_error("Unsupported file format", {
+                    'file_path': str(audio_path),
+                    'file_extension': audio_path.suffix,
+                    'technique': technique,
+                    'error_type': 'unsupported_format'
+                })
                 raise ValueError(f"Unsupported audio format: {audio_path.suffix}")
             
-            # Load audio file
+            # Load and analyze audio file
             audio_data, sample_rate = self._load_audio_file(audio_path)
+            file_info = {
+                'sample_rate': sample_rate,
+                'channels': audio_data.shape[0],
+                'samples': audio_data.shape[1],
+                'duration': audio_data.shape[1] / sample_rate,
+                'format': audio_path.suffix.lower()
+            }
+            self.logger.info(f"Audio file info: {file_info}")
             
             # Extract data using appropriate technique
             if technique == 'lsb':
@@ -152,19 +172,57 @@ class AudioSteganographyEngine:
             elif technique == 'phase_coding':
                 encrypted_data = self._extract_data_phase_coding(audio_data, password, sample_rate)
             else:
+                self._log_extraction_error("Unsupported technique", {
+                    'technique': technique,
+                    'supported_techniques': ['lsb', 'spread_spectrum', 'phase_coding'],
+                    'error_type': 'unsupported_technique'
+                })
                 raise ValueError(f"Unsupported technique: {technique}")
             
             if not encrypted_data:
+                self._log_extraction_error("No hidden data found", {
+                    'file_info': file_info,
+                    'technique': technique,
+                    'error_type': 'no_data_found',
+                    'possible_causes': [
+                        'Wrong extraction technique (try lsb, spread_spectrum, or phase_coding)',
+                        'Incorrect password',
+                        'File doesn\'t contain hidden data',
+                        'Audio file was modified after data hiding (compression, format change)',
+                        'Audio file is corrupted or truncated'
+                    ]
+                })
                 raise Exception("No hidden data found in audio")
             
             # Decrypt and verify data
-            original_data = self._extract_and_decrypt_data(encrypted_data, password)
-            
-            self.logger.info(f"Audio data extraction completed: {len(original_data)} bytes")
-            return original_data
+            try:
+                original_data = self._extract_and_decrypt_data(encrypted_data, password)
+                self.logger.info(f"Audio data extraction completed successfully: {len(original_data)} bytes")
+                return original_data
+            except Exception as decrypt_error:
+                self._log_extraction_error("Decryption failed", {
+                    'file_info': file_info,
+                    'technique': technique,
+                    'encrypted_data_size': len(encrypted_data),
+                    'error_type': 'decryption_failed',
+                    'decrypt_error': str(decrypt_error),
+                    'possible_causes': [
+                        'Incorrect password',
+                        'Data corruption during extraction',
+                        'Wrong extraction technique used',
+                        'Audio file was modified after hiding'
+                    ]
+                })
+                raise
             
         except Exception as e:
-            self.logger.error(f"Audio data extraction failed: {e}")
+            if "extraction failed" not in str(e).lower():
+                self._log_extraction_error("General extraction error", {
+                    'file_path': str(audio_path) if audio_path else 'unknown',
+                    'technique': technique,
+                    'error': str(e),
+                    'error_type': 'general_error'
+                })
             return None
     
     def _prepare_data_for_hiding(self, data: bytes, password: str) -> bytes:
@@ -592,29 +650,355 @@ class AudioSteganographyEngine:
                                      sample_rate: int) -> Optional[bytes]:
         """Extract data using spread spectrum technique."""
         try:
-            # This is a simplified version - full implementation would require
-            # correlation analysis and synchronization
-            self.logger.warning("Spread spectrum extraction not fully implemented")
+            self.logger.info("Starting spread spectrum extraction")
+            
+            # Generate same spreading sequence used for hiding
+            seed = int(hashlib.sha256(password.encode()).hexdigest()[:8], 16)
+            rng = np.random.RandomState(seed)
+            
+            channels, samples = audio_data.shape
+            
+            # Parameters must match hiding process exactly
+            chip_rate = 1000  # Chips per bit
+            amplitude = 0.001  # Low amplitude to maintain quality
+            
+            # Estimate maximum possible data length
+            max_bits = samples // chip_rate
+            
+            # Start with header size (34 bytes = 272 bits) and expand as needed
+            min_header_bits = 34 * 8
+            
+            # Try to extract data by correlating with known spreading sequences
+            extracted_bits = []
+            
+            for bit_idx in range(max_bits):
+                start_sample = bit_idx * chip_rate
+                end_sample = start_sample + chip_rate
+                
+                if end_sample > samples:
+                    break
+                
+                # Extract segment from first channel (averaging if multi-channel)
+                if channels == 1:
+                    segment = audio_data[0, start_sample:end_sample]
+                else:
+                    # Average across channels
+                    segment = np.mean(audio_data[:, start_sample:end_sample], axis=0)
+                
+                # Generate the same spreading sequence used during hiding
+                spread_seq = rng.uniform(-1, 1, chip_rate)
+                
+                # Correlate with spreading sequence to extract bit
+                correlation = np.correlate(segment, spread_seq, mode='valid')[0]
+                
+                # Determine bit based on correlation sign
+                if correlation > 0:
+                    extracted_bits.append(1)
+                else:
+                    extracted_bits.append(0)
+                
+                # Stop early if we have enough for analysis
+                if len(extracted_bits) >= min_header_bits + 100:  # Header + some data
+                    break
+            
+            if len(extracted_bits) < min_header_bits:
+                self.logger.error(f"Not enough bits extracted: {len(extracted_bits)} < {min_header_bits}")
+                return None
+            
+            # Convert bits to bytes
+            bit_array = np.array(extracted_bits, dtype=np.uint8)
+            
+            # Pad to byte boundary
+            padding_needed = (8 - (len(bit_array) % 8)) % 8
+            if padding_needed > 0:
+                bit_array = np.append(bit_array, np.zeros(padding_needed, dtype=np.uint8))
+            
+            all_bytes = np.packbits(bit_array)
+            
+            # Look for magic header
+            for offset in range(min(100, len(all_bytes) - 34)):
+                if offset + 34 > len(all_bytes):
+                    break
+                    
+                potential_magic = bytes(all_bytes[offset:offset + 8])
+                
+                if potential_magic == self.MAGIC_HEADER:
+                    self.logger.info(f"Found magic header at offset {offset}")
+                    
+                    # Parse header
+                    try:
+                        version = bytes(all_bytes[offset + 8:offset + 10])
+                        data_size_bytes = bytes(all_bytes[offset + 10:offset + 18])
+                        data_size = struct.unpack('<Q', data_size_bytes)[0]
+                        checksum = bytes(all_bytes[offset + 18:offset + 34])
+                        
+                        # Validate data size
+                        if data_size <= 0 or data_size > 100 * 1024 * 1024:
+                            continue
+                        
+                        # Extract encrypted data
+                        data_start = offset + 34
+                        data_end = data_start + data_size
+                        
+                        if data_end > len(all_bytes):
+                            # Need to extract more bits
+                            additional_bits_needed = (data_end - len(all_bytes)) * 8
+                            self.logger.info(f"Need {additional_bits_needed} more bits, extracting...")
+                            
+                            # Continue extraction from where we left off
+                            current_bit_idx = len(extracted_bits)
+                            while len(extracted_bits) < (data_end * 8) and current_bit_idx < max_bits:
+                                start_sample = current_bit_idx * chip_rate
+                                end_sample = start_sample + chip_rate
+                                
+                                if end_sample > samples:
+                                    break
+                                
+                                if channels == 1:
+                                    segment = audio_data[0, start_sample:end_sample]
+                                else:
+                                    segment = np.mean(audio_data[:, start_sample:end_sample], axis=0)
+                                
+                                spread_seq = rng.uniform(-1, 1, chip_rate)
+                                correlation = np.correlate(segment, spread_seq, mode='valid')[0]
+                                
+                                if correlation > 0:
+                                    extracted_bits.append(1)
+                                else:
+                                    extracted_bits.append(0)
+                                
+                                current_bit_idx += 1
+                            
+                            # Repack bits to bytes
+                            bit_array = np.array(extracted_bits, dtype=np.uint8)
+                            padding_needed = (8 - (len(bit_array) % 8)) % 8
+                            if padding_needed > 0:
+                                bit_array = np.append(bit_array, np.zeros(padding_needed, dtype=np.uint8))
+                            all_bytes = np.packbits(bit_array)
+                            
+                            if data_end > len(all_bytes):
+                                self.logger.warning(f"Still not enough data after additional extraction")
+                                continue
+                        
+                        encrypted_data = bytes(all_bytes[data_start:data_end])
+                        
+                        # Verify checksum
+                        actual_checksum = hashlib.md5(encrypted_data).digest()
+                        if actual_checksum != checksum:
+                            self.logger.warning("Checksum mismatch")
+                            continue
+                        
+                        self.logger.info(f"Successfully extracted {len(encrypted_data)} bytes using spread spectrum")
+                        return encrypted_data
+                        
+                    except (struct.error, ValueError) as e:
+                        self.logger.warning(f"Header parsing error: {e}")
+                        continue
+            
+            self.logger.error("No valid data found using spread spectrum extraction")
             return None
             
         except Exception as e:
             self.logger.error(f"Spread spectrum extraction failed: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             return None
     
     def _extract_data_phase_coding(self, audio_data: np.ndarray, password: str,
                                   sample_rate: int) -> Optional[bytes]:
         """Extract data using phase coding technique."""
         try:
-            # This is a simplified version - full implementation would require
-            # phase analysis and synchronization
-            self.logger.warning("Phase coding extraction not fully implemented")
+            self.logger.info("Starting phase coding extraction")
+            
+            channels, samples = audio_data.shape
+            
+            # Parameters must match hiding process exactly
+            segment_length = 1024  # Samples per segment
+            phase_shift = np.pi / 4  # 45 degree phase shift
+            
+            # Calculate number of segments
+            num_segments = samples // segment_length
+            
+            # Start with header size (34 bytes = 272 bits) and expand as needed
+            min_header_bits = 34 * 8
+            
+            # Maximum bits we can extract
+            max_bits = num_segments * channels
+            
+            if max_bits < min_header_bits:
+                self.logger.error(f"Not enough segments for header: {max_bits} < {min_header_bits}")
+                return None
+            
+            # Extract bits by analyzing phase differences
+            extracted_bits = []
+            
+            # Process each channel
+            for channel in range(channels):
+                for seg_idx in range(num_segments):
+                    if len(extracted_bits) >= max_bits:
+                        break
+                        
+                    start = seg_idx * segment_length
+                    end = start + segment_length
+                    
+                    # Get segment
+                    segment = audio_data[channel, start:end]
+                    
+                    # Apply FFT
+                    fft_segment = np.fft.fft(segment)
+                    
+                    # Calculate average phase in relevant frequency range
+                    # Use middle frequencies to avoid DC and high-frequency noise
+                    freq_start = len(fft_segment) // 4
+                    freq_end = 3 * len(fft_segment) // 4
+                    
+                    phases = np.angle(fft_segment[freq_start:freq_end])
+                    avg_phase = np.mean(phases)
+                    
+                    # Determine bit based on phase deviation
+                    # During hiding, we added/subtracted phase_shift
+                    # Check if the average phase suggests a positive or negative shift
+                    if np.abs(avg_phase) > phase_shift / 2:
+                        if avg_phase > 0:
+                            extracted_bits.append(1)
+                        else:
+                            extracted_bits.append(0)
+                    else:
+                        # Phase is near zero, could be either - use a different approach
+                        # Look at phase variance to determine bit
+                        phase_variance = np.var(phases)
+                        if phase_variance > np.pi / 8:  # Higher variance suggests modification
+                            extracted_bits.append(1)
+                        else:
+                            extracted_bits.append(0)
+                    
+                    # Stop early if we have enough for analysis
+                    if len(extracted_bits) >= min_header_bits + 100:  # Header + some data
+                        break
+                
+                if len(extracted_bits) >= min_header_bits + 100:
+                    break
+            
+            if len(extracted_bits) < min_header_bits:
+                self.logger.error(f"Not enough bits extracted: {len(extracted_bits)} < {min_header_bits}")
+                return None
+            
+            # Convert bits to bytes
+            bit_array = np.array(extracted_bits, dtype=np.uint8)
+            
+            # Pad to byte boundary
+            padding_needed = (8 - (len(bit_array) % 8)) % 8
+            if padding_needed > 0:
+                bit_array = np.append(bit_array, np.zeros(padding_needed, dtype=np.uint8))
+            
+            all_bytes = np.packbits(bit_array)
+            
+            # Look for magic header
+            for offset in range(min(100, len(all_bytes) - 34)):
+                if offset + 34 > len(all_bytes):
+                    break
+                    
+                potential_magic = bytes(all_bytes[offset:offset + 8])
+                
+                if potential_magic == self.MAGIC_HEADER:
+                    self.logger.info(f"Found magic header at offset {offset}")
+                    
+                    # Parse header
+                    try:
+                        version = bytes(all_bytes[offset + 8:offset + 10])
+                        data_size_bytes = bytes(all_bytes[offset + 10:offset + 18])
+                        data_size = struct.unpack('<Q', data_size_bytes)[0]
+                        checksum = bytes(all_bytes[offset + 18:offset + 34])
+                        
+                        # Validate data size
+                        if data_size <= 0 or data_size > 100 * 1024 * 1024:
+                            continue
+                        
+                        # Extract encrypted data
+                        data_start = offset + 34
+                        data_end = data_start + data_size
+                        
+                        if data_end > len(all_bytes):
+                            # Need to extract more bits
+                            additional_bits_needed = (data_end - len(all_bytes)) * 8
+                            self.logger.info(f"Need {additional_bits_needed} more bits, extracting...")
+                            
+                            # Continue extraction from where we left off
+                            current_seg_idx = len(extracted_bits)
+                            current_channel = 0
+                            
+                            while len(extracted_bits) < (data_end * 8) and current_seg_idx < max_bits:
+                                # Calculate which channel and segment we're in
+                                actual_seg_idx = current_seg_idx % num_segments
+                                current_channel = current_seg_idx // num_segments
+                                
+                                if current_channel >= channels:
+                                    break
+                                
+                                start = actual_seg_idx * segment_length
+                                end = start + segment_length
+                                
+                                if end > samples:
+                                    break
+                                
+                                segment = audio_data[current_channel, start:end]
+                                fft_segment = np.fft.fft(segment)
+                                
+                                freq_start = len(fft_segment) // 4
+                                freq_end = 3 * len(fft_segment) // 4
+                                phases = np.angle(fft_segment[freq_start:freq_end])
+                                avg_phase = np.mean(phases)
+                                
+                                if np.abs(avg_phase) > phase_shift / 2:
+                                    if avg_phase > 0:
+                                        extracted_bits.append(1)
+                                    else:
+                                        extracted_bits.append(0)
+                                else:
+                                    phase_variance = np.var(phases)
+                                    if phase_variance > np.pi / 8:
+                                        extracted_bits.append(1)
+                                    else:
+                                        extracted_bits.append(0)
+                                
+                                current_seg_idx += 1
+                            
+                            # Repack bits to bytes
+                            bit_array = np.array(extracted_bits, dtype=np.uint8)
+                            padding_needed = (8 - (len(bit_array) % 8)) % 8
+                            if padding_needed > 0:
+                                bit_array = np.append(bit_array, np.zeros(padding_needed, dtype=np.uint8))
+                            all_bytes = np.packbits(bit_array)
+                            
+                            if data_end > len(all_bytes):
+                                self.logger.warning(f"Still not enough data after additional extraction")
+                                continue
+                        
+                        encrypted_data = bytes(all_bytes[data_start:data_end])
+                        
+                        # Verify checksum
+                        actual_checksum = hashlib.md5(encrypted_data).digest()
+                        if actual_checksum != checksum:
+                            self.logger.warning("Checksum mismatch")
+                            continue
+                        
+                        self.logger.info(f"Successfully extracted {len(encrypted_data)} bytes using phase coding")
+                        return encrypted_data
+                        
+                    except (struct.error, ValueError) as e:
+                        self.logger.warning(f"Header parsing error: {e}")
+                        continue
+            
+            self.logger.error("No valid data found using phase coding extraction")
             return None
             
         except Exception as e:
             self.logger.error(f"Phase coding extraction failed: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             return None
     
-    def _save_audio_file(self, audio_data: np.ndarray, sample_rate: int, 
+    def _save_audio_file(self, audio_data: np.ndarray, sample_rate: int,
                         output_path: Path, quality: str) -> bool:
         """Save modified audio to file."""
         try:
@@ -745,3 +1129,47 @@ class AudioSteganographyEngine:
     def validate_audio_format(self, audio_path: Path) -> bool:
         """Validate if audio format is supported."""
         return self.analyzer.is_audio_file(audio_path)
+    
+    def _log_extraction_error(self, error_message: str, error_details: Dict[str, Any]) -> None:
+        """Log detailed extraction error information for debugging."""
+        self.logger.error(f"AUDIO EXTRACTION ERROR: {error_message}")
+        
+        # Log error details in a structured format
+        for key, value in error_details.items():
+            if isinstance(value, list):
+                self.logger.error(f"  {key}:")
+                for item in value:
+                    self.logger.error(f"    - {item}")
+            else:
+                self.logger.error(f"  {key}: {value}")
+        
+        # Add troubleshooting suggestions based on error type
+        error_type = error_details.get('error_type', 'unknown')
+        
+        if error_type == 'no_data_found':
+            self.logger.error("\nTROUBLESHOOTING SUGGESTIONS:")
+            self.logger.error("1. Try different extraction techniques: lsb, spread_spectrum, phase_coding")
+            self.logger.error("2. Verify the password is correct")
+            self.logger.error("3. Ensure this audio file contains hidden data")
+            self.logger.error("4. Check if the audio file was modified after hiding data")
+            self.logger.error("5. Use the same audio format that was used for hiding")
+            
+        elif error_type == 'decryption_failed':
+            self.logger.error("\nTROUBLESHOOTING SUGGESTIONS:")
+            self.logger.error("1. Double-check the password")
+            self.logger.error("2. Verify you're using the same extraction technique as was used for hiding")
+            self.logger.error("3. Ensure the audio file hasn't been compressed or converted")
+            
+        elif error_type == 'unsupported_format':
+            self.logger.error("\nTROUBLESHOOTING SUGGESTIONS:")
+            self.logger.error("1. Convert the audio file to a supported format (WAV, FLAC, MP3, etc.)")
+            self.logger.error("2. Use a lossless format (WAV, FLAC) for best steganography compatibility")
+            
+        elif error_type == 'unsupported_technique':
+            technique = error_details.get('technique', 'unknown')
+            supported = error_details.get('supported_techniques', [])
+            self.logger.error("\nTROUBLESHOOTING SUGGESTIONS:")
+            self.logger.error(f"1. Technique '{technique}' is not supported")
+            self.logger.error(f"2. Use one of these supported techniques: {', '.join(supported)}")
+            
+        self.logger.error("\n" + "="*50)
