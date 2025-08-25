@@ -504,153 +504,136 @@ class AudioSteganographyEngine:
                 self.logger.error(f"Not enough positions for header: {len(all_positions)} < {min_header_bits}")
                 return None
             
-            # Try multiple extraction strategies for robustness
-            extraction_strategies = [
-                int(len(all_positions) * 0.9),   # 90% of available positions
-                int(len(all_positions) * 0.8),   # 80% of available positions
-                int(len(all_positions) * 0.7),   # 70% of available positions
-                len(all_positions)                # All available positions
-            ]
+            # Generate the exact same positions used for hiding
+            rng = np.random.RandomState(seed)
             
-            for strategy_idx, max_extract_bits in enumerate(extraction_strategies):
-                try:
-                    self.logger.info(f"Trying extraction strategy {strategy_idx + 1}: {max_extract_bits} bits")
-                    
-                    if max_extract_bits < min_header_bits:
-                        continue
-                    
-                    # Generate positions using same algorithm as hiding
-                    rng = np.random.RandomState(seed)
-                    
-                    # Ensure we don't try to extract more positions than available
-                    actual_extract_bits = min(max_extract_bits, len(all_positions))
-                    selected_positions = rng.choice(all_positions, size=actual_extract_bits, replace=False)
-                    
-                    # Extract all bits
-                    extracted_bits = []
-                    for pos in selected_positions:
-                        if pos < len(flat_audio):  # Bounds check
-                            extracted_bits.append(flat_audio[pos] & 1)
-                        else:
-                            self.logger.warning(f"Position {pos} out of bounds for audio length {len(flat_audio)}")
-                    
-                    if len(extracted_bits) < min_header_bits:
-                        self.logger.warning(f"Not enough bits extracted: {len(extracted_bits)} < {min_header_bits}")
-                        continue
-                    
-                    # Convert to bytes with proper padding
-                    bit_array = np.array(extracted_bits, dtype=np.uint8)
-                    
-                    # Ensure bit array length is multiple of 8 for proper byte packing
-                    padding_needed = (8 - (len(bit_array) % 8)) % 8
-                    if padding_needed > 0:
-                        bit_array = np.append(bit_array, np.zeros(padding_needed, dtype=np.uint8))
-                    
-                    all_bytes = np.packbits(bit_array)
-                    
-                    self.logger.info(f"Extracted {len(all_bytes)} bytes, searching for header...")
-                    
-                    # Look for magic header in the extracted data
-                    header_found = False
-                    data_start_offset = 0
-                    
-                    # Try different starting offsets in case there's alignment issues
-                    search_range = min(200, len(all_bytes) - 34)  # Increased search range
-                    for offset in range(0, max(1, search_range)):
-                        if offset + 34 > len(all_bytes):
-                            break
-                            
-                        potential_magic = bytes(all_bytes[offset:offset + 8])
-                        
-                        if potential_magic == self.MAGIC_HEADER:
-                            self.logger.info(f"Found magic header at offset {offset}")
-                            header_found = True
-                            data_start_offset = offset
-                            break
-                    
-                    if not header_found:
-                        self.logger.debug(f"Strategy {strategy_idx + 1}: Magic header not found")
-                        # Log first few bytes for debugging on last strategy
-                        if strategy_idx == len(extraction_strategies) - 1:
-                            first_bytes = bytes(all_bytes[:50]) if len(all_bytes) >= 50 else bytes(all_bytes)
-                            self.logger.debug(f"First 50 bytes: {first_bytes.hex()}")
-                        continue
-                    
-                    # Parse header starting from found offset
-                    header_start = data_start_offset
-                    try:
-                        magic = bytes(all_bytes[header_start:header_start + 8])
-                        version = bytes(all_bytes[header_start + 8:header_start + 10])
-                        
-                        # Safely unpack data size
-                        if header_start + 18 > len(all_bytes):
-                            self.logger.warning(f"Header incomplete at offset {header_start}")
-                            continue
-                            
-                        data_size_bytes = bytes(all_bytes[header_start + 10:header_start + 18])
-                        if len(data_size_bytes) != 8:
-                            self.logger.warning(f"Invalid data size bytes: {len(data_size_bytes)} != 8")
-                            continue
-                            
-                        data_size = struct.unpack('<Q', data_size_bytes)[0]
-                        
-                        # Validate data size is reasonable
-                        if data_size <= 0 or data_size > 100 * 1024 * 1024:  # Max 100MB
-                            self.logger.warning(f"Suspicious data size: {data_size} bytes")
-                            continue
-                        
-                        if header_start + 34 > len(all_bytes):
-                            self.logger.warning(f"Checksum incomplete at offset {header_start}")
-                            continue
-                            
-                        checksum = bytes(all_bytes[header_start + 18:header_start + 34])
-                        
-                        self.logger.info(f"Header parsed - version: {version.hex()}, data size: {data_size} bytes")
-                        
-                        # Extract the actual encrypted data
-                        data_start = header_start + 34
-                        data_end = data_start + data_size
-                        
-                        if data_end > len(all_bytes):
-                            self.logger.warning(
-                                f"Not enough data extracted for payload: need {data_end}, have {len(all_bytes)}. "
-                                f"May need to extract more bits."
-                            )
-                            continue
-                        
-                        encrypted_data = bytes(all_bytes[data_start:data_end])
-                        
-                        # Verify checksum
-                        actual_checksum = hashlib.md5(encrypted_data).digest()
-                        if actual_checksum != checksum:
-                            self.logger.warning(
-                                f"Checksum mismatch: expected {checksum.hex()}, got {actual_checksum.hex()}"
-                            )
-                            continue
-                        
-                        self.logger.info(
-                            f"Successfully extracted and verified {len(encrypted_data)} bytes "
-                            f"of encrypted data using strategy {strategy_idx + 1}"
-                        )
-                        return encrypted_data
-                        
-                    except (struct.error, ValueError) as parse_error:
-                        self.logger.warning(f"Header parsing error at offset {header_start}: {parse_error}")
-                        continue
-                        
-                except Exception as strategy_error:
-                    self.logger.warning(f"Strategy {strategy_idx + 1} failed: {strategy_error}")
-                    continue
+            # We need to extract exactly the same number of bits that were hidden
+            # Since we don't know this in advance, we'll extract all available positions
+            # and then search for our header pattern
+            selected_positions = rng.choice(all_positions, size=len(all_positions), replace=False)
             
-            # If all strategies failed
-            self.logger.error(
-                "All extraction strategies failed. Possible reasons:\n"
-                "- Wrong password\n"
-                "- File doesn't contain hidden data\n"
-                "- Audio format was changed after hiding (e.g., compressed)\n"
-                "- Different extraction technique needed"
-            )
-            return None
+            # Extract all bits
+            extracted_bits = []
+            for pos in selected_positions:
+                if pos < len(flat_audio):  # Bounds check
+                    extracted_bits.append(flat_audio[pos] & 1)
+                else:
+                    self.logger.warning(f"Position {pos} out of bounds for audio length {len(flat_audio)}")
+            
+            # Convert to bytes with proper padding
+            bit_array = np.array(extracted_bits, dtype=np.uint8)
+            
+            # Ensure bit array length is multiple of 8 for proper byte packing
+            padding_needed = (8 - (len(bit_array) % 8)) % 8
+            if padding_needed > 0:
+                bit_array = np.append(bit_array, np.zeros(padding_needed, dtype=np.uint8))
+            
+            all_bytes = np.packbits(bit_array)
+            
+            self.logger.info(f"Extracted {len(all_bytes)} bytes, searching for header...")
+            
+            # Look for magic header in the extracted data
+            header_found = False
+            data_start_offset = 0
+            
+            # Search for the magic header with a wider range
+            search_range = min(500, len(all_bytes) - 34)  # Increased search range
+            for offset in range(0, max(1, search_range)):
+                if offset + 34 > len(all_bytes):
+                    break
+                    
+                potential_magic = bytes(all_bytes[offset:offset + 8])
+                
+                if potential_magic == self.MAGIC_HEADER:
+                    self.logger.info(f"Found magic header at offset {offset}")
+                    header_found = True
+                    data_start_offset = offset
+                    break
+            
+            if not header_found:
+                # Try a different approach - check if the header might be split across byte boundaries
+                # This can happen if the random position selection doesn't align with byte boundaries
+                self.logger.info("Magic header not found at byte boundaries, trying bit-level search...")
+                
+                # Convert back to bits and search at the bit level
+                all_bits = np.unpackbits(np.frombuffer(all_bytes, dtype=np.uint8))
+                
+                # Search for the magic header pattern in the bit stream
+                magic_bits = np.unpackbits(np.frombuffer(self.MAGIC_HEADER, dtype=np.uint8))
+                
+                for offset in range(0, min(1000, len(all_bits) - len(magic_bits))):
+                    if np.array_equal(all_bits[offset:offset+len(magic_bits)], magic_bits):
+                        self.logger.info(f"Found magic header at bit offset {offset}")
+                        header_found = True
+                        data_start_offset = offset // 8  # Convert to byte offset
+                        break
+                
+                if not header_found:
+                    self.logger.error("Magic header not found in extracted data")
+                    # Log first few bytes for debugging
+                    first_bytes = bytes(all_bytes[:100]) if len(all_bytes) >= 100 else bytes(all_bytes)
+                    self.logger.debug(f"First 100 bytes: {first_bytes.hex()}")
+                    return None
+            
+            # Parse header
+            header_start = data_start_offset
+            try:
+                magic = bytes(all_bytes[header_start:header_start + 8])
+                version = bytes(all_bytes[header_start + 8:header_start + 10])
+                
+                # Safely unpack data size
+                if header_start + 18 > len(all_bytes):
+                    self.logger.warning(f"Header incomplete at offset {header_start}")
+                    return None
+                    
+                data_size_bytes = bytes(all_bytes[header_start + 10:header_start + 18])
+                if len(data_size_bytes) != 8:
+                    self.logger.warning(f"Invalid data size bytes: {len(data_size_bytes)} != 8")
+                    return None
+                    
+                data_size = struct.unpack('<Q', data_size_bytes)[0]
+                
+                # Validate data size is reasonable
+                if data_size <= 0 or data_size > 100 * 1024 * 1024:  # Max 100MB
+                    self.logger.warning(f"Suspicious data size: {data_size} bytes")
+                    return None
+                
+                if header_start + 34 > len(all_bytes):
+                    self.logger.warning(f"Checksum incomplete at offset {header_start}")
+                    return None
+                    
+                checksum = bytes(all_bytes[header_start + 18:header_start + 34])
+                
+                self.logger.info(f"Header parsed - version: {version.hex()}, data size: {data_size} bytes")
+                
+                # Extract the actual encrypted data
+                data_start = header_start + 34
+                data_end = data_start + data_size
+                
+                if data_end > len(all_bytes):
+                    self.logger.warning(
+                        f"Not enough data extracted for payload: need {data_end}, have {len(all_bytes)}"
+                    )
+                    return None
+                
+                encrypted_data = bytes(all_bytes[data_start:data_end])
+                
+                # Verify checksum
+                actual_checksum = hashlib.md5(encrypted_data).digest()
+                if actual_checksum != checksum:
+                    self.logger.warning(
+                        f"Checksum mismatch: expected {checksum.hex()}, got {actual_checksum.hex()}"
+                    )
+                    return None
+                
+                self.logger.info(
+                    f"Successfully extracted and verified {len(encrypted_data)} bytes of encrypted data"
+                )
+                return encrypted_data
+                
+            except (struct.error, ValueError) as parse_error:
+                self.logger.error(f"Header parsing error at offset {header_start}: {parse_error}")
+                return None
             
         except Exception as e:
             self.logger.error(f"LSB extraction failed: {e}")
