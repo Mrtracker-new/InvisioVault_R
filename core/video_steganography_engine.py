@@ -600,6 +600,7 @@ class VideoSteganographyEngine:
             frames_path = frames_dir / "frames"
             
             # Get original video properties
+            assert ffmpeg is not None, "FFmpeg module is required for video operations"
             probe = ffmpeg.probe(str(original_path))
             video_stream = next(s for s in probe['streams'] if s['codec_type'] == 'video')
             fps = eval(video_stream['r_frame_rate'])  # Convert fraction to float
@@ -617,6 +618,7 @@ class VideoSteganographyEngine:
             input_pattern = str(frames_path / "frame_%06d.png")
             
             # Build ffmpeg command with additional options for stability
+            assert ffmpeg is not None, "FFmpeg module is required for input stream"
             stream = ffmpeg.input(
                 input_pattern, 
                 framerate=fps,
@@ -637,6 +639,7 @@ class VideoSteganographyEngine:
             
             if audio_streams:
                 self.logger.debug("Including audio stream from original video")
+                assert ffmpeg is not None, "FFmpeg module is required for audio input"
                 audio_input = ffmpeg.input(str(original_path))
                 stream = ffmpeg.output(
                     stream, audio_input['a'],
@@ -646,6 +649,7 @@ class VideoSteganographyEngine:
                 )
             else:
                 self.logger.debug("Video has no audio stream")
+                assert ffmpeg is not None, "FFmpeg module is required for video output"
                 stream = ffmpeg.output(
                     stream,
                     str(output_path),
@@ -653,6 +657,7 @@ class VideoSteganographyEngine:
                 )
             
             # Run ffmpeg with better error handling
+            assert ffmpeg is not None, "FFmpeg module is required for compilation and execution"
             self.logger.debug(f"Running ffmpeg command: {' '.join(ffmpeg.compile(stream))}")
             
             try:
