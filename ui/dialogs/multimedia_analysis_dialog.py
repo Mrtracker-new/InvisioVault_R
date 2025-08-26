@@ -191,12 +191,8 @@ class MultimediaAnalysisDialog(QDialog):
         panel = QGroupBox("Multimedia Files")
         layout = QVBoxLayout(panel)
         
-        # Drop zone
-        self.file_drop_zone = FileDropZone(
-            "Drop multimedia files here\n(Video: MP4, AVI, MKV, MOV)\n(Audio: MP3, WAV, FLAC, AAC)"
-        )
-        self.file_drop_zone.setMinimumHeight(120)
-        self.file_drop_zone.files_dropped.connect(self.on_files_dropped)
+        # Drop zone (simple version without internal browse)
+        self.file_drop_zone = self.create_simple_drop_zone()
         layout.addWidget(self.file_drop_zone)
         
         # File list
@@ -213,10 +209,10 @@ class MultimediaAnalysisDialog(QDialog):
         # Buttons
         button_layout = QHBoxLayout()
         
-        browse_button = QPushButton("Browse Files...")
+        browse_button = QPushButton("📁 Browse Files...")
         browse_button.clicked.connect(self.browse_files)
         
-        remove_button = QPushButton("Remove Selected")
+        remove_button = QPushButton("🗑️ Remove Selected")
         remove_button.clicked.connect(self.remove_selected_file)
         
         button_layout.addWidget(browse_button)
@@ -502,6 +498,98 @@ class MultimediaAnalysisDialog(QDialog):
         
         return panel
     
+    def create_simple_drop_zone(self) -> QWidget:
+        """Create a simple drag and drop zone without internal browse functionality."""
+        drop_widget = QLabel()
+        drop_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        drop_widget.setMinimumHeight(120)
+        drop_widget.setAcceptDrops(True)
+        drop_widget.setWordWrap(True)
+        
+        # Set up the drop zone appearance
+        drop_widget.setStyleSheet("""
+            QLabel {
+                border: 2px dashed #888;
+                border-radius: 8px;
+                background-color: #f5f5f5;
+                color: #333;
+                font-size: 13px;
+                padding: 20px;
+                text-align: center;
+            }
+        """)
+        
+        drop_widget.setText(
+            "📁 Drop multimedia files here\n\n"
+            "Drag and drop files here\n\n"
+            "Supported: MP4, AVI, MKV, MOV\n"
+            "         MP3, WAV, FLAC, AAC"
+        )
+        
+        # Override drag and drop events
+        def dragEnterEvent(event):
+            if event.mimeData().hasUrls():
+                event.acceptProposedAction()
+                drop_widget.setStyleSheet("""
+                    QLabel {
+                        border: 3px dashed #4CAF50;
+                        border-radius: 8px;
+                        background-color: #E8F5E8;
+                        color: #1B5E20;
+                        font-size: 14px;
+                        font-weight: bold;
+                        padding: 20px;
+                        text-align: center;
+                    }
+                """)
+                drop_widget.setText("💾 Drop files here\n\nDrop multimedia files here")
+            else:
+                event.ignore()
+        
+        def dragLeaveEvent(event):
+            drop_widget.setStyleSheet("""
+                QLabel {
+                    border: 2px dashed #888;
+                    border-radius: 8px;
+                    background-color: #f5f5f5;
+                    color: #333;
+                    font-size: 13px;
+                    padding: 20px;
+                    text-align: center;
+                }
+            """)
+            drop_widget.setText(
+                "📁 Drop multimedia files here\n\n"
+                "Drag and drop files here\n\n"
+                "Supported: MP4, AVI, MKV, MOV\n"
+                "         MP3, WAV, FLAC, AAC"
+            )
+        
+        def dropEvent(event):
+            # Reset appearance
+            dragLeaveEvent(None)
+            
+            urls = event.mimeData().urls()
+            file_paths = []
+            
+            for url in urls:
+                if url.isLocalFile():
+                    file_path = Path(url.toLocalFile())
+                    if file_path.is_file():
+                        file_paths.append(str(file_path))
+            
+            if file_paths:
+                self.on_files_dropped(file_paths)
+            
+            event.acceptProposedAction()
+        
+        # Assign the event handlers
+        drop_widget.dragEnterEvent = dragEnterEvent
+        drop_widget.dragLeaveEvent = dragLeaveEvent
+        drop_widget.dropEvent = dropEvent
+        
+        return drop_widget
+    
     def setup_connections(self):
         """Set up signal connections."""
         pass  # Connections are set up in init_ui
@@ -520,8 +608,6 @@ class MultimediaAnalysisDialog(QDialog):
         
         if valid_files:
             self.add_files(valid_files)
-            # Clear the drop zone after files are processed to avoid duplication
-            self.file_drop_zone.clear_files()
         
         if invalid_files:
             QMessageBox.warning(
@@ -529,8 +615,6 @@ class MultimediaAnalysisDialog(QDialog):
                 f"The following files are not supported multimedia formats:\n\n" +
                 "\n".join(invalid_files)
             )
-            # Clear invalid files from drop zone as well
-            self.file_drop_zone.clear_files()
     
     def browse_files(self):
         """Browse for multimedia files."""
