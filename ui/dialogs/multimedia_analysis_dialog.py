@@ -376,6 +376,8 @@ class MultimediaAnalysisDialog(QDialog):
         
         if valid_files:
             self.add_files(valid_files)
+            # Clear the drop zone after files are processed to avoid duplication
+            self.file_drop_zone.clear_files()
         
         if invalid_files:
             QMessageBox.warning(
@@ -383,6 +385,8 @@ class MultimediaAnalysisDialog(QDialog):
                 f"The following files are not supported multimedia formats:\n\n" +
                 "\n".join(invalid_files)
             )
+            # Clear invalid files from drop zone as well
+            self.file_drop_zone.clear_files()
     
     def browse_files(self):
         """Browse for multimedia files."""

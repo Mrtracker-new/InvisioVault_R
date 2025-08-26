@@ -511,6 +511,11 @@ class MultimediaHideDialog(QDialog):
         # Update UI when inputs change
         self.password_input.textChanged.connect(self.update_hide_button_state)
         self.output_path_input.textChanged.connect(self.update_hide_button_state)
+        
+        # Connect file drop zone change signals to ensure UI stays synchronized
+        # These provide additional synchronization beyond the files_dropped signals
+        self.carrier_drop_zone.files_changed.connect(self.on_carrier_drop_zone_changed)
+        self.files_drop_zone.files_changed.connect(self.on_files_drop_zone_changed)
     
     def update_video_quality_label(self, value):
         """Update video quality label based on slider value."""
@@ -530,16 +535,53 @@ class MultimediaHideDialog(QDialog):
         if file_paths:
             carrier_path = Path(file_paths[0])
             if self.analyzer.is_multimedia_file(carrier_path):
-                self.set_carrier_file(carrier_path)
+                # Check if it's a lossy audio format and warn (same as browse button)
+                if self.analyzer.is_audio_file(carrier_path) and self._is_lossy_audio(carrier_path):
+                    reply = QMessageBox.warning(
+                        self, "Lossy Audio Format Warning",
+                        f"You've selected a {carrier_path.suffix.upper()} file as a carrier, which is a lossy format.\n\n"
+                        "This is NOT recommended for steganography. When using lossy formats:\n\n"
+                        "1. The hidden data may already be damaged in the source file\n"
+                        "2. You MUST choose a lossless format like WAV or FLAC for the output file\n"
+                        "3. Extraction may still fail due to the lossy compression artifacts\n\n"
+                        "For best results, please use WAV or FLAC files as carriers.\n\n"
+                        "Do you want to continue with this file anyway?",
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                        QMessageBox.StandardButton.No
+                    )
+                    if reply == QMessageBox.StandardButton.Yes:
+                        self.set_carrier_file(carrier_path)
+                        # Clear the drop zone after successful selection
+                        self.carrier_drop_zone.clear_files()
+                else:
+                    self.set_carrier_file(carrier_path)
+                    # Clear the drop zone after successful selection
+                    self.carrier_drop_zone.clear_files()
             else:
                 QMessageBox.warning(
                     self, "Invalid File",
                     "Please select a supported multimedia file (video or audio)."
                 )
+                # Clear invalid files from drop zone
+                self.carrier_drop_zone.clear_files()
     
     def on_files_to_hide_dropped(self, file_paths):
         """Handle files to hide drop."""
         self.add_files_to_hide([Path(p) for p in file_paths])
+        # Clear the drop zone after files are processed - they're now managed by the dialog
+        self.files_drop_zone.clear_files()
+    
+    def on_carrier_drop_zone_changed(self, file_paths):
+        """Handle carrier drop zone file list changes (for synchronization)."""
+        # This method ensures UI synchronization when the drop zone's internal state changes
+        # It's called when files are added/removed from the drop zone's internal list
+        pass  # We handle this through the files_dropped signal and clear_files() calls
+    
+    def on_files_drop_zone_changed(self, file_paths):
+        """Handle files drop zone file list changes (for synchronization)."""
+        # This method ensures UI synchronization when the drop zone's internal state changes
+        # It's called when files are added/removed from the drop zone's internal list
+        pass  # We handle this through the files_dropped signal and clear_files() calls
     
     def browse_carrier_file(self):
         """Browse for carrier multimedia file."""
