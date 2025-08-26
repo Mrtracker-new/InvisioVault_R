@@ -426,7 +426,7 @@ class ImageAnalyzer:
             
             # Mean filter and variance calculation
             try:
-                if hasattr(scipy, 'ndimage') and scipy.ndimage:
+                if hasattr(scipy, 'ndimage') and scipy.ndimage:  # type: ignore
                     assert scipy is not None, "scipy not available"
                     mean_filtered = scipy.ndimage.convolve(gray, kernel)  # type: ignore
                     variance = scipy.ndimage.convolve((gray - mean_filtered) ** 2, kernel)  # type: ignore
@@ -496,7 +496,7 @@ class ImageAnalyzer:
             # Calculate gradients
             assert np is not None, "numpy not available"
             try:
-                if hasattr(scipy, 'ndimage') and scipy.ndimage:
+                if hasattr(scipy, 'ndimage') and scipy.ndimage:  # type: ignore
                     assert scipy is not None, "scipy not available"
                     grad_x = scipy.ndimage.sobel(gray, axis=1)  # type: ignore
                     grad_y = scipy.ndimage.sobel(gray, axis=0)  # type: ignore
@@ -660,7 +660,7 @@ class ImageAnalyzer:
             
             # Calculate autocorrelation to measure predictability
             try:
-                if hasattr(scipy, 'signal') and scipy.signal:
+                if hasattr(scipy, 'signal') and scipy.signal:  # type: ignore
                     # Simple autocorrelation approximation
                     assert scipy is not None, "scipy not available"
                     autocorr = scipy.signal.correlate2d(gray, gray, mode='same')  # type: ignore
