@@ -601,7 +601,7 @@ class VideoSteganographyEngine:
             
             # Get original video properties
             assert ffmpeg is not None, "FFmpeg module is required for video operations"
-            probe = ffmpeg.probe(str(original_path))
+            probe = ffmpeg.probe(str(original_path))  # type: ignore
             video_stream = next(s for s in probe['streams'] if s['codec_type'] == 'video')
             fps = eval(video_stream['r_frame_rate'])  # Convert fraction to float
             
@@ -619,7 +619,7 @@ class VideoSteganographyEngine:
             
             # Build ffmpeg command with additional options for stability
             assert ffmpeg is not None, "FFmpeg module is required for input stream"
-            stream = ffmpeg.input(
+            stream = ffmpeg.input(  # type: ignore
                 input_pattern, 
                 framerate=fps,
                 start_number=0  # Start from frame 0
@@ -640,8 +640,8 @@ class VideoSteganographyEngine:
             if audio_streams:
                 self.logger.debug("Including audio stream from original video")
                 assert ffmpeg is not None, "FFmpeg module is required for audio input"
-                audio_input = ffmpeg.input(str(original_path))
-                stream = ffmpeg.output(
+                audio_input = ffmpeg.input(str(original_path))  # type: ignore
+                stream = ffmpeg.output(  # type: ignore
                     stream, audio_input['a'],
                     str(output_path),
                     acodec='copy',
@@ -650,7 +650,7 @@ class VideoSteganographyEngine:
             else:
                 self.logger.debug("Video has no audio stream")
                 assert ffmpeg is not None, "FFmpeg module is required for video output"
-                stream = ffmpeg.output(
+                stream = ffmpeg.output(  # type: ignore
                     stream,
                     str(output_path),
                     **encoding_params
@@ -658,11 +658,11 @@ class VideoSteganographyEngine:
             
             # Run ffmpeg with better error handling
             assert ffmpeg is not None, "FFmpeg module is required for compilation and execution"
-            self.logger.debug(f"Running ffmpeg command: {' '.join(ffmpeg.compile(stream))}")
+            self.logger.debug(f"Running ffmpeg command: {' '.join(ffmpeg.compile(stream))}")  # type: ignore
             
             try:
-                ffmpeg.run(stream, overwrite_output=True, capture_stdout=True, capture_stderr=True)
-            except ffmpeg.Error as e:
+                ffmpeg.run(stream, overwrite_output=True, capture_stdout=True, capture_stderr=True)  # type: ignore
+            except ffmpeg.Error as e:  # type: ignore
                 error_output = e.stderr.decode() if e.stderr else "Unknown ffmpeg error"
                 self.logger.error(f"FFmpeg error: {error_output}")
                 raise Exception(f"Video encoding failed: {error_output}")
