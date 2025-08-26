@@ -428,8 +428,8 @@ class ImageAnalyzer:
             try:
                 if hasattr(scipy, 'ndimage') and scipy.ndimage:
                     assert scipy is not None, "scipy not available"
-                    mean_filtered = scipy.ndimage.convolve(gray, kernel)
-                    variance = scipy.ndimage.convolve((gray - mean_filtered) ** 2, kernel)
+                    mean_filtered = scipy.ndimage.convolve(gray, kernel)  # type: ignore
+                    variance = scipy.ndimage.convolve((gray - mean_filtered) ** 2, kernel)  # type: ignore
                     complexity = float(np.mean(variance))
                 else:
                     # Fallback without scipy
@@ -498,8 +498,8 @@ class ImageAnalyzer:
             try:
                 if hasattr(scipy, 'ndimage') and scipy.ndimage:
                     assert scipy is not None, "scipy not available"
-                    grad_x = scipy.ndimage.sobel(gray, axis=1)
-                    grad_y = scipy.ndimage.sobel(gray, axis=0)
+                    grad_x = scipy.ndimage.sobel(gray, axis=1)  # type: ignore
+                    grad_y = scipy.ndimage.sobel(gray, axis=0)  # type: ignore
                     gradient_magnitude = np.sqrt(grad_x**2 + grad_y**2)
                 else:
                     # Simple gradient calculation without scipy
@@ -663,7 +663,7 @@ class ImageAnalyzer:
                 if hasattr(scipy, 'signal') and scipy.signal:
                     # Simple autocorrelation approximation
                     assert scipy is not None, "scipy not available"
-                    autocorr = scipy.signal.correlate2d(gray, gray, mode='same')
+                    autocorr = scipy.signal.correlate2d(gray, gray, mode='same')  # type: ignore
                     predictability = float(np.max(autocorr) / np.mean(autocorr))
                 else:
                     # Fallback: use variance as predictability measure
