@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QGroupBox, QLabel, 
+    QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox, QLabel, 
     QPushButton, QFileDialog, QTextEdit, QTableWidget, QTableWidgetItem,
     QHeaderView, QTabWidget, QWidget, QProgressBar, QMessageBox, QSplitter,
     QListWidget, QListWidgetItem, QFrame
@@ -341,22 +341,166 @@ class MultimediaAnalysisDialog(QDialog):
         return widget
     
     def create_preview_tab(self) -> QWidget:
-        """Create the multimedia preview tab."""
+        """Create the enhanced multimedia preview tab."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
         
-        # Instructions label
-        instructions = QLabel("Select a multimedia file from the list to preview it here.")
-        instructions.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        instructions.setStyleSheet("color: #666; font-style: italic; padding: 10px;")
-        layout.addWidget(instructions)
+        # Create main splitter for preview
+        preview_splitter = QSplitter(Qt.Orientation.Vertical)
+        layout.addWidget(preview_splitter)
+        
+        # Top section - File information panel
+        info_panel = self.create_file_info_panel()
+        preview_splitter.addWidget(info_panel)
+        
+        # Bottom section - Media player and visualization
+        media_panel = self.create_media_panel()
+        preview_splitter.addWidget(media_panel)
+        
+        # Set splitter proportions (info panel smaller, media panel larger)
+        preview_splitter.setSizes([200, 400])
+        
+        return widget
+    
+    def create_file_info_panel(self) -> QWidget:
+        """Create detailed file information panel."""
+        panel = QGroupBox("📁 File Information")
+        layout = QVBoxLayout(panel)
+        
+        # File details in a grid layout
+        info_frame = QFrame()
+        info_frame.setFrameStyle(QFrame.Shape.StyledPanel)
+        info_layout = QGridLayout(info_frame)
+        info_layout.setVerticalSpacing(8)
+        info_layout.setHorizontalSpacing(15)
+        
+        # File info labels (will be populated when file is selected)
+        self.preview_filename_label = QLabel("No file selected")
+        self.preview_filename_label.setStyleSheet("font-weight: bold; color: #333;")
+        self.preview_filename_label.setWordWrap(True)
+        
+        self.preview_filesize_label = QLabel("-")
+        self.preview_filesize_label.setStyleSheet("color: #555;")
+        
+        self.preview_format_label = QLabel("-")
+        self.preview_format_label.setStyleSheet("color: #555;")
+        
+        self.preview_duration_label = QLabel("-")
+        self.preview_duration_label.setStyleSheet("color: #555;")
+        
+        self.preview_resolution_label = QLabel("-")
+        self.preview_resolution_label.setStyleSheet("color: #555;")
+        
+        self.preview_codec_label = QLabel("-")
+        self.preview_codec_label.setStyleSheet("color: #555;")
+        
+        self.preview_bitrate_label = QLabel("-")
+        self.preview_bitrate_label.setStyleSheet("color: #555;")
+        
+        # Add labels to grid
+        row = 0
+        info_layout.addWidget(QLabel("📄 Filename:"), row, 0)
+        info_layout.addWidget(self.preview_filename_label, row, 1)
+        
+        row += 1
+        info_layout.addWidget(QLabel("📏 File Size:"), row, 0)
+        info_layout.addWidget(self.preview_filesize_label, row, 1)
+        
+        row += 1
+        info_layout.addWidget(QLabel("🎭 Format:"), row, 0)
+        info_layout.addWidget(self.preview_format_label, row, 1)
+        
+        row += 1
+        info_layout.addWidget(QLabel("⏱️ Duration:"), row, 0)
+        info_layout.addWidget(self.preview_duration_label, row, 1)
+        
+        row += 1
+        info_layout.addWidget(QLabel("📐 Resolution:"), row, 0)
+        info_layout.addWidget(self.preview_resolution_label, row, 1)
+        
+        row += 1
+        info_layout.addWidget(QLabel("🔧 Codec:"), row, 0)
+        info_layout.addWidget(self.preview_codec_label, row, 1)
+        
+        row += 1
+        info_layout.addWidget(QLabel("📊 Bitrate:"), row, 0)
+        info_layout.addWidget(self.preview_bitrate_label, row, 1)
+        
+        # Make the second column stretch
+        info_layout.setColumnStretch(1, 1)
+        
+        layout.addWidget(info_frame)
+        
+        # Analysis status indicator
+        self.preview_analysis_status = QLabel("ℹ️ Select a file to view analysis data")
+        self.preview_analysis_status.setStyleSheet("""
+            QLabel {
+                padding: 8px;
+                background-color: #f0f0f0;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                color: #666;
+                font-style: italic;
+            }
+        """)
+        layout.addWidget(self.preview_analysis_status)
+        
+        return panel
+    
+    def create_media_panel(self) -> QWidget:
+        """Create media player and visualization panel."""
+        panel = QGroupBox("🎬 Media Preview & Visualization")
+        layout = QVBoxLayout(panel)
+        
+        # Instructions when no file is selected
+        self.preview_instructions = QLabel("Select a multimedia file from the list to preview it here.")
+        self.preview_instructions.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.preview_instructions.setStyleSheet("""
+            QLabel {
+                color: #999;
+                font-style: italic;
+                padding: 40px;
+                font-size: 14px;
+                background-color: #f8f8f8;
+                border: 2px dashed #ddd;
+                border-radius: 8px;
+            }
+        """)
+        layout.addWidget(self.preview_instructions)
         
         # Multimedia player widget
         self.multimedia_player = MultimediaPlayerWidget()
-        self.multimedia_player.setMinimumHeight(400)
+        self.multimedia_player.setMinimumHeight(350)
+        self.multimedia_player.hide()  # Initially hidden
         layout.addWidget(self.multimedia_player)
         
-        return widget
+        # Additional visualization area for audio files
+        self.visualization_frame = QFrame()
+        self.visualization_frame.setFrameStyle(QFrame.Shape.StyledPanel)
+        self.visualization_frame.setMinimumHeight(150)
+        self.visualization_frame.hide()  # Initially hidden
+        
+        viz_layout = QVBoxLayout(self.visualization_frame)
+        
+        # Audio waveform placeholder (could be enhanced with actual waveform generation)
+        self.waveform_label = QLabel("🎵 Audio Waveform Visualization")
+        self.waveform_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.waveform_label.setStyleSheet("""
+            QLabel {
+                background-color: #2c2c2c;
+                color: #ffffff;
+                border: 1px solid #555;
+                border-radius: 4px;
+                padding: 20px;
+                font-size: 16px;
+                font-weight: bold;
+            }
+        """)
+        viz_layout.addWidget(self.waveform_label)
+        
+        layout.addWidget(self.visualization_frame)
+        
+        return panel
     
     def setup_connections(self):
         """Set up signal connections."""
@@ -494,11 +638,177 @@ class MultimediaAnalysisDialog(QDialog):
             file_path_str = current.data(Qt.ItemDataRole.UserRole)
             if file_path_str:
                 file_path = Path(file_path_str)
-                if file_path.exists() and hasattr(self, 'multimedia_player'):
+                if file_path.exists():
+                    # Update file information panel
+                    self.update_file_preview_info(file_path)
+                    
                     # Load the file in the multimedia player
-                    success = self.multimedia_player.load_file(file_path)
-                    if not success:
-                        self.logger.warning(f"Failed to load multimedia file for preview: {file_path.name}")
+                    if hasattr(self, 'multimedia_player'):
+                        success = self.multimedia_player.load_file(file_path)
+                        if success:
+                            # Show media player and hide instructions
+                            self.preview_instructions.hide()
+                            self.multimedia_player.show()
+                            
+                            # Show visualization frame for audio files
+                            if self.analyzer.is_audio_file(file_path):
+                                self.visualization_frame.show()
+                                # Update waveform label with file name
+                                self.waveform_label.setText(f"🎵 Audio Waveform: {file_path.name}")
+                            else:
+                                self.visualization_frame.hide()
+                        else:
+                            self.logger.warning(f"Failed to load multimedia file for preview: {file_path.name}")
+                            # Show error in media panel
+                            self.preview_instructions.setText(f"❌ Failed to load media file:\n{file_path.name}")
+                            self.preview_instructions.show()
+                            self.multimedia_player.hide()
+                            self.visualization_frame.hide()
+        else:
+            # No file selected - reset preview
+            self.clear_file_preview_info()
+            self.preview_instructions.setText("Select a multimedia file from the list to preview it here.")
+            self.preview_instructions.show()
+            self.multimedia_player.hide()
+            self.visualization_frame.hide()
+    
+    def update_file_preview_info(self, file_path: Path):
+        """Update the file preview information panel."""
+        try:
+            # Basic file information
+            file_size = file_path.stat().st_size
+            file_ext = file_path.suffix.lower()
+            
+            # Update labels
+            self.preview_filename_label.setText(file_path.name)
+            self.preview_filesize_label.setText(self.format_file_size(file_size))
+            self.preview_format_label.setText(file_ext.upper())
+            
+            # Determine media type and show appropriate info
+            if self.analyzer.is_video_file(file_path):
+                self.preview_codec_label.setText("Video codec info")
+                self.preview_bitrate_label.setText("Calculating...")
+                self.preview_resolution_label.setText("Detecting...")
+                self.preview_duration_label.setText("Calculating...")
+                
+                # Try to get more detailed info if analysis is available
+                filename = file_path.name
+                if filename in self.analysis_results and 'error' not in self.analysis_results[filename]:
+                    analysis = self.analysis_results[filename]
+                    self.preview_duration_label.setText(analysis.get('duration_formatted', 'Unknown'))
+                    width = analysis.get('width', 0)
+                    height = analysis.get('height', 0)
+                    if width and height:
+                        self.preview_resolution_label.setText(f"{width} × {height}")
+                    else:
+                        self.preview_resolution_label.setText("Unknown")
+                    
+                    fps = analysis.get('fps', 0)
+                    if fps > 0:
+                        self.preview_bitrate_label.setText(f"{fps:.1f} FPS")
+                    else:
+                        self.preview_bitrate_label.setText("Unknown FPS")
+                        
+                    self.preview_codec_label.setText(f"Video ({file_ext.upper()})")
+                else:
+                    self.preview_resolution_label.setText("Analyze for details")
+                    self.preview_duration_label.setText("Analyze for details")
+                    self.preview_bitrate_label.setText("Analyze for details")
+                    self.preview_codec_label.setText(f"Video ({file_ext.upper()})")
+                    
+            elif self.analyzer.is_audio_file(file_path):
+                self.preview_codec_label.setText("Audio codec info")
+                self.preview_bitrate_label.setText("Calculating...")
+                self.preview_resolution_label.setText("N/A (Audio)")
+                self.preview_duration_label.setText("Calculating...")
+                
+                # Try to get more detailed info if analysis is available
+                filename = file_path.name
+                if filename in self.analysis_results and 'error' not in self.analysis_results[filename]:
+                    analysis = self.analysis_results[filename]
+                    self.preview_duration_label.setText(analysis.get('duration_formatted', 'Unknown'))
+                    
+                    sample_rate = analysis.get('sample_rate', 0)
+                    channels = analysis.get('channels', 0)
+                    if sample_rate and channels:
+                        self.preview_bitrate_label.setText(f"{sample_rate:,} Hz, {channels}ch")
+                    else:
+                        self.preview_bitrate_label.setText("Unknown bitrate")
+                        
+                    self.preview_codec_label.setText(f"Audio ({file_ext.upper()})")
+                else:
+                    self.preview_duration_label.setText("Analyze for details")
+                    self.preview_bitrate_label.setText("Analyze for details")
+                    self.preview_codec_label.setText(f"Audio ({file_ext.upper()})")
+            
+            # Update analysis status
+            filename = file_path.name
+            if filename in self.analysis_results:
+                if 'error' in self.analysis_results[filename]:
+                    self.preview_analysis_status.setText(f"❌ Analysis failed: {self.analysis_results[filename]['error']}")
+                    self.preview_analysis_status.setStyleSheet("""
+                        QLabel {
+                            padding: 8px;
+                            background-color: #ffe6e6;
+                            border: 1px solid #ffcccc;
+                            border-radius: 4px;
+                            color: #cc0000;
+                            font-style: italic;
+                        }
+                    """)
+                else:
+                    analysis = self.analysis_results[filename]
+                    capacity = self.format_file_size(analysis.get('capacity_bytes', 0))
+                    suitability = analysis.get('suitability_score', 0)
+                    self.preview_analysis_status.setText(f"✅ Analyzed - Capacity: {capacity}, Suitability: {suitability}/10")
+                    self.preview_analysis_status.setStyleSheet("""
+                        QLabel {
+                            padding: 8px;
+                            background-color: #e6ffe6;
+                            border: 1px solid #ccffcc;
+                            border-radius: 4px;
+                            color: #006600;
+                            font-style: italic;
+                        }
+                    """)
+            else:
+                self.preview_analysis_status.setText("⏳ Not analyzed yet - Click 'Analyze Files' to get detailed information")
+                self.preview_analysis_status.setStyleSheet("""
+                    QLabel {
+                        padding: 8px;
+                        background-color: #fff3e0;
+                        border: 1px solid #ffcc80;
+                        border-radius: 4px;
+                        color: #e65100;
+                        font-style: italic;
+                    }
+                """)
+                
+        except Exception as e:
+            self.logger.error(f"Failed to update file preview info: {e}")
+            self.clear_file_preview_info()
+            self.preview_analysis_status.setText(f"❌ Error loading file information: {str(e)}")
+    
+    def clear_file_preview_info(self):
+        """Clear the file preview information."""
+        self.preview_filename_label.setText("No file selected")
+        self.preview_filesize_label.setText("-")
+        self.preview_format_label.setText("-")
+        self.preview_duration_label.setText("-")
+        self.preview_resolution_label.setText("-")
+        self.preview_codec_label.setText("-")
+        self.preview_bitrate_label.setText("-")
+        self.preview_analysis_status.setText("ℹ️ Select a file to view analysis data")
+        self.preview_analysis_status.setStyleSheet("""
+            QLabel {
+                padding: 8px;
+                background-color: #f0f0f0;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                color: #666;
+                font-style: italic;
+            }
+        """)
     
     def start_analysis(self):
         """Start the analysis process."""
