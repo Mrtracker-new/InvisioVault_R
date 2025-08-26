@@ -421,11 +421,13 @@ class ImageAnalyzer:
             
             # Calculate local variance using a sliding window
             kernel_size = 5
+            assert np is not None, "numpy not available"
             kernel = np.ones((kernel_size, kernel_size)) / (kernel_size ** 2)
             
             # Mean filter and variance calculation
             try:
                 if hasattr(scipy, 'ndimage') and scipy.ndimage:
+                    assert scipy is not None, "scipy not available"
                     mean_filtered = scipy.ndimage.convolve(gray, kernel)
                     variance = scipy.ndimage.convolve((gray - mean_filtered) ** 2, kernel)
                     complexity = float(np.mean(variance))
@@ -491,8 +493,10 @@ class ImageAnalyzer:
                 gray = img_array
             
             # Calculate gradients
+            assert np is not None, "numpy not available"
             try:
                 if hasattr(scipy, 'ndimage') and scipy.ndimage:
+                    assert scipy is not None, "scipy not available"
                     grad_x = scipy.ndimage.sobel(gray, axis=1)
                     grad_y = scipy.ndimage.sobel(gray, axis=0)
                     gradient_magnitude = np.sqrt(grad_x**2 + grad_y**2)
@@ -525,6 +529,7 @@ class ImageAnalyzer:
         """Detect potential compression artifacts."""
         try:
             # Simple artifact detection based on block patterns
+            assert np is not None, "numpy not available"
             if len(img_array.shape) == 3:
                 gray = np.mean(img_array, axis=2)
             else:
@@ -582,6 +587,7 @@ class ImageAnalyzer:
                 lsb_plane = channel & 1
                 
                 # LSB statistics
+                assert np is not None, "numpy not available"
                 lsb_entropy = self._calculate_entropy(lsb_plane.astype(np.uint8) * 255)['overall']
                 lsb_uniformity = np.abs(np.mean(lsb_plane) - 0.5)  # Should be ~0.5 for random data
                 
@@ -601,6 +607,7 @@ class ImageAnalyzer:
             results['channel_analysis'] = channel_results
             
             # Overall LSB assessment
+            assert np is not None, "numpy not available"
             avg_entropy = np.mean([ch['lsb_entropy'] for ch in channel_results.values()])
             avg_uniformity = np.mean([ch['lsb_uniformity'] for ch in channel_results.values()])
             avg_pattern_score = np.mean([ch['pattern_anomaly_score'] for ch in channel_results.values()])
@@ -622,6 +629,7 @@ class ImageAnalyzer:
         """Detect anomalous patterns in LSB plane."""
         try:
             # Chi-square test for randomness
+            assert np is not None, "numpy not available"
             ones = np.sum(lsb_plane)
             zeros = lsb_plane.size - ones
             expected = lsb_plane.size / 2
@@ -643,6 +651,7 @@ class ImageAnalyzer:
             security_metrics = {}
             
             # Predictability analysis
+            assert np is not None, "numpy not available"
             if len(img_array.shape) == 3:
                 gray = np.mean(img_array, axis=2)
             else:
@@ -652,6 +661,7 @@ class ImageAnalyzer:
             try:
                 if hasattr(scipy, 'signal') and scipy.signal:
                     # Simple autocorrelation approximation
+                    assert scipy is not None, "scipy not available"
                     autocorr = scipy.signal.correlate2d(gray, gray, mode='same')
                     predictability = float(np.max(autocorr) / np.mean(autocorr))
                 else:
