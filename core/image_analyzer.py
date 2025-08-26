@@ -486,6 +486,7 @@ class ImageAnalyzer:
     def _calculate_edge_density(self, img_array) -> Dict[str, Any]:
         """Calculate edge density using gradient magnitude."""
         try:
+            assert np is not None, "numpy not available"
             if len(img_array.shape) == 3:
                 # Convert to grayscale
                 gray = np.mean(img_array, axis=2)
