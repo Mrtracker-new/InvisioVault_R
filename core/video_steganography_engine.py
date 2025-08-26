@@ -19,12 +19,15 @@ import numpy as np
 # Suppress warnings
 warnings.filterwarnings('ignore')
 
+# Type imports for optional dependencies
 try:
     import cv2
-    import ffmpeg
+    import ffmpeg  # type: ignore # ffmpeg-python package
 except ImportError as e:
     print(f"Warning: Video dependencies not fully installed: {e}")
     print("Please install: pip install opencv-python ffmpeg-python")
+    cv2 = None  # type: ignore
+    ffmpeg = None  # type: ignore
 
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
@@ -44,6 +47,11 @@ class VideoSteganographyEngine:
         self.security_level = security_level
         self.encryption_engine = EncryptionEngine(security_level)
         self.analyzer = MultimediaAnalyzer()
+        
+        # Check if video dependencies are available
+        self.dependencies_available = cv2 is not None and ffmpeg is not None
+        if not self.dependencies_available:
+            self.logger.warning("Video dependencies not available. Install with: pip install opencv-python ffmpeg-python")
         
         # Video processing parameters
         self.frame_skip = 10  # Use every 10th frame to avoid detection
@@ -66,6 +74,10 @@ class VideoSteganographyEngine:
         Returns:
             Success status
         """
+        if not self.dependencies_available:
+            self.logger.error("Video dependencies not available. Install with: pip install opencv-python ffmpeg-python")
+            return False
+            
         temp_dir = None
         try:
             self.logger.info(f"Starting video steganography: {video_path.name}")
@@ -145,6 +157,10 @@ class VideoSteganographyEngine:
         Returns:
             Extracted data or None if failed
         """
+        if not self.dependencies_available:
+            self.logger.error("Video dependencies not available. Install with: pip install opencv-python ffmpeg-python")
+            return None
+            
         temp_dir = None
         try:
             self.logger.info(f"Starting video data extraction: {video_path.name}")
@@ -221,6 +237,9 @@ class VideoSteganographyEngine:
     def _extract_frames(self, video_path: Path, output_dir: Path) -> List[Path]:
         """Extract video frames to temporary directory."""
         try:
+            # Ensure cv2 is available (should be checked by dependencies_available)
+            assert cv2 is not None, "OpenCV not available"
+            
             # Create frames output directory
             frames_dir = output_dir / "frames"
             frames_dir.mkdir(exist_ok=True)
@@ -265,6 +284,7 @@ class VideoSteganographyEngine:
         
         for frame_file in frame_files[:5]:  # Check first 5 frames
             try:
+                assert cv2 is not None, "OpenCV not available"
                 img = cv2.imread(str(frame_file))
                 if img is not None:
                     height, width, channels = img.shape
@@ -302,6 +322,7 @@ class VideoSteganographyEngine:
                     break
                 
                 # Load frame
+                assert cv2 is not None, "OpenCV not available"
                 img = cv2.imread(str(frame_file))
                 if img is None:
                     self.logger.warning(f"Could not load frame: {frame_file}")
@@ -334,7 +355,7 @@ class VideoSteganographyEngine:
                 for i, pos in enumerate(positions):
                     bit_to_hide = data_bits[bits_hidden + i]
                     original_value = flat_img[pos]
-                    flat_img[pos] = (flat_img[pos] & 0xFE) | bit_to_hide
+                    flat_img[pos] = (int(flat_img[pos]) & 0xFE) | int(bit_to_hide)
                     
                     # Debug first few modifications
                     if i < 5:
@@ -400,6 +421,7 @@ class VideoSteganographyEngine:
                 if len(header_bits) >= header_bits_needed:
                     break
                     
+                assert cv2 is not None, "OpenCV not available"
                 img = cv2.imread(str(frame_file))
                 if img is None:
                     continue
@@ -423,7 +445,7 @@ class VideoSteganographyEngine:
                 flat_img = img.flatten()
                 for pos in positions:
                     if pos < len(flat_img):
-                        header_bits.append(flat_img[pos] & 1)
+                        header_bits.append(int(flat_img[pos]) & 1)
             
             if len(header_bits) < header_bits_needed:
                 self.logger.error(f"Not enough header bits extracted: {len(header_bits)} < {header_bits_needed}")
@@ -464,6 +486,7 @@ class VideoSteganographyEngine:
                 if bits_extracted >= total_bits_needed:
                     break
                 
+                assert cv2 is not None, "OpenCV not available"
                 img = cv2.imread(str(frame_file))
                 if img is None:
                     continue
@@ -494,7 +517,7 @@ class VideoSteganographyEngine:
                 frame_bits = []
                 for pos in positions:
                     if pos < len(flat_img):
-                        frame_bits.append(flat_img[pos] & 1)
+                        frame_bits.append(int(flat_img[pos]) & 1)
                 
                 all_bits.extend(frame_bits)
                 bits_extracted += len(frame_bits)
@@ -538,6 +561,7 @@ class VideoSteganographyEngine:
     def _extract_header_from_frame(self, frame_file: Path, rng: np.random.RandomState) -> Optional[bytes]:
         """Extract header data from first frame."""
         try:
+            assert cv2 is not None, "OpenCV not available"
             img = cv2.imread(str(frame_file))
             if img is None:
                 return None
@@ -555,7 +579,7 @@ class VideoSteganographyEngine:
             flat_img = img.flatten()
             header_bits = []
             for pos in positions:
-                header_bits.append(flat_img[pos] & 1)
+                header_bits.append(int(flat_img[pos]) & 1)
             
             # Convert to bytes
             bit_array = np.array(header_bits, dtype=np.uint8)
@@ -570,6 +594,9 @@ class VideoSteganographyEngine:
                          output_path: Path, quality: int) -> bool:
         """Reassemble video from modified frames."""
         try:
+            # Ensure ffmpeg is available (should be checked by dependencies_available)
+            assert ffmpeg is not None, "ffmpeg not available"
+            
             frames_path = frames_dir / "frames"
             
             # Get original video properties
@@ -733,6 +760,7 @@ class VideoSteganographyEngine:
         """Verify that a frame was written correctly to disk."""
         try:
             # Read the frame back from disk
+            assert cv2 is not None, "OpenCV not available"
             written_img = cv2.imread(str(frame_path))
             if written_img is None:
                 self.logger.error(f"Could not read back written frame: {frame_path}")

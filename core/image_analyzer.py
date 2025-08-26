@@ -180,7 +180,8 @@ class ImageAnalyzer:
                 results['error'] = "PIL and numpy required for full analysis"
                 return results
             
-            # Load and prepare image
+            # Load and prepare image  
+            assert Image is not None, "PIL not available"
             with Image.open(path) as img:
                 # Basic image properties
                 results['image_properties'] = self._analyze_image_properties(img)
@@ -270,6 +271,7 @@ class ImageAnalyzer:
                 max_size = 1024
                 ratio = min(max_size / width, max_size / height)
                 new_size = (int(width * ratio), int(height * ratio))
+                assert Image is not None, "PIL not available"
                 img = img.resize(new_size, Image.Resampling.LANCZOS)
         elif analysis_level == AnalysisLevel.THOROUGH:
             # Even for thorough analysis, optimize very large images to prevent UI freezing
@@ -278,9 +280,11 @@ class ImageAnalyzer:
                 max_size = 3072  # Larger than balanced but still manageable
                 ratio = min(max_size / width, max_size / height)
                 new_size = (int(width * ratio), int(height * ratio))
+                assert Image is not None, "PIL not available"
                 img = img.resize(new_size, Image.Resampling.LANCZOS)
                 self.logger.info(f"Resized to {new_size[0]}x{new_size[1]} for better performance")
         
+        assert np is not None, "numpy not available"
         return np.array(img)
     
     def _analyze_capacity(self, img: Any, img_array: Any) -> Dict[str, Any]:
@@ -347,6 +351,7 @@ class ImageAnalyzer:
     def _calculate_entropy(self, img_array) -> Dict[str, Any]:
         """Calculate Shannon entropy for image channels."""
         try:
+            assert np is not None, "numpy not available"
             if len(img_array.shape) == 2:
                 # Grayscale
                 hist, _ = np.histogram(img_array, bins=256, range=(0, 256))
@@ -381,6 +386,7 @@ class ImageAnalyzer:
     def _calculate_noise_level(self, img_array) -> Dict[str, Any]:
         """Calculate noise level using standard deviation."""
         try:
+            assert np is not None, "numpy not available"
             if len(img_array.shape) == 2:
                 # Grayscale
                 noise = float(np.std(img_array))
@@ -408,6 +414,7 @@ class ImageAnalyzer:
         try:
             if len(img_array.shape) == 3:
                 # Convert to grayscale for texture analysis
+                assert np is not None, "numpy not available"
                 gray = np.mean(img_array, axis=2)
             else:
                 gray = img_array
@@ -441,6 +448,7 @@ class ImageAnalyzer:
     def _analyze_color_distribution(self, img_array) -> Dict[str, Any]:
         """Analyze color distribution and uniformity."""
         try:
+            assert np is not None, "numpy not available"
             if len(img_array.shape) == 2:
                 # Grayscale
                 unique_values = len(np.unique(img_array))
@@ -536,7 +544,7 @@ class ImageAnalyzer:
                 variance_std = np.std(block_variance)
                 
                 # Artifacts likely if block variances are very uniform
-                artifact_likelihood = max(0.0, 1.0 - (variance_std / avg_block_variance)) if avg_block_variance > 0 else 0.0
+                artifact_likelihood = max(0.0, float(1.0 - (variance_std / avg_block_variance))) if avg_block_variance > 0 else 0.0
                 block_variance_uniformity = float(variance_std / avg_block_variance) if avg_block_variance > 0 else 0
             else:
                 artifact_likelihood = 0.0

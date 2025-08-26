@@ -83,13 +83,20 @@ def _load_ffmpeg():
     global _ffmpeg, _ffmpeg_loaded
     if not _ffmpeg_loaded:
         try:
-            import ffmpeg
-            _ffmpeg = ffmpeg
+            # Try to import ffmpeg-python package
+            import ffmpeg as ffmpeg_module
+            _ffmpeg = ffmpeg_module
             _ffmpeg_loaded = True
         except ImportError as e:
-            raise ImportError(
+            # Set to None if not available - this is optional for future use
+            _ffmpeg = None
+            _ffmpeg_loaded = True
+            # Log warning instead of raising error since it's not currently used
+            import warnings
+            warnings.warn(
                 f"FFmpeg not available: {e}. "
-                "Please install: pip install ffmpeg-python"
+                "Install with: pip install ffmpeg-python (optional for future features)",
+                ImportWarning
             )
     return _ffmpeg
 
@@ -138,12 +145,14 @@ class MultimediaAnalyzer:
             
             # Lazy load OpenCV for video analysis
             cv2 = _load_cv2()
+            assert cv2 is not None, "OpenCV module is required for video analysis"
             cap = cv2.VideoCapture(str(video_path))
             
             if not cap.isOpened():
                 raise Exception("Failed to open video file")
             
             # Get video properties
+            assert cv2 is not None, "OpenCV module is required for video properties"
             frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
             fps = cap.get(cv2.CAP_PROP_FPS)
             width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -226,6 +235,7 @@ class MultimediaAnalyzer:
             
             # Lazy load pydub for audio analysis
             AudioSegment = _load_pydub()
+            assert AudioSegment is not None, "Pydub AudioSegment is required for audio analysis"
             audio = AudioSegment.from_file(str(audio_path))
             
             # Get basic properties
@@ -292,6 +302,7 @@ class MultimediaAnalyzer:
         try:
             # Get cv2 reference from lazy loading
             cv2 = _load_cv2()
+            assert cv2 is not None, "OpenCV module is required for video quality analysis"
             
             # Sample frames at different points
             sample_points = [0.1, 0.3, 0.5, 0.7, 0.9]
@@ -301,11 +312,13 @@ class MultimediaAnalyzer:
             
             for point in sample_points:
                 frame_idx = int(frame_count * point)
+                assert cv2 is not None, "OpenCV module is required for frame positioning"
                 cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
                 
                 ret, frame = cap.read()
                 if ret:
                     # Convert to grayscale for analysis
+                    assert cv2 is not None, "OpenCV module is required for color conversion"
                     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                     
                     # Calculate metrics
@@ -313,6 +326,7 @@ class MultimediaAnalyzer:
                     contrast = np.std(gray)
                     
                     # Estimate noise using Laplacian variance
+                    assert cv2 is not None, "OpenCV module is required for Laplacian calculation"
                     noise = cv2.Laplacian(gray, cv2.CV_64F).var()
                     
                     brightness_values.append(brightness)
@@ -320,11 +334,11 @@ class MultimediaAnalyzer:
                     noise_values.append(noise)
             
             return {
-                'avg_brightness': np.mean(brightness_values),
-                'avg_contrast': np.mean(contrast_values),
-                'avg_noise': np.mean(noise_values),
-                'brightness_std': np.std(brightness_values),
-                'contrast_std': np.std(contrast_values)
+                'avg_brightness': float(np.mean(brightness_values)),
+                'avg_contrast': float(np.mean(contrast_values)),
+                'avg_noise': float(np.mean(noise_values)),
+                'brightness_std': float(np.std(brightness_values)),
+                'contrast_std': float(np.std(contrast_values))
             }
             
         except Exception as e:
@@ -342,19 +356,23 @@ class MultimediaAnalyzer:
         try:
             # Get librosa reference from lazy loading
             librosa = _load_librosa()
+            assert librosa is not None, "Librosa module is required for audio quality analysis"
             
             # Load audio with librosa for analysis
             y, sr = librosa.load(str(audio_path), sr=sample_rate, duration=30.0)  # Analyze first 30 seconds
             
             # Calculate spectral features
+            assert librosa is not None, "Librosa module is required for spectral features"
             spectral_centroid = np.mean(librosa.feature.spectral_centroid(y=y, sr=sr))
             spectral_bandwidth = np.mean(librosa.feature.spectral_bandwidth(y=y, sr=sr))
             spectral_rolloff = np.mean(librosa.feature.spectral_rolloff(y=y, sr=sr))
             
             # Calculate zero crossing rate
+            assert librosa is not None, "Librosa module is required for zero crossing rate"
             zcr = np.mean(librosa.feature.zero_crossing_rate(y))
             
             # Calculate RMS energy
+            assert librosa is not None, "Librosa module is required for RMS calculation"
             rms = np.mean(librosa.feature.rms(y=y))
             
             # Calculate dynamic range

@@ -10,7 +10,7 @@ import struct
 import hashlib
 import secrets
 from pathlib import Path
-from typing import Tuple, Optional, Dict, Any, List
+from typing import Tuple, Optional, Dict, Any, List, Union
 import warnings
 
 import numpy as np
@@ -264,7 +264,7 @@ class AudioSteganographyEngine:
             self.logger.error(f"Failed to prepare data: {e}")
             raise
     
-    def _load_audio_file(self, audio_path: Path) -> Tuple[np.ndarray, int]:
+    def _load_audio_file(self, audio_path: Path) -> Tuple[np.ndarray, Union[int, float]]:
         """Load audio file and return audio data and sample rate."""
         try:
             # Load with librosa for consistent format
@@ -287,7 +287,7 @@ class AudioSteganographyEngine:
             raise
     
     def _hide_data_lsb(self, audio_data: np.ndarray, data: bytes, 
-                       password: str, sample_rate: int) -> Optional[np.ndarray]:
+                       password: str, sample_rate: Union[int, float]) -> Optional[np.ndarray]:
         """Hide data using LSB (Least Significant Bit) technique."""
         try:
             # Generate deterministic random sequence from password
@@ -354,7 +354,7 @@ class AudioSteganographyEngine:
             return None
     
     def _hide_data_spread_spectrum(self, audio_data: np.ndarray, data: bytes,
-                                  password: str, sample_rate: int) -> Optional[np.ndarray]:
+                                  password: str, sample_rate: Union[int, float]) -> Optional[np.ndarray]:
         """Hide data using spread spectrum technique."""
         try:
             # Generate spreading sequence from password
@@ -410,7 +410,7 @@ class AudioSteganographyEngine:
             return None
     
     def _hide_data_phase_coding(self, audio_data: np.ndarray, data: bytes,
-                               password: str, sample_rate: int) -> Optional[np.ndarray]:
+                               password: str, sample_rate: Union[int, float]) -> Optional[np.ndarray]:
         """Hide data using phase coding technique."""
         try:
             # Convert data to bit array
@@ -473,7 +473,7 @@ class AudioSteganographyEngine:
             return None
     
     def _extract_data_lsb(self, audio_data: np.ndarray, password: str, 
-                          sample_rate: int) -> Optional[bytes]:
+                          sample_rate: Union[int, float]) -> Optional[bytes]:
         """Extract data using LSB technique - exactly mirrors hiding process."""
         try:
             self.logger.info(f"Starting LSB extraction from audio file")
@@ -642,7 +642,7 @@ class AudioSteganographyEngine:
             return None
     
     def _extract_data_spread_spectrum(self, audio_data: np.ndarray, password: str,
-                                     sample_rate: int) -> Optional[bytes]:
+                                     sample_rate: Union[int, float]) -> Optional[bytes]:
         """Extract data using spread spectrum technique."""
         try:
             self.logger.info("Starting spread spectrum extraction")
@@ -800,7 +800,7 @@ class AudioSteganographyEngine:
             return None
     
     def _extract_data_phase_coding(self, audio_data: np.ndarray, password: str,
-                                  sample_rate: int) -> Optional[bytes]:
+                                  sample_rate: Union[int, float]) -> Optional[bytes]:
         """Extract data using phase coding technique."""
         try:
             self.logger.info("Starting phase coding extraction")
@@ -993,7 +993,7 @@ class AudioSteganographyEngine:
             self.logger.error(f"Traceback: {traceback.format_exc()}")
             return None
     
-    def _save_audio_file(self, audio_data: np.ndarray, sample_rate: int,
+    def _save_audio_file(self, audio_data: np.ndarray, sample_rate: Union[int, float],
                         output_path: Path, quality: str) -> bool:
         """Save modified audio to file."""
         try:
