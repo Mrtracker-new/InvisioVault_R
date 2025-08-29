@@ -172,7 +172,9 @@ class MultimediaHideDialog(QDialog):
                 self.logger = Logger()
                 self.config = ConfigManager()
                 self.error_handler = ErrorHandler()
-                self.analyzer = MultimediaAnalyzer()
+                # LAZY LOADING: Don't initialize analyzer until needed
+                self.analyzer = None
+                self._analyzer_initializing = False
             
             # Dialog state
             self.carrier_file = None
@@ -180,14 +182,17 @@ class MultimediaHideDialog(QDialog):
             self.analysis_worker = None
             self.hide_worker = None
             
-            # Initialize UI
+            # Initialize UI (lightweight components only)
             with profiler.timer("multimedia_hide_dialog_ui_init"):
                 self.init_ui()
             
             with profiler.timer("multimedia_hide_dialog_connections"):
                 self.setup_connections()
             
-            self.logger.info("Multimedia hide dialog initialized")
+            # Show loading indicator initially
+            self._show_initialization_status("Dialog ready - analyzer will load when needed")
+            
+            self.logger.info("Multimedia hide dialog initialized (with lazy loading)")
     
     def init_ui(self):
         """Initialize the user interface."""
@@ -534,7 +539,11 @@ class MultimediaHideDialog(QDialog):
         """Handle carrier file drop."""
         if file_paths:
             carrier_path = Path(file_paths[0])
-            if self.analyzer.is_multimedia_file(carrier_path):
+            
+            # Initialize analyzer if needed
+            self._ensure_analyzer_initialized()
+            
+            if self.analyzer and self.analyzer.is_multimedia_file(carrier_path):
                 # Check if it's a lossy audio format and warn (same as browse button)
                 if self.analyzer.is_audio_file(carrier_path) and self._is_lossy_audio(carrier_path):
                     reply = QMessageBox.warning(
@@ -593,7 +602,11 @@ class MultimediaHideDialog(QDialog):
         
         if file_path:
             carrier_path = Path(file_path)
-            if self.analyzer.is_multimedia_file(carrier_path):
+            
+            # Initialize analyzer if needed
+            self._ensure_analyzer_initialized()
+            
+            if self.analyzer and self.analyzer.is_multimedia_file(carrier_path):
                 # Check if it's a lossy audio format and warn
                 if self.analyzer.is_audio_file(carrier_path) and self._is_lossy_audio(carrier_path):
                     reply = QMessageBox.warning(
@@ -637,7 +650,7 @@ class MultimediaHideDialog(QDialog):
             suggested_path = self.carrier_file.parent / suggested_name
             
             # Determine if this is audio or video
-            is_audio = self.analyzer.is_audio_file(self.carrier_file)
+            is_audio = self.analyzer and self.analyzer.is_audio_file(self.carrier_file)
             
             if is_audio:
                 # For audio files, show format warning and recommendations
@@ -675,6 +688,9 @@ class MultimediaHideDialog(QDialog):
             suggested_name = file_path.stem + "_hidden" + file_path.suffix
             suggested_path = file_path.parent / suggested_name
             self.output_path_input.setText(str(suggested_path))
+        
+        # Ensure analyzer is initialized when first file is selected
+        self._ensure_analyzer_initialized()
         
         # Don't start analysis automatically - make it on-demand for better performance
         # User can trigger analysis manually if needed
@@ -835,7 +851,10 @@ class MultimediaHideDialog(QDialog):
             self.video_quality_label.setVisible(False)
             return
         
-        # Determine file type
+        # Determine file type (with analyzer safety check)
+        if not self.analyzer:
+            return  # Cannot determine file type without analyzer
+            
         is_video = self.analyzer.is_video_file(self.carrier_file)
         is_audio = self.analyzer.is_audio_file(self.carrier_file)
         
@@ -938,6 +957,10 @@ class MultimediaHideDialog(QDialog):
                     return
             
             # Determine media type and settings
+            if not self.analyzer:
+                QMessageBox.warning(self, "Error", "Multimedia analyzer not available.")
+                return
+                
             media_type = 'video' if self.analyzer.is_video_file(self.carrier_file) else 'audio'
             
             # Select the appropriate technique based on media type
@@ -1064,6 +1087,39 @@ class MultimediaHideDialog(QDialog):
                 return f"{size_float:.1f} {unit}"
             size_float /= 1024
         return f"{size_float:.1f} TB"
+    
+    def _ensure_analyzer_initialized(self):
+        """Ensure multimedia analyzer is initialized (lazy loading)."""
+        if self.analyzer is None and not self._analyzer_initializing:
+            self._analyzer_initializing = True
+            self._show_initialization_status("Loading multimedia analyzer...")
+            
+            try:
+                profiler = PerformanceProfiler()
+                with profiler.timer("multimedia_analyzer_lazy_init"):
+                    self.analyzer = MultimediaAnalyzer()
+                
+                self._show_initialization_status("Multimedia analyzer ready")
+                self.logger.info("Multimedia analyzer initialized via lazy loading")
+                
+            except Exception as e:
+                self.logger.error(f"Failed to initialize multimedia analyzer: {e}")
+                self._show_initialization_status(f"Analyzer initialization failed: {e}")
+                QMessageBox.warning(
+                    self, "Initialization Error", 
+                    f"Failed to initialize multimedia analyzer:\n{e}\n\n"
+                    "Some features may not be available."
+                )
+            finally:
+                self._analyzer_initializing = False
+    
+    def _show_initialization_status(self, message: str):
+        """Show initialization status in the analysis text area."""
+        if hasattr(self, 'analysis_text'):
+            current_text = self.analysis_text.toPlainText()
+            if "Analyzing multimedia file..." not in current_text:
+                self.analysis_text.setPlainText(f"🔧 {message}")
+                self.analysis_text.repaint()  # Force immediate update
     
     def closeEvent(self, event):
         """Handle dialog close event."""
