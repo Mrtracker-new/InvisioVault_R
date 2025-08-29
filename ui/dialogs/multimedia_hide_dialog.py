@@ -751,12 +751,28 @@ class MultimediaHideDialog(QDialog):
         if not self.carrier_file:
             return
         
+        # Prevent multiple analysis threads - disable button during analysis
+        if self.analysis_worker and self.analysis_worker.isRunning():
+            self.logger.warning("Analysis already in progress, ignoring request")
+            return
+        
+        # Clean up any previous worker
+        if self.analysis_worker:
+            self.analysis_worker.quit()
+            self.analysis_worker.wait()
+            self.analysis_worker = None
+        
+        # Disable analyze button to prevent double-clicking
+        self.analyze_button.setEnabled(False)
+        self.analyze_button.setText("📊 Analyzing...")
+        
         self.analysis_text.setPlainText("Analyzing multimedia file...")
         
         # Start analysis worker
         self.analysis_worker = MultimediaAnalysisWorker(self.carrier_file, self.analyzer)
         self.analysis_worker.analysis_completed.connect(self.on_analysis_completed)
         self.analysis_worker.analysis_failed.connect(self.on_analysis_failed)
+        self.analysis_worker.finished.connect(self.on_analysis_finished)  # Re-enable button when done
         self.analysis_worker.start()
     
     def on_analysis_completed(self, analysis):
@@ -804,6 +820,12 @@ class MultimediaHideDialog(QDialog):
         """Handle failed analysis."""
         self.analysis_text.setPlainText(f"Analysis failed: {error_msg}")
         self.current_analysis = None
+    
+    def on_analysis_finished(self):
+        """Handle analysis worker finished (success or failure)."""
+        # Re-enable the analyze button and restore original text
+        self.analyze_button.setEnabled(True)
+        self.analyze_button.setText("📊 Analyze File")
     
     def update_capacity_info(self):
         """Update capacity information display."""
@@ -1127,13 +1149,23 @@ class MultimediaHideDialog(QDialog):
     
     def closeEvent(self, event):
         """Handle dialog close event."""
-        # Stop any running workers
+        self.logger.info("Multimedia hide dialog closing - stopping worker threads")
+        
+        # Stop any running workers gracefully
         if self.analysis_worker and self.analysis_worker.isRunning():
-            self.analysis_worker.terminate()
-            self.analysis_worker.wait()
+            self.logger.info("Stopping analysis worker thread")
+            self.analysis_worker.quit()
+            if not self.analysis_worker.wait(3000):  # Wait up to 3 seconds
+                self.logger.warning("Analysis worker didn't stop gracefully, terminating")
+                self.analysis_worker.terminate()
+                self.analysis_worker.wait()
         
         if self.hide_worker and self.hide_worker.isRunning():
-            self.hide_worker.terminate()
-            self.hide_worker.wait()
+            self.logger.info("Stopping hide worker thread")
+            self.hide_worker.quit()
+            if not self.hide_worker.wait(3000):  # Wait up to 3 seconds
+                self.logger.warning("Hide worker didn't stop gracefully, terminating")
+                self.hide_worker.terminate()
+                self.hide_worker.wait()
         
         super().closeEvent(event)

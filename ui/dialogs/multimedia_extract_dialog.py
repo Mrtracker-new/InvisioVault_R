@@ -634,9 +634,15 @@ class MultimediaExtractDialog(QDialog):
     
     def closeEvent(self, event):
         """Handle dialog close event."""
-        # Stop any running workers
+        self.logger.info("Multimedia extract dialog closing - stopping worker threads")
+        
+        # Stop any running workers gracefully
         if self.extract_worker and self.extract_worker.isRunning():
-            self.extract_worker.terminate()
-            self.extract_worker.wait()
+            self.logger.info("Stopping extract worker thread")
+            self.extract_worker.quit()
+            if not self.extract_worker.wait(3000):  # Wait up to 3 seconds
+                self.logger.warning("Extract worker didn't stop gracefully, terminating")
+                self.extract_worker.terminate()
+                self.extract_worker.wait()
         
         super().closeEvent(event)
