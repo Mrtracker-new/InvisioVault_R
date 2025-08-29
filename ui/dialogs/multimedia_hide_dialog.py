@@ -281,7 +281,7 @@ class MultimediaHideDialog(QDialog):
             file_types=['.mp4', '.avi', '.mkv', '.mov', '.mp3', '.wav', '.flac', '.aac'],
             show_browse_button=False
         )
-        self.carrier_drop_zone.setMinimumHeight(180)
+        self.carrier_drop_zone.setMinimumHeight(140)
         self.carrier_drop_zone.files_dropped.connect(self.on_carrier_files_dropped)
         carrier_layout.addWidget(self.carrier_drop_zone)
         
@@ -306,7 +306,7 @@ class MultimediaHideDialog(QDialog):
             title="Drop files to hide here",
             show_browse_button=False
         )
-        self.files_drop_zone.setMinimumHeight(180)
+        self.files_drop_zone.setMinimumHeight(140)
         self.files_drop_zone.files_dropped.connect(self.on_files_to_hide_dropped)
         files_layout.addWidget(self.files_drop_zone)
         

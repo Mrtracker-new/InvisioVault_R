@@ -48,7 +48,9 @@ class FileDropZone(QWidget):
         # Drop area
         self.drop_area = QLabel()
         self.drop_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.drop_area.setMinimumHeight(160)
+        # Adjust minimum height based on whether browse button is shown
+        min_height = 160 if self.show_browse_button else 120
+        self.drop_area.setMinimumHeight(min_height)
         self.drop_area.setWordWrap(True)
         self.update_drop_area_style()
         layout.addWidget(self.drop_area)
@@ -132,7 +134,11 @@ class FileDropZone(QWidget):
             lines = []
             lines.append(f"📁 {self.title}")
             lines.append("")
-            lines.append("Drag and drop files here or click Browse")
+            # Show appropriate text based on browse button availability
+            if self.show_browse_button:
+                lines.append("Drag and drop files here or click Browse")
+            else:
+                lines.append("Drag and drop files here")
             
             if self.file_types:
                 lines.append("")
@@ -311,7 +317,11 @@ class FileDropZone(QWidget):
             lines = []
             lines.append(f"📁 {count_text}")
             lines.append("")
-            lines.append("Drop more files or click Browse")
+            # Show appropriate text based on browse button availability
+            if self.show_browse_button:
+                lines.append("Drop more files or click Browse")
+            else:
+                lines.append("Drop more files here")
             
             # Apply similar styling but with different content
             style = """
