@@ -255,9 +255,10 @@ class MultimediaExtractDialog(QDialog):
         group = QGroupBox("Multimedia File Selection")
         layout = QVBoxLayout(group)
         
-        # Drop zone
+        # Drop zone without internal browse button
         self.file_drop_zone = FileDropZone(
-            "Drop multimedia file here\n(Video: MP4, AVI, MKV, MOV)\n(Audio: MP3, WAV, FLAC, AAC)"
+            title="Drop multimedia file here\n(Video: MP4, AVI, MKV, MOV)\n(Audio: MP3, WAV, FLAC, AAC)",
+            show_browse_button=False
         )
         self.file_drop_zone.setMinimumHeight(100)
         self.file_drop_zone.files_dropped.connect(self.on_files_dropped)

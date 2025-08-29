@@ -26,6 +26,7 @@ class FileDropZone(QWidget):
                  title: str = "Drop Files Here",
                  file_types: Optional[List[str]] = None,
                  max_files: int = 0,  # 0 = unlimited
+                 show_browse_button: bool = True,  # Option to hide internal browse button
                  parent=None):
         super().__init__(parent)
         
@@ -33,6 +34,7 @@ class FileDropZone(QWidget):
         self.title = title
         self.file_types = file_types or []  # Extensions like ['.png', '.jpg']
         self.max_files = max_files
+        self.show_browse_button = show_browse_button
         self.files = []  # List of selected file paths
         
         self.init_ui()
@@ -51,16 +53,19 @@ class FileDropZone(QWidget):
         self.update_drop_area_style()
         layout.addWidget(self.drop_area)
         
-        # Browse button
-        browse_layout = QHBoxLayout()
-        browse_layout.addStretch()
-        
-        self.browse_btn = QPushButton("📁 Browse Files")
-        self.browse_btn.clicked.connect(self.browse_files)
-        browse_layout.addWidget(self.browse_btn)
-        
-        browse_layout.addStretch()
-        layout.addLayout(browse_layout)
+        # Browse button (only show if enabled)
+        if self.show_browse_button:
+            browse_layout = QHBoxLayout()
+            browse_layout.addStretch()
+            
+            self.browse_btn = QPushButton("📁 Browse Files")
+            self.browse_btn.clicked.connect(self.browse_files)
+            browse_layout.addWidget(self.browse_btn)
+            
+            browse_layout.addStretch()
+            layout.addLayout(browse_layout)
+        else:
+            self.browse_btn = None
         
         # Selected files list
         self.files_label = QLabel("Selected Files:")
