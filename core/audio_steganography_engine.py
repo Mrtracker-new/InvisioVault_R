@@ -318,7 +318,7 @@ class AudioSteganographyEngine:
                 audio_data = audio_data.reshape(1, -1)
             
             self.logger.debug(f"Loaded with librosa: {audio_data.shape} @ {sample_rate}Hz")
-            return audio_data, sample_rate
+            return audio_data, int(sample_rate)
             
         except Exception as e:
             self.logger.error(f"Failed to load audio: {e}")
@@ -542,7 +542,7 @@ class AudioSteganographyEngine:
             chip_rate = min(1000, samples // (len(data_bits) * 2))
             
             # Calculate adaptive amplitude based on audio power
-            audio_power = np.mean(np.abs(audio_data))
+            audio_power = float(np.mean(np.abs(audio_data)))
             amplitude = min(0.002, audio_power * 0.01)  # Adaptive amplitude
             
             for channel in range(channels):
@@ -1049,7 +1049,7 @@ class AudioSteganographyEngine:
     
     def _parse_enhanced_header(self, all_bytes: np.ndarray, offset: int,
                               rng: np.random.RandomState, all_positions: np.ndarray,
-                              flat_audio: np.ndarray, original_seed: int = None) -> Optional[bytes]:
+                              flat_audio: np.ndarray, original_seed: Optional[int] = None) -> Optional[bytes]:
         """Parse enhanced header and extract data."""
         try:
             # Parse enhanced header structure
