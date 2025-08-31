@@ -1088,7 +1088,8 @@ class AudioSteganographyEngine:
                 fresh_rng = np.random.RandomState(original_seed)
             else:
                 # Fallback: try to extract from rng state (may not work correctly)
-                fresh_rng = np.random.RandomState(rng.get_state()[1][0])
+                rng_state = rng.get_state()
+                fresh_rng = np.random.RandomState(int(rng_state[1][0]))
             
             # Generate all positions needed from the beginning
             selected_positions = fresh_rng.choice(
