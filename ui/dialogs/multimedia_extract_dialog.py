@@ -73,8 +73,12 @@ class MultimediaExtractWorkerThread(QThread):
                 if self.audio_engine is None:
                     raise Exception("Audio engine not initialized")
                 self.status_updated.emit("Extracting data from audio samples...")
-                extracted_data = self.audio_engine.extract_data_from_audio(
-                    self.multimedia_path, self.password, technique=self.technique
+                # Use enhanced extraction with recovery attempts
+                extracted_data = self.audio_engine.extract_data_with_recovery(
+                    audio_path=self.multimedia_path,
+                    password=self.password,
+                    technique=self.technique if self.technique else 'auto',
+                    max_attempts=5  # Try multiple recovery strategies
                 )
             
             self.progress_updated.emit(60)

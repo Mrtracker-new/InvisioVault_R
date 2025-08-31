@@ -115,9 +115,15 @@ class MultimediaHideWorkerThread(QThread):
                 if self.audio_engine is None:
                     raise Exception("Audio engine not initialized")
                 self.status_updated.emit("Hiding data in audio samples...")
-                success = self.audio_engine.hide_data_in_audio(
-                    self.carrier_path, archive_data, self.output_path,
-                    self.password, technique=self.technique, quality=self.quality
+                # Use enhanced hiding with redundancy and error correction
+                success = self.audio_engine.hide_data_with_redundancy(
+                    audio_path=self.carrier_path, 
+                    data=archive_data, 
+                    output_path=self.output_path,
+                    password=self.password, 
+                    technique=self.technique,
+                    redundancy_level=3,  # 3x redundancy for reliability
+                    error_correction=True  # Enable error correction
                 )
             
             self.progress_updated.emit(90)
