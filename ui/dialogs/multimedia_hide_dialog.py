@@ -24,7 +24,7 @@ from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler
 from utils.performance_profiler import PerformanceProfiler
 from core.video_steganography_engine import VideoSteganographyEngine
-from core.audio_steganography_engine import AudioSteganographyEngine
+from core.audio.audio_steganography import AudioSteganographyEngine, EmbeddingConfig
 from core.multimedia_analyzer import MultimediaAnalyzer
 from core.encryption_engine import SecurityLevel
 from ui.components.file_drop_zone import FileDropZone
@@ -115,16 +115,31 @@ class MultimediaHideWorkerThread(QThread):
                 if self.audio_engine is None:
                     raise Exception("Audio engine not initialized")
                 self.status_updated.emit("Hiding data in audio samples...")
-                # Use enhanced hiding with redundancy and error correction
-                success = self.audio_engine.hide_data_with_redundancy(
+                
+                # Create configuration for new audio steganography system
+                config = self.audio_engine.create_config(
+                    technique=self.technique if self.technique else 'lsb',
+                    mode='secure',  # Use secure mode for multimedia operations
+                    password=self.password,
+                    redundancy_level=3,  # 3x redundancy for reliability
+                    error_correction=True,  # Enable error correction
+                    anti_detection=True,  # Enable anti-detection for multimedia
+                    randomize_positions=True
+                )
+                
+                # Use new hide_data method
+                result = self.audio_engine.hide_data(
                     audio_path=self.carrier_path, 
                     data=archive_data, 
                     output_path=self.output_path,
-                    password=self.password, 
-                    technique=self.technique,
-                    redundancy_level=3,  # 3x redundancy for reliability
-                    error_correction=True  # Enable error correction
+                    config=config
                 )
+                
+                success = result.success
+                if not success:
+                    self.logger.error(f"Audio hiding failed: {result.message}")
+                else:
+                    self.logger.info(f"Audio hiding successful: {result.capacity_utilization:.1f}% capacity used")
             
             self.progress_updated.emit(90)
             

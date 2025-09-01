@@ -3,8 +3,8 @@
 
 **Author**: Rolan (RNR)  
 **Project**: InvisioVault - Advanced Steganography Suite  
-**Last Updated**: August 2025  
-**Version**: 1.0.0
+**Last Updated**: September 2025  
+**Version**: 1.1.0 (Active Development)
 
 ---
 

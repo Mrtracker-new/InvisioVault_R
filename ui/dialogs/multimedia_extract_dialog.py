@@ -20,7 +20,7 @@ from utils.logger import Logger
 from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler
 from core.video_steganography_engine import VideoSteganographyEngine
-from core.audio_steganography_engine import AudioSteganographyEngine
+from core.audio.audio_steganography import AudioSteganographyEngine, EmbeddingConfig
 from core.multimedia_analyzer import MultimediaAnalyzer
 from core.encryption_engine import SecurityLevel
 from ui.components.file_drop_zone import FileDropZone
@@ -73,13 +73,25 @@ class MultimediaExtractWorkerThread(QThread):
                 if self.audio_engine is None:
                     raise Exception("Audio engine not initialized")
                 self.status_updated.emit("Extracting data from audio samples...")
-                # Use enhanced extraction with recovery attempts
-                extracted_data = self.audio_engine.extract_data_with_recovery(
-                    audio_path=self.multimedia_path,
-                    password=self.password,
+                
+                # Create configuration for new audio steganography system
+                config = self.audio_engine.create_config(
                     technique=self.technique if self.technique else 'auto',
+                    password=self.password
+                )
+                
+                # Use new extract_data method with recovery
+                result = self.audio_engine.extract_data(
+                    audio_path=self.multimedia_path,
+                    config=config,
                     max_attempts=5  # Try multiple recovery strategies
                 )
+                
+                extracted_data = result.data if result.success else None
+                if not result.success:
+                    self.logger.error(f"Audio extraction failed: {result.message}")
+                else:
+                    self.logger.info(f"Audio extraction successful using {result.technique_detected} with {result.recovery_method}")
             
             self.progress_updated.emit(60)
             
