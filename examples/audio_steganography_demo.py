@@ -150,7 +150,7 @@ def demonstrate_basic_usage():
             config=config
         )
         
-        if extraction_result.success:
+        if extraction_result.success and extraction_result.data:
             extracted_message = extraction_result.data.decode('utf-8')
             print(f"✅ Extraction successful!")
             print(f"   📝 Extracted: {extracted_message}")
@@ -244,7 +244,7 @@ def demonstrate_multiple_techniques():
                     config=config
                 )
                 
-                if extraction_result.success:
+                if extraction_result.success and extraction_result.data:
                     extracted = extraction_result.data.decode('utf-8')
                     if extracted == test_data:
                         print(f"   ✅ Extraction: {extraction_result.processing_time:.2f}s")
@@ -333,7 +333,7 @@ def demonstrate_error_recovery():
             max_attempts=5  # All recovery strategies
         )
         
-        if recovery_result.success:
+        if recovery_result.success and recovery_result.data:
             extracted = recovery_result.data.decode('utf-8')
             print(f"✅ Recovery successful using {recovery_result.recovery_method}")
             print(f"🎯 Message verified: {extracted == test_data}")
@@ -428,7 +428,7 @@ def demonstrate_security_features():
                     config=config
                 )
                 
-                if extraction_result.success:
+                if extraction_result.success and extraction_result.data:
                     extracted = extraction_result.data.decode('utf-8')
                     print(f"   ✅ Extraction successful")
                     print(f"   🎯 Data integrity: {'VERIFIED' if extracted == test_data else 'FAILED'}")

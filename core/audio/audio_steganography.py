@@ -322,7 +322,7 @@ class AudioSteganographyEngine:
                             result.attempts_made = attempt
                             result.warnings = warnings
                             
-                            self.logger.info(f"Extraction successful: {len(result.data)} bytes recovered")
+                            self.logger.info(f"Extraction successful: {len(result.data) if result.data else 0} bytes recovered")
                             return result
                             
                     except Exception as e:
@@ -756,10 +756,10 @@ class AudioSteganographyEngine:
                         confidence_score=1.0
                     )
             
-            return ExtractionResult(False, f"{strategy} strategy failed")
+            return ExtractionResult(False, message=f"{strategy} strategy failed")
             
         except Exception as e:
-            return ExtractionResult(False, f"{strategy} strategy error: {e}")
+            return ExtractionResult(False, message=f"{strategy} strategy error: {e}")
     
     def _extract_with_redundancy(self, audio_data: np.ndarray, config: EmbeddingConfig,
                                 technique: BaseEmbeddingTechnique, sample_rate: int) -> Optional[bytes]:
