@@ -233,7 +233,10 @@ class LSBEmbedding(BaseEmbeddingTechnique):
             # Generate random positions with skip factor
             available_positions = np.arange(0, total_samples, self.skip_factor)
             if len(available_positions) >= num_bits:
+                # CRITICAL FIX: Sort positions to ensure deterministic order
+                # This ensures extraction uses same positions in same order as embedding
                 positions = rng.choice(available_positions, size=num_bits, replace=False)
+                positions = np.sort(positions)  # Sort for consistent ordering
             else:
                 positions = available_positions
         else:

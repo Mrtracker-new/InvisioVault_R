@@ -517,13 +517,36 @@ class AudioSteganographyEngine:
             return EmbeddingResult(False, f"Capacity check failed: {e}")
     
     def _apply_mode_config(self, config: EmbeddingConfig) -> EmbeddingConfig:
-        """Apply mode-specific configuration."""
+        """Apply mode-specific configuration only if not explicitly set by user."""
+        # CRITICAL FIX: Don't overwrite explicitly set user parameters
+        # Only apply mode defaults if user hasn't explicitly set the values
+        
         for mode in StegoMode:
             if mode.code == config.mode:
-                config.redundancy_level = mode.redundancy
-                config.error_correction = mode.error_correction
-                config.anti_detection = mode.anti_detection
+                # Store original user values to check if they were explicitly set
+                default_config = EmbeddingConfig()
+                
+                # Only apply mode settings if user hasn't changed from defaults
+                # This ensures multimedia dialog explicit settings are preserved
+                if config.redundancy_level == default_config.redundancy_level:
+                    config.redundancy_level = mode.redundancy
+                    self.logger.debug(f"Applied mode redundancy_level: {mode.redundancy}")
+                else:
+                    self.logger.debug(f"Preserving user redundancy_level: {config.redundancy_level}")
+                    
+                if config.error_correction == default_config.error_correction:
+                    config.error_correction = mode.error_correction
+                    self.logger.debug(f"Applied mode error_correction: {mode.error_correction}")
+                else:
+                    self.logger.debug(f"Preserving user error_correction: {config.error_correction}")
+                    
+                if config.anti_detection == default_config.anti_detection:
+                    config.anti_detection = mode.anti_detection
+                    self.logger.debug(f"Applied mode anti_detection: {mode.anti_detection}")
+                else:
+                    self.logger.debug(f"Preserving user anti_detection: {config.anti_detection}")
                 break
+                
         return config
     
     def _prepare_data_for_embedding(self, data: bytes, config: EmbeddingConfig, 
@@ -578,11 +601,13 @@ class AudioSteganographyEngine:
                 start_idx = copy_idx * segment_size
                 end_idx = start_idx + segment_size if copy_idx < config.redundancy_level - 1 else samples
                 
+                # FIXED: Use consistent password generation for both embedding and extraction
                 # For single copy (no redundancy), use original password
-                # For multiple copies, create unique seeds
+                # For multiple copies, create unique seeds using the same method as extraction
                 if config.redundancy_level == 1:
                     password_to_use = config.password
                 else:
+                    # Use exact same seed generation as in extraction
                     password_to_use = hashlib.sha256(
                         f"{config.password}_{copy_idx}_{config.technique}".encode()
                     ).hexdigest()[:16]
@@ -597,7 +622,7 @@ class AudioSteganographyEngine:
                 
                 if result_segment is not None:
                     modified_audio[:, start_idx:end_idx] = result_segment
-                    self.logger.debug(f"Embedded redundant copy {copy_idx + 1}/{config.redundancy_level}")
+                    self.logger.debug(f"Embedded redundant copy {copy_idx + 1}/{config.redundancy_level} with password hash: {password_to_use[:8]}...")
                 else:
                     self.logger.warning(f"Failed to embed copy {copy_idx + 1}")
             
@@ -775,23 +800,33 @@ class AudioSteganographyEngine:
                 start_idx = copy_idx * segment_size
                 end_idx = start_idx + segment_size if copy_idx < redundancy_level - 1 else samples
                 
-                # Create same seed used during embedding
-                copy_seed = hashlib.sha256(
-                    f"{config.password}_{copy_idx}_{config.technique}".encode()
-                ).hexdigest()[:16]
+                # FIXED: Use exact same password generation as in embedding
+                if redundancy_level == 1:
+                    password_to_use = config.password
+                else:
+                    # Must match embedding exactly
+                    password_to_use = hashlib.sha256(
+                        f"{config.password}_{copy_idx}_{config.technique}".encode()
+                    ).hexdigest()[:16]
                 
                 # Extract from segment
                 segment_audio = audio_data[:, start_idx:end_idx]
-                copy_data = technique.extract(segment_audio, copy_seed, sample_rate)
+                copy_data = technique.extract(segment_audio, password_to_use, sample_rate)
                 
                 if copy_data:
                     extracted_copies.append(copy_data)
+                    self.logger.debug(f"Extracted redundant copy {copy_idx + 1}/{redundancy_level} with password hash: {password_to_use[:8]}...")
+                else:
+                    self.logger.debug(f"Failed to extract copy {copy_idx + 1}")
             
             # Vote on most common result
             if extracted_copies:
                 from collections import Counter
                 counter = Counter(extracted_copies)
                 most_common = counter.most_common(1)[0]
+                
+                # Log voting results for debugging
+                self.logger.debug(f"Redundancy voting: {len(extracted_copies)} copies extracted, most common has {most_common[1]} votes")
                 
                 if most_common[1] >= 2 or len(extracted_copies) == 1:
                     return most_common[0]
