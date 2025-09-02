@@ -75,9 +75,15 @@ class MultimediaExtractWorkerThread(QThread):
                 self.status_updated.emit("Extracting data from audio samples...")
                 
                 # Create configuration for new audio steganography system
+                # IMPORTANT: Must match the exact configuration used during hiding
                 config = self.audio_engine.create_config(
-                    technique=self.technique if self.technique else 'auto',
-                    password=self.password
+                    technique=self.technique if self.technique else 'lsb',
+                    mode='secure',  # Use secure mode for multimedia operations
+                    password=self.password,
+                    redundancy_level=3,  # 3x redundancy for reliability
+                    error_correction=True,  # Enable error correction
+                    anti_detection=True,  # Enable anti-detection for multimedia
+                    randomize_positions=True
                 )
                 
                 # Use new extract_data method with recovery
