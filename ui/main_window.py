@@ -818,14 +818,14 @@ class MainWindow(QMainWindow):
         # Image Analysis action
         analysis_action = QAction("&Image Analysis", self)
         analysis_action.setStatusTip("Analyze image suitability")
-        analysis_action.triggered.connect(lambda: self.nav_list.setCurrentRow(4))
+        analysis_action.triggered.connect(lambda: self.nav_list.setCurrentRow(5))
         tools_menu.addAction(analysis_action)
         
         # Settings action
         settings_action = QAction("&Settings", self)
         settings_action.setShortcut("Ctrl+,")
         settings_action.setStatusTip("Open application settings")
-        settings_action.triggered.connect(lambda: self.nav_list.setCurrentRow(5))
+        settings_action.triggered.connect(lambda: self.nav_list.setCurrentRow(6))
         tools_menu.addAction(settings_action)
         
         # Help menu
@@ -859,7 +859,7 @@ class MainWindow(QMainWindow):
         # Settings button
         settings_action = QAction("⚙️ Settings", self)
         settings_action.setStatusTip("Open settings")
-        settings_action.triggered.connect(lambda: self.nav_list.setCurrentRow(5))
+        settings_action.triggered.connect(lambda: self.nav_list.setCurrentRow(6))
         toolbar.addAction(settings_action)
     
     def init_status_bar(self):
