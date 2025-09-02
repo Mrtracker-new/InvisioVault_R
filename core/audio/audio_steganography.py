@@ -302,8 +302,13 @@ class AudioSteganographyEngine:
             for attempt, technique_name in enumerate(techniques_to_try, 1):
                 self.logger.debug(f"Extraction attempt {attempt}: {technique_name}")
                 
-                # Create technique
-                technique = self.technique_factory.create_technique(technique_name)
+                # Create technique with appropriate parameters
+                technique_params = {}
+                if technique_name == 'lsb':
+                    technique_params['randomize'] = config.randomize_positions
+                    self.logger.debug(f"Setting LSB randomize={config.randomize_positions} for extraction")
+                
+                technique = self.technique_factory.create_technique(technique_name, **technique_params)
                 if technique is None:
                     continue
                 
@@ -594,23 +599,29 @@ class AudioSteganographyEngine:
             channels, samples = audio_data.shape
             modified_audio = audio_data.copy()
             
-            # Calculate segment size for redundant copies
+            # For redundancy level 1, just embed normally
+            if config.redundancy_level == 1:
+                result_audio = technique.embed(modified_audio, data, config.password, sample_rate)
+                if result_audio is not None:
+                    self.logger.debug(f"Embedded single copy with original password")
+                    return result_audio
+                else:
+                    self.logger.error("Failed to embed single copy")
+                    return None
+            
+            # For multiple redundancy, embed the same data multiple times across the audio
+            # CRITICAL FIX: All copies should use the SAME password so they can be extracted
+            # with the original password. Redundancy is for reliability, not security.
             segment_size = samples // config.redundancy_level
             
             for copy_idx in range(config.redundancy_level):
                 start_idx = copy_idx * segment_size
                 end_idx = start_idx + segment_size if copy_idx < config.redundancy_level - 1 else samples
                 
-                # FIXED: Use consistent password generation for both embedding and extraction
-                # For single copy (no redundancy), use original password
-                # For multiple copies, create unique seeds using the same method as extraction
-                if config.redundancy_level == 1:
-                    password_to_use = config.password
-                else:
-                    # Use exact same seed generation as in extraction
-                    password_to_use = hashlib.sha256(
-                        f"{config.password}_{copy_idx}_{config.technique}".encode()
-                    ).hexdigest()[:16]
+                # CRITICAL FIX: Use the original password for all copies
+                # This ensures that standard extraction (which uses the original password)
+                # can find and extract the magic header from any of the copies
+                password_to_use = config.password
                 
                 # Embed in segment
                 segment_audio = modified_audio[:, start_idx:end_idx]
@@ -622,7 +633,7 @@ class AudioSteganographyEngine:
                 
                 if result_segment is not None:
                     modified_audio[:, start_idx:end_idx] = result_segment
-                    self.logger.debug(f"Embedded redundant copy {copy_idx + 1}/{config.redundancy_level} with password hash: {password_to_use[:8]}...")
+                    self.logger.debug(f"Embedded redundant copy {copy_idx + 1}/{config.redundancy_level} with original password")
                 else:
                     self.logger.warning(f"Failed to embed copy {copy_idx + 1}")
             
@@ -736,43 +747,115 @@ class AudioSteganographyEngine:
         """Attempt extraction with specific strategy."""
         try:
             self.logger.debug(f"Extraction attempt {attempt} using {strategy} strategy")
+            self.logger.debug(f"Audio shape: {audio_data.shape}, sample_rate: {sample_rate}")
+            self.logger.debug(f"Config - redundancy: {config.redundancy_level}, technique: {config.technique}")
             
             # Try different approaches based on strategy
             if strategy == 'standard':
-                # First, try to extract just the header to determine the actual size needed
-                header_size = 8 + 2 + 4  # magic + metadata_size + data_size
-                header_data = technique.extract(audio_data, config.password, sample_rate, header_size)
-                
-                if header_data and len(header_data) >= header_size and header_data.startswith(self.MAGIC_HEADER):
-                    # Parse the header to get total size needed
-                    try:
-                        offset = len(self.MAGIC_HEADER)
-                        metadata_size = struct.unpack('<H', header_data[offset:offset + 2])[0]
-                        offset += 2
-                        data_size = struct.unpack('<I', header_data[offset:offset + 4])[0]
-                        
-                        # Calculate total size needed
-                        total_size = len(self.MAGIC_HEADER) + 2 + 4 + metadata_size + data_size
-                        
-                        # Extract the exact amount needed
-                        extracted_data = technique.extract(audio_data, config.password, sample_rate, total_size)
-                    except:
-                        # Fallback to full extraction if parsing fails
-                        extracted_data = technique.extract(audio_data, config.password, sample_rate)
+                # CRITICAL FIX: Handle redundancy in standard extraction
+                # If redundancy_level > 1, try extracting from the first segment
+                if config.redundancy_level > 1:
+                    self.logger.debug(f"Redundancy detected ({config.redundancy_level}), trying first segment extraction")
+                    channels, samples = audio_data.shape
+                    segment_size = samples // config.redundancy_level
+                    first_segment = audio_data[:, :segment_size]
+                    
+                    # Try to extract header from first segment
+                    header_size = 8 + 2 + 4  # magic + metadata_size + data_size
+                    self.logger.debug(f"Attempting to extract header from first segment ({header_size} bytes)...")
+                    header_data = technique.extract(first_segment, config.password, sample_rate, header_size)
+                    
+                    self.logger.debug(f"Header extraction result: {len(header_data) if header_data else 0} bytes")
+                    if header_data and len(header_data) >= header_size:
+                        self.logger.debug(f"Header bytes: {header_data[:20].hex() if header_data else 'None'}...")
+                        if header_data.startswith(self.MAGIC_HEADER):
+                            self.logger.debug("✅ Magic header found in first segment!")
+                            # Parse the header to get total size needed
+                            try:
+                                offset = len(self.MAGIC_HEADER)
+                                metadata_size = struct.unpack('<H', header_data[offset:offset + 2])[0]
+                                offset += 2
+                                data_size = struct.unpack('<I', header_data[offset:offset + 4])[0]
+                                
+                                self.logger.debug(f"Parsed header: metadata_size={metadata_size}, data_size={data_size}")
+                                
+                                # Calculate total size needed
+                                total_size = len(self.MAGIC_HEADER) + 2 + 4 + metadata_size + data_size
+                                self.logger.debug(f"Total size needed: {total_size} bytes")
+                                
+                                # Extract the exact amount needed from first segment
+                                extracted_data = technique.extract(first_segment, config.password, sample_rate, total_size)
+                                self.logger.debug(f"Full extraction from first segment: {len(extracted_data) if extracted_data else 0} bytes")
+                            except Exception as parse_error:
+                                self.logger.debug(f"Header parsing failed: {parse_error}, falling back to full segment extraction")
+                                # Fallback to full segment extraction if parsing fails
+                                extracted_data = technique.extract(first_segment, config.password, sample_rate)
+                        else:
+                            self.logger.debug(f"❌ Magic header not found in first segment. Expected: {self.MAGIC_HEADER.hex()}, got: {header_data[:8].hex() if len(header_data) >= 8 else 'too short'}")
+                            # Try full segment extraction
+                            extracted_data = technique.extract(first_segment, config.password, sample_rate)
+                    else:
+                        self.logger.debug("❌ Header extraction from first segment failed or too short")
+                        # Try full segment extraction
+                        extracted_data = technique.extract(first_segment, config.password, sample_rate)
                 else:
-                    # Fallback to full extraction if header parsing fails
-                    extracted_data = technique.extract(audio_data, config.password, sample_rate)
+                    # No redundancy, extract from entire audio
+                    # First, try to extract just the header to determine the actual size needed
+                    header_size = 8 + 2 + 4  # magic + metadata_size + data_size
+                    self.logger.debug(f"Attempting to extract header ({header_size} bytes)...")
+                    header_data = technique.extract(audio_data, config.password, sample_rate, header_size)
+                    
+                    self.logger.debug(f"Header extraction result: {len(header_data) if header_data else 0} bytes")
+                    if header_data and len(header_data) >= header_size:
+                        self.logger.debug(f"Header bytes: {header_data[:20].hex() if header_data else 'None'}...")
+                        if header_data.startswith(self.MAGIC_HEADER):
+                            self.logger.debug("✅ Magic header found!")
+                            # Parse the header to get total size needed
+                            try:
+                                offset = len(self.MAGIC_HEADER)
+                                metadata_size = struct.unpack('<H', header_data[offset:offset + 2])[0]
+                                offset += 2
+                                data_size = struct.unpack('<I', header_data[offset:offset + 4])[0]
+                                
+                                self.logger.debug(f"Parsed header: metadata_size={metadata_size}, data_size={data_size}")
+                                
+                                # Calculate total size needed
+                                total_size = len(self.MAGIC_HEADER) + 2 + 4 + metadata_size + data_size
+                                self.logger.debug(f"Total size needed: {total_size} bytes")
+                                
+                                # Extract the exact amount needed
+                                extracted_data = technique.extract(audio_data, config.password, sample_rate, total_size)
+                                self.logger.debug(f"Full extraction result: {len(extracted_data) if extracted_data else 0} bytes")
+                            except Exception as parse_error:
+                                self.logger.debug(f"Header parsing failed: {parse_error}, falling back to full extraction")
+                                # Fallback to full extraction if parsing fails
+                                extracted_data = technique.extract(audio_data, config.password, sample_rate)
+                        else:
+                            self.logger.debug(f"❌ Magic header not found. Expected: {self.MAGIC_HEADER.hex()}, got: {header_data[:8].hex() if len(header_data) >= 8 else 'too short'}")
+                            # Fallback to full extraction if header parsing fails
+                            extracted_data = technique.extract(audio_data, config.password, sample_rate)
+                    else:
+                        self.logger.debug("❌ Header extraction failed or too short")
+                        # Fallback to full extraction if header parsing fails
+                        extracted_data = technique.extract(audio_data, config.password, sample_rate)
             elif strategy == 'redundant':
+                self.logger.debug("Using redundant extraction strategy")
                 extracted_data = self._extract_with_redundancy(audio_data, config, technique, sample_rate)
             elif strategy == 'error_correction':
+                self.logger.debug("Using error correction extraction strategy")
                 extracted_data = self._extract_with_error_correction(audio_data, config, technique, sample_rate)
             else:
+                self.logger.debug(f"Using {strategy} extraction strategy")
                 extracted_data = technique.extract(audio_data, config.password, sample_rate, expected_size)
             
+            self.logger.debug(f"Strategy {strategy} extracted {len(extracted_data) if extracted_data else 0} bytes")
+            
             if extracted_data:
+                self.logger.debug(f"Attempting to decrypt and verify...")
                 # Try to decrypt and verify
                 original_data = self._decrypt_and_verify(extracted_data, config.password)
                 if original_data:
+                    self.logger.debug(f"✅ Decryption successful: {len(original_data)} bytes")
                     return ExtractionResult(
                         success=True,
                         data=original_data,
@@ -780,10 +863,15 @@ class AudioSteganographyEngine:
                         recovery_method=strategy,
                         confidence_score=1.0
                     )
+                else:
+                    self.logger.debug(f"❌ Decryption/verification failed")
+            else:
+                self.logger.debug(f"❌ No data extracted by {strategy} strategy")
             
             return ExtractionResult(False, message=f"{strategy} strategy failed")
             
         except Exception as e:
+            self.logger.error(f"Exception in {strategy} strategy: {e}")
             return ExtractionResult(False, message=f"{strategy} strategy error: {e}")
     
     def _extract_with_redundancy(self, audio_data: np.ndarray, config: EmbeddingConfig,
@@ -792,22 +880,22 @@ class AudioSteganographyEngine:
         try:
             channels, samples = audio_data.shape
             redundancy_level = config.redundancy_level
-            segment_size = samples // redundancy_level
             
+            # For single redundancy, extract normally
+            if redundancy_level == 1:
+                return technique.extract(audio_data, config.password, sample_rate)
+            
+            # For multiple redundancy, extract from each segment
+            segment_size = samples // redundancy_level
             extracted_copies = []
             
             for copy_idx in range(redundancy_level):
                 start_idx = copy_idx * segment_size
                 end_idx = start_idx + segment_size if copy_idx < redundancy_level - 1 else samples
                 
-                # FIXED: Use exact same password generation as in embedding
-                if redundancy_level == 1:
-                    password_to_use = config.password
-                else:
-                    # Must match embedding exactly
-                    password_to_use = hashlib.sha256(
-                        f"{config.password}_{copy_idx}_{config.technique}".encode()
-                    ).hexdigest()[:16]
+                # CRITICAL FIX: Use original password for all copies
+                # This matches the embedding logic where all copies use the same password
+                password_to_use = config.password
                 
                 # Extract from segment
                 segment_audio = audio_data[:, start_idx:end_idx]
@@ -815,7 +903,7 @@ class AudioSteganographyEngine:
                 
                 if copy_data:
                     extracted_copies.append(copy_data)
-                    self.logger.debug(f"Extracted redundant copy {copy_idx + 1}/{redundancy_level} with password hash: {password_to_use[:8]}...")
+                    self.logger.debug(f"Extracted redundant copy {copy_idx + 1}/{redundancy_level} with original password")
                 else:
                     self.logger.debug(f"Failed to extract copy {copy_idx + 1}")
             
@@ -865,12 +953,18 @@ class AudioSteganographyEngine:
     def _decrypt_and_verify(self, encrypted_data: bytes, password: str) -> Optional[bytes]:
         """Decrypt extracted data and verify integrity."""
         try:
+            self.logger.debug(f"Starting decryption/verification for {len(encrypted_data)} bytes")
+            
             # Parse header
             if len(encrypted_data) < 14:  # Minimum header size
+                self.logger.debug(f"❌ Data too short for header: {len(encrypted_data)} < 14 bytes")
                 return None
             
             if not encrypted_data.startswith(self.MAGIC_HEADER):
+                self.logger.debug(f"❌ Magic header mismatch. Expected: {self.MAGIC_HEADER.hex()}, got: {encrypted_data[:8].hex()}")
                 return None
+            
+            self.logger.debug("✅ Magic header verified")
             
             offset = len(self.MAGIC_HEADER)
             metadata_size = struct.unpack('<H', encrypted_data[offset:offset + 2])[0]
@@ -878,28 +972,55 @@ class AudioSteganographyEngine:
             data_size = struct.unpack('<I', encrypted_data[offset:offset + 4])[0]
             offset += 4
             
+            self.logger.debug(f"Header parsed: metadata_size={metadata_size}, data_size={data_size}")
+            
+            # Validate sizes
+            expected_total = len(self.MAGIC_HEADER) + 2 + 4 + metadata_size + data_size
+            if len(encrypted_data) < expected_total:
+                self.logger.debug(f"❌ Data length mismatch. Expected: {expected_total}, got: {len(encrypted_data)}")
+                return None
+            
             # Extract metadata and encrypted data
             metadata_json = encrypted_data[offset:offset + metadata_size]
             offset += metadata_size
             encrypted_payload = encrypted_data[offset:offset + data_size]
             
+            self.logger.debug(f"Extracted metadata ({len(metadata_json)} bytes) and payload ({len(encrypted_payload)} bytes)")
+            
             # Parse metadata
-            metadata = json.loads(metadata_json.decode('utf-8'))
+            try:
+                metadata = json.loads(metadata_json.decode('utf-8'))
+                self.logger.debug(f"Metadata parsed: {metadata}")
+            except Exception as meta_error:
+                self.logger.debug(f"❌ Metadata parsing failed: {meta_error}")
+                return None
             
             # Decrypt payload
-            decrypted_data = self.encryption_engine.decrypt_with_metadata(encrypted_payload, password)
+            self.logger.debug("Attempting decryption...")
+            try:
+                decrypted_data = self.encryption_engine.decrypt_with_metadata(encrypted_payload, password)
+                self.logger.debug(f"✅ Decryption successful: {len(decrypted_data)} bytes")
+            except Exception as decrypt_error:
+                self.logger.debug(f"❌ Decryption failed: {decrypt_error}")
+                return None
             
             # Verify checksum
             if 'checksum' in metadata:
                 expected_checksum = metadata['checksum']
                 actual_checksum = hashlib.sha256(decrypted_data).hexdigest()
+                self.logger.debug(f"Checksum verification: expected={expected_checksum[:16]}..., actual={actual_checksum[:16]}...")
                 if expected_checksum != actual_checksum:
-                    self.logger.warning("Checksum mismatch - data may be corrupted")
+                    self.logger.warning("❌ Checksum mismatch - data may be corrupted")
+                    return None
+                else:
+                    self.logger.debug("✅ Checksum verified")
+            else:
+                self.logger.debug("No checksum found in metadata")
             
             return decrypted_data
             
         except Exception as e:
-            self.logger.debug(f"Decryption/verification failed: {e}")
+            self.logger.debug(f"❌ Decryption/verification failed with exception: {e}")
             return None
     
     def _generate_extraction_error_message(self, techniques_tried: List[str], 

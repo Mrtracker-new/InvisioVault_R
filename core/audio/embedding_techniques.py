@@ -179,17 +179,51 @@ class LSBEmbedding(BaseEmbeddingTechnique):
         try:
             self.logger.debug(f"LSB extraction: expected_size={expected_size}")
             
-            # Generate same random seed
-            rng_seed = self._generate_seed_sequence(password)
-            rng = np.random.RandomState(rng_seed)
-            
             # Convert to integer format
             audio_int = self._float_to_int16(audio_data)
             channels, samples = audio_int.shape
             
-            # Calculate maximum possible extraction size if not specified
+            # CRITICAL FIX for randomization: Use two-phase extraction when size is unknown
+            if expected_size is None and self.randomize:
+                self.logger.debug("Using two-phase extraction for randomized positions")
+                
+                # Phase 1: Extract enough data to read the header and determine actual size
+                header_estimate_size = 512  # Conservative estimate for header size
+                header_data = self._extract_with_size(audio_int, password, channels, samples, header_estimate_size)
+                
+                if header_data is None:
+                    self.logger.error("Failed to extract header for size detection")
+                    return None
+                
+                # Try to find the actual data size from the extracted header
+                actual_size = self._detect_embedded_size(header_data)
+                if actual_size is None:
+                    self.logger.debug("Could not detect embedded size, falling back to full capacity")
+                    # Fallback to full capacity extraction
+                    max_capacity = self.calculate_capacity(audio_data, sample_rate)
+                    expected_size = max_capacity
+                else:
+                    self.logger.debug(f"Detected embedded size: {actual_size} bytes")
+                    expected_size = actual_size
+            
+            # Standard extraction with known size
+            return self._extract_with_size(audio_int, password, channels, samples, expected_size)
+            
+        except Exception as e:
+            self.logger.error(f"LSB extraction failed: {e}")
+            return None
+    
+    def _extract_with_size(self, audio_int: np.ndarray, password: str, channels: int, 
+                          samples: int, expected_size: int) -> Optional[bytes]:
+        """Extract data with known size."""
+        try:
+            # Generate same random seed
+            rng_seed = self._generate_seed_sequence(password)
+            rng = np.random.RandomState(rng_seed)
+            
+            # Use provided expected_size or calculate maximum
             if expected_size is None:
-                max_capacity = self.calculate_capacity(audio_data, sample_rate)
+                max_capacity = (channels * samples) // self.skip_factor // 8
                 expected_size = max_capacity
             
             # Generate same positions used for embedding
@@ -214,7 +248,48 @@ class LSBEmbedding(BaseEmbeddingTechnique):
             return self._reconstruct_data(bit_array, expected_size)
             
         except Exception as e:
-            self.logger.error(f"LSB extraction failed: {e}")
+            self.logger.error(f"LSB extraction with size failed: {e}")
+            return None
+    
+    def _detect_embedded_size(self, header_data: bytes) -> Optional[int]:
+        """Try to detect the actual embedded data size from header data."""
+        try:
+            # Look for InvisioVault magic header patterns
+            magic_headers = [b'INVV_AUD', b'INVV_IMG', b'INVV_VID']  # Support multiple formats
+            
+            for magic in magic_headers:
+                magic_pos = header_data.find(magic)
+                if magic_pos >= 0:
+                    self.logger.debug(f"Found magic header at position {magic_pos}")
+                    
+                    # Try to parse the size information after magic header
+                    try:
+                        # Skip magic header (8 bytes)
+                        offset = magic_pos + len(magic)
+                        if offset + 6 <= len(header_data):  # Need at least 6 more bytes
+                            # Read metadata_size (2 bytes) + data_size (4 bytes)
+                            import struct
+                            metadata_size = struct.unpack('<H', header_data[offset:offset + 2])[0]
+                            data_size = struct.unpack('<I', header_data[offset + 2:offset + 6])[0]
+                            
+                            # Calculate total embedded size
+                            total_size = len(magic) + 2 + 4 + metadata_size + data_size
+                            
+                            self.logger.debug(f"Parsed sizes: metadata={metadata_size}, data={data_size}, total={total_size}")
+                            
+                            # Sanity check: total size should be reasonable
+                            if 10 <= total_size <= 10000000:  # Between 10 bytes and 10MB
+                                return total_size
+                            else:
+                                self.logger.debug(f"Total size {total_size} seems unreasonable")
+                    except Exception as parse_error:
+                        self.logger.debug(f"Failed to parse size after magic header: {parse_error}")
+                        continue
+            
+            return None  # Could not detect size
+            
+        except Exception as e:
+            self.logger.debug(f"Size detection failed: {e}")
             return None
     
     def calculate_capacity(self, audio_data: np.ndarray, sample_rate: int) -> int:
@@ -233,10 +308,11 @@ class LSBEmbedding(BaseEmbeddingTechnique):
             # Generate random positions with skip factor
             available_positions = np.arange(0, total_samples, self.skip_factor)
             if len(available_positions) >= num_bits:
-                # CRITICAL FIX: Sort positions to ensure deterministic order
-                # This ensures extraction uses same positions in same order as embedding
+                # CRITICAL FIX: Don't sort positions! This would scramble the data order.
+                # The RNG will generate the same sequence for the same seed/password.
+                # We must use positions in the exact same order they were selected during embedding.
                 positions = rng.choice(available_positions, size=num_bits, replace=False)
-                positions = np.sort(positions)  # Sort for consistent ordering
+                # DO NOT SORT: positions = np.sort(positions) - this would scramble the data!
             else:
                 positions = available_positions
         else:
