@@ -206,6 +206,12 @@ class LSBEmbedding(BaseEmbeddingTechnique):
                     self.logger.debug(f"Detected embedded size: {actual_size} bytes")
                     expected_size = actual_size
             
+            # Ensure expected_size is not None before calling _extract_with_size
+            if expected_size is None:
+                # Final fallback: use maximum capacity
+                expected_size = self.calculate_capacity(audio_data, sample_rate)
+                self.logger.debug(f"Using fallback capacity: {expected_size} bytes")
+            
             # Standard extraction with known size
             return self._extract_with_size(audio_int, password, channels, samples, expected_size)
             
@@ -221,10 +227,11 @@ class LSBEmbedding(BaseEmbeddingTechnique):
             rng_seed = self._generate_seed_sequence(password)
             rng = np.random.RandomState(rng_seed)
             
-            # Use provided expected_size or calculate maximum
-            if expected_size is None:
+            # Ensure expected_size is valid (should not be None here, but safety check)
+            if expected_size is None or expected_size <= 0:
                 max_capacity = (channels * samples) // self.skip_factor // 8
                 expected_size = max_capacity
+                self.logger.debug(f"Using calculated capacity: {expected_size} bytes")
             
             # Generate same positions used for embedding
             total_bits = expected_size * 8
