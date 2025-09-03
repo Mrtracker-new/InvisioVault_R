@@ -652,7 +652,9 @@ class AudioSteganographyEngine:
             
             # Apply gentle filtering to smooth statistical artifacts
             from scipy import signal as scipy_signal
-            b, a = scipy_signal.butter(8, 0.99, 'low')
+            # Fix type safety: scipy.signal.butter returns tuple of arrays
+            filter_coeffs = scipy_signal.butter(8, 0.99, 'low')
+            b, a = filter_coeffs[0], filter_coeffs[1]
             
             channels, samples = audio_data.shape
             processed_audio = audio_data + noise
