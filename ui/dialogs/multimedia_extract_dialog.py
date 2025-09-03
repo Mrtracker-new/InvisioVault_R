@@ -74,24 +74,85 @@ class MultimediaExtractWorkerThread(QThread):
                     raise Exception("Audio engine not initialized")
                 self.status_updated.emit("Extracting data from audio samples...")
                 
-                # Create configuration for new audio steganography system
-                # IMPORTANT: Must match the exact configuration used during hiding
-                config = self.audio_engine.create_config(
-                    technique=self.technique if self.technique else 'lsb',
-                    mode='secure',  # Use secure mode for multimedia operations
-                    password=self.password,
-                    redundancy_level=3,  # 3x redundancy for reliability
-                    error_correction=True,  # Enable error correction
-                    anti_detection=True,  # Enable anti-detection for multimedia
-                    randomize_positions=True
-                )
+                # Try multiple configurations to handle different embedding settings
+                # This fixes the issue where extraction fails due to configuration mismatch
                 
-                # Use new extract_data method with recovery
-                result = self.audio_engine.extract_data(
-                    audio_path=self.multimedia_path,
-                    config=config,
-                    max_attempts=5  # Try multiple recovery strategies
-                )
+                extraction_configs = [
+                    # Try most common configurations first
+                    # Config 1: Default balanced mode (most common)
+                    self.audio_engine.create_config(
+                        technique=self.technique if self.technique else 'lsb',
+                        mode='balanced',
+                        password=self.password,
+                        redundancy_level=2,
+                        error_correction=True,
+                        anti_detection=False,
+                        randomize_positions=True
+                    ),
+                    # Config 2: Secure mode with 3x redundancy
+                    self.audio_engine.create_config(
+                        technique=self.technique if self.technique else 'lsb',
+                        mode='secure',
+                        password=self.password,
+                        redundancy_level=3,
+                        error_correction=True,
+                        anti_detection=True,
+                        randomize_positions=True
+                    ),
+                    # Config 3: Fast mode (single redundancy)
+                    self.audio_engine.create_config(
+                        technique=self.technique if self.technique else 'lsb',
+                        mode='fast',
+                        password=self.password,
+                        redundancy_level=1,
+                        error_correction=False,
+                        anti_detection=False,
+                        randomize_positions=True
+                    ),
+                    # Config 4: Maximum mode
+                    self.audio_engine.create_config(
+                        technique=self.technique if self.technique else 'lsb',
+                        mode='maximum',
+                        password=self.password,
+                        redundancy_level=5,
+                        error_correction=True,
+                        anti_detection=True,
+                        randomize_positions=True
+                    )
+                ]
+                
+                result = None
+                # Try each configuration until one works
+                for i, config in enumerate(extraction_configs, 1):
+                    self.logger.info(f"Trying extraction config {i}/4: mode={config.mode}, redundancy={config.redundancy_level}")
+                    
+                    # Use new extract_data method with recovery
+                    result = self.audio_engine.extract_data(
+                        audio_path=self.multimedia_path,
+                        config=config,
+                        max_attempts=3  # Reduced attempts per config to try more configs faster
+                    )
+                    
+                    if result.success:
+                        self.logger.info(f"✅ Extraction successful with config {i}: mode={config.mode}, redundancy={config.redundancy_level}")
+                        break
+                    else:
+                        self.logger.debug(f"❌ Config {i} failed: {result.message}")
+                
+                if not result or not result.success:
+                    # Final fallback: try with auto technique detection
+                    self.logger.info("Trying final fallback with auto technique detection")
+                    fallback_config = self.audio_engine.create_config(
+                        technique='auto',  # Try all techniques
+                        password=self.password,
+                        redundancy_level=2  # Use most common redundancy
+                    )
+                    
+                    result = self.audio_engine.extract_data(
+                        audio_path=self.multimedia_path,
+                        config=fallback_config,
+                        max_attempts=8  # More attempts for fallback
+                    )
                 
                 extracted_data = result.data if result.success else None
                 if not result.success:

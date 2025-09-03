@@ -727,16 +727,61 @@ class AudioSteganographyEngine:
                 techniques.append('lsb')  # LSB as fallback
             return techniques
     
+    def _try_different_redundancy_levels(self, audio_data: np.ndarray, config: EmbeddingConfig,
+                                        technique: BaseEmbeddingTechnique, sample_rate: int) -> Optional[bytes]:
+        """Try extraction with different redundancy levels to handle config mismatches."""
+        try:
+            # Try different redundancy levels in order of common usage
+            redundancy_levels = [config.redundancy_level, 2, 1, 3, 5]  # Try original first, then common values
+            
+            for redundancy in redundancy_levels:
+                self.logger.debug(f"Trying redundancy level {redundancy}")
+                
+                # Create temporary config with this redundancy level
+                temp_config = EmbeddingConfig(
+                    technique=config.technique,
+                    mode=config.mode,
+                    password=config.password,
+                    redundancy_level=redundancy,
+                    error_correction=config.error_correction,
+                    anti_detection=config.anti_detection,
+                    randomize_positions=config.randomize_positions,
+                    custom_seed=config.custom_seed,
+                    quality_optimization=config.quality_optimization
+                )
+                
+                # Try standard extraction with this redundancy level
+                extracted_data = self._extract_with_redundancy(audio_data, temp_config, technique, sample_rate)
+                
+                if extracted_data:
+                    # Try to decrypt and verify
+                    decrypted_data = self._decrypt_and_verify(extracted_data, config.password)
+                    if decrypted_data:
+                        self.logger.info(f"✅ Success with redundancy level {redundancy}")
+                        return extracted_data
+                    else:
+                        self.logger.debug(f"Extraction with redundancy {redundancy} failed decryption")
+                else:
+                    self.logger.debug(f"No data extracted with redundancy level {redundancy}")
+            
+            return None
+            
+        except Exception as e:
+            self.logger.debug(f"Redundancy level fallback failed: {e}")
+            return None
+    
     def _get_extraction_strategies(self, max_attempts: int) -> List[str]:
         """Get extraction strategies to try."""
         strategies = ['standard']
         if max_attempts > 1:
-            strategies.append('error_correction')
+            strategies.append('redundancy_fallback')  # Try different redundancy levels
         if max_attempts > 2:
-            strategies.append('redundant')
+            strategies.append('error_correction')
         if max_attempts > 3:
-            strategies.append('partial')
+            strategies.append('redundant')
         if max_attempts > 4:
+            strategies.append('partial')
+        if max_attempts > 5:
             strategies.append('brute_force')
         return strategies
     
@@ -838,6 +883,9 @@ class AudioSteganographyEngine:
                         self.logger.debug("❌ Header extraction failed or too short")
                         # Fallback to full extraction if header parsing fails
                         extracted_data = technique.extract(audio_data, config.password, sample_rate)
+            elif strategy == 'redundancy_fallback':
+                self.logger.debug("Using redundancy fallback strategy - trying different redundancy levels")
+                extracted_data = self._try_different_redundancy_levels(audio_data, config, technique, sample_rate)
             elif strategy == 'redundant':
                 self.logger.debug("Using redundant extraction strategy")
                 extracted_data = self._extract_with_redundancy(audio_data, config, technique, sample_rate)
