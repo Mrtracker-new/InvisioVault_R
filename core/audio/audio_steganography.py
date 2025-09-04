@@ -653,10 +653,9 @@ class AudioSteganographyEngine:
             # Apply gentle filtering to smooth statistical artifacts
             from scipy import signal as scipy_signal
             
-            # scipy.signal.butter returns tuple of numpy arrays (b, a) for filter coefficients
-            # Using explicit type annotation to satisfy static type checker
-            filter_result: Tuple[np.ndarray, np.ndarray] = scipy_signal.butter(8, 0.99, 'low')
-            b, a = filter_result
+            # scipy.signal.butter with output='ba' returns tuple of 2 numpy arrays (b, a)
+            # Explicitly specify output format to ensure consistent return type
+            b, a = scipy_signal.butter(8, 0.99, 'low', output='ba')
             
             channels, samples = audio_data.shape
             processed_audio = audio_data + noise
