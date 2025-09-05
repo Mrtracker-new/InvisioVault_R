@@ -117,13 +117,14 @@ class MultimediaHideWorkerThread(QThread):
                 self.status_updated.emit("Hiding data in audio samples...")
                 
                 # Create configuration for new audio steganography system
+                # CRITICAL FIX: Disable anti-detection to prevent precision issues
                 config = self.audio_engine.create_config(
                     technique=self.technique if self.technique else 'lsb',
                     mode='secure',  # Use secure mode for multimedia operations
                     password=self.password,
                     redundancy_level=3,  # 3x redundancy for reliability
                     error_correction=True,  # Enable error correction
-                    anti_detection=True,  # Enable anti-detection for multimedia
+                    anti_detection=False,  # DISABLED: Prevents precision loss during extraction
                     randomize_positions=True
                 )
                 

@@ -78,8 +78,18 @@ class MultimediaExtractWorkerThread(QThread):
                 # This fixes the issue where extraction fails due to configuration mismatch
                 
                 extraction_configs = [
-                    # Try most common configurations first
-                    # Config 1: Default balanced mode (most common)
+                    # CRITICAL FIX: Try SECURE mode FIRST as embedding always uses secure mode
+                    # Config 1: Secure mode with 3x redundancy (MATCHES EMBEDDING)
+                    self.audio_engine.create_config(
+                        technique=self.technique if self.technique else 'lsb',
+                        mode='secure',
+                        password=self.password,
+                        redundancy_level=3,
+                        error_correction=True,
+                        anti_detection=False,  # MATCHES EMBEDDING: disabled
+                        randomize_positions=True
+                    ),
+                    # Config 2: Try balanced mode as fallback
                     self.audio_engine.create_config(
                         technique=self.technique if self.technique else 'lsb',
                         mode='balanced',
@@ -87,16 +97,6 @@ class MultimediaExtractWorkerThread(QThread):
                         redundancy_level=2,
                         error_correction=True,
                         anti_detection=False,
-                        randomize_positions=True
-                    ),
-                    # Config 2: Secure mode with 3x redundancy
-                    self.audio_engine.create_config(
-                        technique=self.technique if self.technique else 'lsb',
-                        mode='secure',
-                        password=self.password,
-                        redundancy_level=3,
-                        error_correction=True,
-                        anti_detection=True,
                         randomize_positions=True
                     ),
                     # Config 3: Fast mode (single redundancy)
