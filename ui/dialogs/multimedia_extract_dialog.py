@@ -78,13 +78,13 @@ class MultimediaExtractWorkerThread(QThread):
                 # This fixes the issue where extraction fails due to configuration mismatch
                 
                 extraction_configs = [
-                    # CRITICAL FIX: Try SECURE mode FIRST as embedding always uses secure mode
-                    # Config 1: Secure mode with 3x redundancy (MATCHES EMBEDDING)
+                    # TEMPORARY FIX: Try FAST mode FIRST (redundancy=1) to match current embedding
+                    # Config 1: Fast mode with single redundancy (MATCHES CURRENT EMBEDDING)
                     self.audio_engine.create_config(
                         technique=self.technique if self.technique else 'lsb',
-                        mode='secure',
+                        mode='fast',
                         password=self.password,
-                        redundancy_level=3,
+                        redundancy_level=1,
                         error_correction=True,
                         anti_detection=False,  # MATCHES EMBEDDING: disabled
                         randomize_positions=True

@@ -638,7 +638,9 @@ class AudioProcessor:
             
             if format_ext in ['wav', 'flac']:
                 if format_ext == 'flac':
-                    export_params['parameters'] = ['-compression_level', '8']
+                    # CRITICAL FIX: Use minimum compression for steganography precision
+                    # High compression can interfere with LSB data integrity
+                    export_params['parameters'] = ['-compression_level', '0']
             else:
                 export_params['bitrate'] = '320k'
             
