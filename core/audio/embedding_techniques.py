@@ -177,7 +177,7 @@ class LSBEmbedding(BaseEmbeddingTechnique):
             Extracted data or None if extraction failed
         """
         try:
-            self.logger.debug(f"LSB extraction: expected_size={expected_size}")
+            self.logger.debug(f"LSB extraction: expected_size={expected_size}, randomize={self.randomize}")
             
             # Convert to integer format
             audio_int = self._float_to_int16(audio_data)
@@ -312,15 +312,18 @@ class LSBEmbedding(BaseEmbeddingTechnique):
         total_samples = channels * samples
         
         if self.randomize:
-            # Generate random positions with skip factor
+            # CRITICAL FIX: Use deterministic shuffle instead of random choice
+            # This ensures the same positions are generated in the same order every time
             available_positions = np.arange(0, total_samples, self.skip_factor)
+            
             if len(available_positions) >= num_bits:
-                # CRITICAL FIX: Don't sort positions! This would scramble the data order.
-                # The RNG will generate the same sequence for the same seed/password.
-                # We must use positions in the exact same order they were selected during embedding.
-                positions = rng.choice(available_positions, size=num_bits, replace=False)
-                # DO NOT SORT: positions = np.sort(positions) - this would scramble the data!
+                # Create a copy and shuffle it deterministically
+                shuffled_positions = available_positions.copy()
+                rng.shuffle(shuffled_positions)
+                # Take the first num_bits positions from the shuffled array
+                positions = shuffled_positions[:num_bits]
             else:
+                # Not enough positions available
                 positions = available_positions
         else:
             # Sequential positions with skip factor
