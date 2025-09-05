@@ -567,13 +567,21 @@ class AudioProcessor:
             else:
                 save_data = audio_data
             
-            # Determine subtype based on format
-            # Use 32-bit for better precision preservation for steganography
+            # CRITICAL FIX: For LSB steganography, we need to preserve exact bit patterns
+            # Convert to 16-bit integer first, then back to float to ensure consistency
+            # This prevents floating-point precision issues from corrupting LSB data
             format_ext = output_path.suffix.lower().lstrip('.')
+            if format_ext in ['wav', 'flac']:
+                # Convert to 16-bit integer and back to ensure exact LSB preservation
+                save_data_int16 = (save_data * 32767).astype(np.int16)
+                save_data = save_data_int16.astype(np.float32) / 32767.0
+            
+            # Determine subtype based on format
+            # Use 16-bit PCM for LSB steganography compatibility
             if format_ext == 'wav':
-                subtype = 'PCM_32'
+                subtype = 'PCM_16'  # Use 16-bit for LSB compatibility
             elif format_ext == 'flac':
-                subtype = 'PCM_24'  # FLAC supports up to 24-bit
+                subtype = 'PCM_16'  # Use 16-bit for consistency
             else:
                 subtype = None
             
@@ -643,10 +651,12 @@ class AudioProcessor:
             return False
     
     def _normalize_audio(self, audio_data: np.ndarray) -> np.ndarray:
-        """Normalize audio data to prevent clipping."""
+        """Normalize audio data to prevent clipping while preserving LSB precision."""
         max_val = np.max(np.abs(audio_data))
-        if max_val > 1.0:
-            audio_data = audio_data / max_val
+        # Use a slightly lower threshold to preserve precision for steganography
+        if max_val > 0.99:
+            # Scale down with a small margin to avoid clipping after LSB modifications
+            audio_data = audio_data * (0.99 / max_val)
         return audio_data
     
     def _check_output_format(self, output_path: Path) -> List[str]:

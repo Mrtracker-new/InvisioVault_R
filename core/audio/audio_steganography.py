@@ -775,16 +775,16 @@ class AudioSteganographyEngine:
     
     def _get_extraction_strategies(self, max_attempts: int) -> List[str]:
         """Get extraction strategies to try."""
-        strategies = ['standard']
-        if max_attempts > 1:
-            strategies.append('redundancy_fallback')  # Try different redundancy levels
+        strategies = ['direct_simple', 'standard']  # Try simplest first
         if max_attempts > 2:
-            strategies.append('error_correction')
+            strategies.append('redundancy_fallback')  # Try different redundancy levels
         if max_attempts > 3:
-            strategies.append('redundant')
+            strategies.append('error_correction')
         if max_attempts > 4:
-            strategies.append('partial')
+            strategies.append('redundant')
         if max_attempts > 5:
+            strategies.append('partial')
+        if max_attempts > 6:
             strategies.append('brute_force')
         return strategies
     
@@ -799,7 +799,13 @@ class AudioSteganographyEngine:
             self.logger.debug(f"Config - redundancy: {config.redundancy_level}, technique: {config.technique}")
             
             # Try different approaches based on strategy
-            if strategy == 'standard':
+            if strategy == 'direct_simple':
+                # CRITICAL FIX: Direct simple extraction without complex logic
+                # This bypasses all redundancy handling and just tries basic extraction
+                self.logger.debug("Using direct simple extraction - no redundancy logic")
+                extracted_data = technique.extract(audio_data, config.password, sample_rate)
+                
+            elif strategy == 'standard':
                 # CRITICAL FIX: Handle redundancy in standard extraction
                 # If redundancy_level > 1, try extracting from the first segment
                 if config.redundancy_level > 1:
