@@ -23,7 +23,7 @@ try:
         EmbeddingConfig,
         create_audio_steganography_engine
     )
-    from core.encryption_engine import SecurityLevel
+    from core.security.encryption_engine import SecurityLevel
     from utils.logger import Logger
     
     # Also try importing audio libraries to create test files

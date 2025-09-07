@@ -9,7 +9,7 @@ import hashlib
 from pathlib import Path
 from typing import Tuple, Optional, Union
 
-from core.encryption_engine import EncryptionEngine, SecurityLevel
+from core.security.encryption_engine import EncryptionEngine, SecurityLevel
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler, EncryptionError
 

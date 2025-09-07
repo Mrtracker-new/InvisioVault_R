@@ -11,9 +11,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from core.enhanced_steganography_engine import EnhancedSteganographyEngine, enhance_existing_engine
-from core.steganography_engine import SteganographyEngine
-from core.encryption_engine import EncryptionEngine, SecurityLevel
+from core.steganography.enhanced_steganography_engine import EnhancedSteganographyEngine
+from core.steganography.steganography_engine import SteganographyEngine
+from core.security.encryption_engine import EncryptionEngine, SecurityLevel
 from utils.logger import Logger
 
 

@@ -14,8 +14,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from core.steganography_engine import SteganographyEngine
-from core.encryption_engine import EncryptionEngine, SecurityLevel
+from core.steganography.steganography_engine import SteganographyEngine
+from core.security.encryption_engine import EncryptionEngine, SecurityLevel
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler, EncryptionError
 

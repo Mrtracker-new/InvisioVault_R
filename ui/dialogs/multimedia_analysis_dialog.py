@@ -18,7 +18,7 @@ from PySide6.QtGui import QFont, QPixmap
 from utils.logger import Logger
 from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler
-from core.multimedia_analyzer import MultimediaAnalyzer
+from core.analyzers.multimedia_analyzer import MultimediaAnalyzer
 from ui.components.file_drop_zone import FileDropZone
 from ui.components.multimedia_player import MultimediaPlayerWidget
 

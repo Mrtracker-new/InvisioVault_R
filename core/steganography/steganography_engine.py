@@ -15,7 +15,7 @@ from PIL import Image, ImageStat
 
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
-from core.secure_steganography_engine import SecureSteganographyEngine
+from core.steganography.secure_steganography_engine import SecureSteganographyEngine
 
 
 class SteganographyEngine:

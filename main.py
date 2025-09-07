@@ -32,7 +32,7 @@ from ui.main_window import MainWindow
 from utils.config_manager import ConfigManager
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
-from core.security_service import SecurityService
+from core.security.security_service import SecurityService
 
 
 def qt_message_handler(msg_type, context, message):

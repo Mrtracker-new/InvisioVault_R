@@ -15,7 +15,7 @@ import stat
 
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler, FileAccessError
-from core.crypto_utils import CryptoUtils
+from core.security.crypto_utils import CryptoUtils
 
 
 class FileManager:

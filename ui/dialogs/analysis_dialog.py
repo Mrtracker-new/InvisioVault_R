@@ -20,7 +20,7 @@ from utils.logger import Logger
 from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler
 from operations.analysis_operation import AnalysisOperation
-from core.image_analyzer import AnalysisLevel
+from core.analyzers.image_analyzer import AnalysisLevel
 
 
 class AnalysisWorkerThread(QThread):

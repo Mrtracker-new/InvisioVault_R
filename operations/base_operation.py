@@ -11,8 +11,8 @@ from enum import Enum
 
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
-from core.file_manager import FileManager
-from core.crypto_utils import CryptoUtils
+from core.utils.file_manager import FileManager
+from core.security.crypto_utils import CryptoUtils
 
 
 class OperationStatus(Enum):

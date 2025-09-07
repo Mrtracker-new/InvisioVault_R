@@ -17,9 +17,9 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QFont, QPixmap
 
-from core.enhanced_steganography_engine import EnhancedSteganographyEngine
-from core.encryption_engine import EncryptionEngine, SecurityLevel
-from core.security_service import SecurityService
+from core.steganography.enhanced_steganography_engine import EnhancedSteganographyEngine
+from core.security.encryption_engine import EncryptionEngine, SecurityLevel
+from core.security.security_service import SecurityService
 from utils.logger import Logger
 from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler

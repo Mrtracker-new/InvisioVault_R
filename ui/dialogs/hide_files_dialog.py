@@ -20,10 +20,10 @@ from PySide6.QtGui import QFont, QPixmap
 from utils.logger import Logger
 from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler
-from core.steganography_engine import SteganographyEngine
-from core.encryption_engine import EncryptionEngine, SecurityLevel
-from core.multi_decoy_engine import MultiDecoyEngine
-from core.security_service import SecurityService
+from core.steganography.steganography_engine import SteganographyEngine
+from core.security.encryption_engine import EncryptionEngine, SecurityLevel
+from core.steganography.multi_decoy_engine import MultiDecoyEngine
+from core.security.security_service import SecurityService
 
 
 class ImageAnalysisWorker(QThread):

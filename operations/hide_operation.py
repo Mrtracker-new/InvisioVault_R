@@ -9,9 +9,9 @@ from typing import Optional, List, Dict, Any, Callable
 from datetime import datetime
 
 from operations.base_operation import BaseOperation, OperationStatus
-from core.steganography_engine import SteganographyEngine
-from core.encryption_engine import EncryptionEngine
-from core.file_manager import FileManager
+from core.steganography.steganography_engine import SteganographyEngine
+from core.security.encryption_engine import EncryptionEngine
+from core.utils.file_manager import FileManager
 from utils.file_utils import FileUtils, CompressionType
 from utils.config_manager import ConfigManager
 from utils.logger import Logger

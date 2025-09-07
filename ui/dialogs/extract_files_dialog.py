@@ -19,10 +19,10 @@ from PySide6.QtGui import QFont, QPixmap
 from utils.logger import Logger
 from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler
-from core.steganography_engine import SteganographyEngine
-from core.enhanced_steganography_engine import EnhancedSteganographyEngine
-from core.encryption_engine import EncryptionEngine, SecurityLevel
-from core.multi_decoy_engine import MultiDecoyEngine
+from core.steganography.steganography_engine import SteganographyEngine
+from core.steganography.enhanced_steganography_engine import EnhancedSteganographyEngine
+from core.security.encryption_engine import EncryptionEngine, SecurityLevel
+from core.steganography.multi_decoy_engine import MultiDecoyEngine
 
 
 class ExtractWorkerThread(QThread):

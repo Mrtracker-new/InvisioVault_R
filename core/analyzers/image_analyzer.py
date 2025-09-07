@@ -61,7 +61,7 @@ except ImportError:
 
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
-from core.crypto_utils import CryptoUtils
+from core.security.crypto_utils import CryptoUtils
 
 
 class AnalysisLevel(Enum):

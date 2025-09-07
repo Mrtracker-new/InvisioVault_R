@@ -8,11 +8,11 @@ __author__ = "Rolan (RNR)"
 __license__ = "MIT"
 
 # Import main components for easy access
-from core.steganography_engine import SteganographyEngine
-from core.encryption_engine import EncryptionEngine, SecurityLevel
-from core.advanced_encryption import AdvancedEncryptionEngine
-from core.decoy_engine import DecoyEngine
-from core.two_factor_engine import TwoFactorEngine
+from core.steganography.steganography_engine import SteganographyEngine
+from core.security.encryption_engine import EncryptionEngine, SecurityLevel
+from core.security.advanced_encryption import AdvancedEncryptionEngine
+from core.steganography.decoy_engine import DecoyEngine
+from core.security.two_factor_engine import TwoFactorEngine
 from utils.logger import Logger
 from utils.config_manager import ConfigManager, ConfigSection
 from utils.error_handler import ErrorHandler

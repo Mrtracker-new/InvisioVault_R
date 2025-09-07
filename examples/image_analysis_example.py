@@ -15,7 +15,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from operations.analysis_operation import AnalysisOperation
-from core.image_analyzer import AnalysisLevel
+from core.analyzers.image_analyzer import AnalysisLevel
 
 
 def demonstrate_basic_analysis(image_path: str):

@@ -31,8 +31,8 @@ except ImportError as e:
 
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
-from core.encryption_engine import EncryptionEngine, SecurityLevel
-from core.multimedia_analyzer import MultimediaAnalyzer
+from core.security.encryption_engine import EncryptionEngine, SecurityLevel
+from core.analyzers.multimedia_analyzer import MultimediaAnalyzer
 
 
 class VideoSteganographyEngine:

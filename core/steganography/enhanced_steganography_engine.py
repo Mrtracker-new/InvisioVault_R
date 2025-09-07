@@ -17,9 +17,9 @@ try:
 except ImportError:
     cv2 = None
 
-from core.steganography_engine import SteganographyEngine
-from core.anti_detection_engine import AntiDetectionEngine
-from core.encryption_engine import EncryptionEngine
+from core.steganography.steganography_engine import SteganographyEngine
+from core.steganography.anti_detection_engine import AntiDetectionEngine
+from core.security.encryption_engine import EncryptionEngine
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
 

@@ -23,7 +23,7 @@ warnings.filterwarnings('ignore')
 
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler
-from core.encryption_engine import EncryptionEngine, SecurityLevel
+from core.security.encryption_engine import EncryptionEngine, SecurityLevel
 from core.audio.audio_processor import AudioProcessor, AudioInfo
 from core.audio.embedding_techniques import (
     EmbeddingTechniqueFactory, 

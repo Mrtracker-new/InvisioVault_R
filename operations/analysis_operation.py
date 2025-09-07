@@ -8,9 +8,9 @@ from typing import Optional, Dict, Any, Callable, List
 from datetime import datetime
 
 from operations.base_operation import BaseOperation, OperationType
-from core.steganography_engine import SteganographyEngine
-from core.image_analyzer import ImageAnalyzer, AnalysisLevel
-from core.file_manager import FileManager
+from core.steganography.steganography_engine import SteganographyEngine
+from core.analyzers.image_analyzer import ImageAnalyzer, AnalysisLevel
+from core.utils.file_manager import FileManager
 from utils.logger import Logger
 from utils.error_handler import ErrorHandler, UserInputError, InvisioVaultError
 

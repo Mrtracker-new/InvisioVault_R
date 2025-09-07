@@ -19,10 +19,10 @@ from PySide6.QtGui import QFont
 from utils.logger import Logger
 from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler
-from core.video_steganography_engine import VideoSteganographyEngine
+from core.multimedia.video_steganography_engine import VideoSteganographyEngine
 from core.audio.audio_steganography import AudioSteganographyEngine, EmbeddingConfig
-from core.multimedia_analyzer import MultimediaAnalyzer
-from core.encryption_engine import SecurityLevel
+from core.analyzers.multimedia_analyzer import MultimediaAnalyzer
+from core.security.encryption_engine import SecurityLevel
 from ui.components.file_drop_zone import FileDropZone
 from ui.components.progress_dialog import ProgressDialog
 

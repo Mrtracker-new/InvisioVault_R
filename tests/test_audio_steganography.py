@@ -29,7 +29,7 @@ try:
         AudioSteganographyEngine, EmbeddingConfig, EmbeddingResult, 
         ExtractionResult, StegoMode
     )
-    from core.encryption_engine import SecurityLevel
+    from core.security.encryption_engine import SecurityLevel
     from utils.logger import Logger
 except ImportError as e:
     pytest.skip(f"Audio steganography modules not available: {e}", allow_module_level=True)
