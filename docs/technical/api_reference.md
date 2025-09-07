@@ -1,7 +1,7 @@
 # 📚 InvisioVault API Reference
 ### *Complete Technical Documentation for Developers*
 
-**Version**: 1.1.0  
+**Version**: 1.0.0
 **Author**: Rolan (RNR)  
 **Purpose**: Your complete API guide for building with InvisioVault  
 **Last Updated**: August 2025
@@ -58,19 +58,19 @@ class SteganographyEngine:
 
 #### **Key Methods**
 
-##### **`hide_data(carrier_path, data, output_path, randomize=True, seed=None)`**
+##### **`hide_data_with_password(carrier_path, data, output_path, password, use_secure_mode=None)`**
 ```python
-def hide_data(self, carrier_path: Path, data: bytes, output_path: Path, 
-              randomize: bool = True, seed: int = None) -> bool:
+def hide_data_with_password(self, carrier_path, data: bytes, output_path, 
+                           password: str, use_secure_mode: Optional[bool] = None) -> bool:
     """
-    Hide data in carrier image using LSB steganography.
+    Hide data with password-based security (recommended method).
     
     Args:
         carrier_path: Path to carrier image (PNG/BMP/TIFF)
         data: Binary data to hide
         output_path: Path for output steganographic image
-        randomize: Use randomized positioning (recommended)
-        seed: Random seed for positioning (password-derived)
+        password: Password for encryption and randomization
+        use_secure_mode: Override default secure mode setting
     
     Returns:
         bool: Success status
@@ -82,17 +82,17 @@ def hide_data(self, carrier_path: Path, data: bytes, output_path: Path,
     """
 ```
 
-##### **`extract_data(stego_path, randomize=True, seed=None)`**
+##### **`extract_data_with_password(stego_path, password, use_secure_mode=None)`**
 ```python
-def extract_data(self, stego_path: Path, randomize: bool = True, 
-                 seed: int = None) -> bytes:
+def extract_data_with_password(self, stego_path, password: str,
+                              use_secure_mode: Optional[bool] = None) -> bytes:
     """
-    Extract hidden data from steganographic image.
+    Extract hidden data with password-based security.
     
     Args:
         stego_path: Path to steganographic image
-        randomize: Use randomized positioning
-        seed: Random seed for positioning
+        password: Password for decryption and positioning
+        use_secure_mode: Override default secure mode setting
     
     Returns:
         bytes: Extracted data or None if extraction failed
@@ -1080,6 +1080,6 @@ print("ὑ0 Different passwords will reveal different datasets from different me
 ---
 
 **Last Updated**: August 2025  
-**Version**: 1.1.0 - Multimedia Steganography Edition  
+**Version**: 1.0.0 - Multimedia Steganography Edition
 **Author**: Rolan (RNR)  
 **License**: MIT Educational License

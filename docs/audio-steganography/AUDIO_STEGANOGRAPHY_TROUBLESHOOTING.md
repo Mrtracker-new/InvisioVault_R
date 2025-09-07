@@ -211,7 +211,7 @@ The fundamental rule of audio steganography: **Lossy compression and LSB stegano
 
 *Last Updated: September 2025*  
 *InVisioVault Audio Steganography Documentation*  
-*Version: 2.1 - Fast Mode Operational*
+*Version: 1.0.0 - Fast Mode Operational*
 
 ---
 

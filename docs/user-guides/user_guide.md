@@ -110,10 +110,10 @@ invisiovault-cli      # CLI version
 
 When you first launch InvisioVault:
 
-1. **Welcome Screen**: Brief introduction to features
+1. **Application Launch**: Main window opens with navigation panel
 2. **Settings Initialization**: Default configuration setup
 3. **Security Check**: Validates system compatibility
-4. **UI Theme**: Choose between Dark/Light modes
+4. **Dark Mode UI**: Application uses professional dark theme
 
 ---
 
@@ -137,11 +137,11 @@ When you first launch InvisioVault:
 | **4** | 📁 **Select Files to Hide** | Any file type, check capacity indicator |
 | **5** | 🔐 **Set Password** | Strong password (8+ characters) |
 | **6** | ⚙️ **Configure Security** | Choose Standard, High, or Maximum |
-| **7** | ✨ **Click "Hide"** | Automatic dual-layer protection applied! |
+|| **7** | ✨ **Click "Hide"** | Files hidden with AES-256 encryption! |
 
-🎉 **Congratulations!** Your files are now hidden with:
-- 🎭 **Decoy layer** (innocent files with auto-generated password)
-- 🛡️ **Real layer** (your actual files with your password)
+🎉 **Congratulations!** Your files are now securely hidden with:
+- 🔐 **AES-256 Encryption** (military-grade security)
+- 🛡️ **Advanced Anti-Detection** (evades analysis tools)
 
 ### **📊 Image Format Guide**
 
@@ -196,19 +196,18 @@ When you first launch InvisioVault:
 | **6** | ⚡ **Click "Extract"** | Lightning-fast extraction! |
 
 🎉 **Success!** The system automatically:
-- 🔍 **Finds your dataset** among multiple layers
-- 📝 **Extracts only your files** (not decoy data)
-- ✅ **Verifies integrity** with cryptographic checksums
+- 🔍 **Locates hidden data** in the image
+- 📝 **Extracts your files** with full integrity
+- ✅ **Verifies data** with cryptographic checksums
 
 ### **🤔 What If I Don't Remember My Password?**
 
-| Scenario | What Happens | Result |
-|----------|--------------|--------|
-| 🟢 **Correct Password** | Gets your actual files | ✅ Success |
-| 🟡 **Different Password** | May get decoy files | 👀 Shows innocent data |
-| 🔴 **Wrong Password** | Nothing extracted | ❌ No trace of hidden data |
+|| Scenario | What Happens | Result |
+||----------|--------------|--------|
+|| 🟢 **Correct Password** | Gets your actual files | ✅ Success |
+|| 🔴 **Wrong Password** | "No hidden data found" error | ❌ No access to files |
 
-> 💡 **Pro Tip**: Different passwords may reveal different datasets in the same image!
+> ⚠️ **Important**: Passwords are case-sensitive and must be exact - there's no password recovery!
 
 ### **Image Analysis**
 

@@ -329,6 +329,7 @@ temp_files/
 *.xz
 archives/
 backups/
+backup/
 
 # Image files (potential carriers or outputs)
 # NOTE: Uncomment if you want to exclude all images

@@ -1,5 +1,7 @@
 # Anti-Detection Steganography Test Report
 
+**Version**: 1.0.0
+
 ## Executive Summary
 
 ✅ **EXCELLENT PERFORMANCE**: Your enhanced anti-detection steganography system is working exceptionally well and provides significant security improvements over standard methods.

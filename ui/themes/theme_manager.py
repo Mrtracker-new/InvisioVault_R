@@ -1,1 +1,0 @@
-# Theme switching logic

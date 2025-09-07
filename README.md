@@ -170,7 +170,7 @@ For legitimate educational or research purposes, contact the development team th
 - ✅ **LSB Technique Integration**: Direct LSB embedding/extraction working perfectly
 - ✅ **Engine Integration**: Header-based metadata system implemented
 - 🔧 **Advanced Redundancy Modes**: In development - extraction improvements in progress
-- 📋 **Complete Documentation**: See [`AUDIO_STEGANOGRAPHY_REWRITE.md`](docs/AUDIO_STEGANOGRAPHY_REWRITE.md) and [`MULTIMEDIA_STEGANOGRAPHY.md`](docs/MULTIMEDIA_STEGANOGRAPHY.md)
+- 📋 **Complete Documentation**: See [`AUDIO_STEGANOGRAPHY_REWRITE.md`](docs/audio-steganography/AUDIO_STEGANOGRAPHY_REWRITE.md)
 
 ### 🛡️ **Advanced Security**
 - 🔐 **AES-256-CBC Encryption**: Military-grade encryption with PBKDF2 key derivation
@@ -486,11 +486,11 @@ test_with_external_tools.bat
 
 | 📄 **Document** | 📝 **Description** | 🔗 **Link** |
 |-------------|----------------|--------|
-| **🛡️ Anti-Detection Techniques** | Technical implementation details | [`docs/anti_detection_techniques.md`](docs/anti_detection_techniques.md) |
-| **📊 Test Results** | Comprehensive steganalysis test report | [`docs/ANTI_DETECTION_TEST_REPORT.md`](docs/ANTI_DETECTION_TEST_REPORT.md) |
-| **🎲 LSB Randomization** | Randomized positioning implementation | [`docs/LSB_RANDOMIZATION_IMPLEMENTATION.md`](docs/LSB_RANDOMIZATION_IMPLEMENTATION.md) |
-| **🧪 Testing Guide** | How to test against steganalysis tools | [`docs/TESTING_GUIDE.md`](docs/TESTING_GUIDE.md) |
-| **📋 Implementation Summary** | Complete feature overview | [`docs/ANTI_DETECTION_IMPLEMENTATION_SUMMARY.md`](docs/ANTI_DETECTION_IMPLEMENTATION_SUMMARY.md) |
+|| **🛡️ Anti-Detection Techniques** | Technical implementation details | [`docs/security/anti_detection_techniques.md`](docs/security/anti_detection_techniques.md) |
+|| **📊 Test Results** | Comprehensive steganalysis test report | [`docs/security/ANTI_DETECTION_TEST_REPORT.md`](docs/security/ANTI_DETECTION_TEST_REPORT.md) |
+|| **🎲 LSB Randomization** | Randomized positioning implementation | [`docs/technical/LSB_RANDOMIZATION_IMPLEMENTATION.md`](docs/technical/LSB_RANDOMIZATION_IMPLEMENTATION.md) |
+| **🧪 Testing Guide** | How to test against steganalysis tools | [`docs/development/TESTING_GUIDE.md`](docs/development/TESTING_GUIDE.md) |
+|| **📋 Implementation Summary** | Complete feature overview | [`docs/security/ANTI_DETECTION_IMPLEMENTATION_SUMMARY.md`](docs/security/ANTI_DETECTION_IMPLEMENTATION_SUMMARY.md) |
 
 ### 🔥 **Key Improvements in This Update**
 
@@ -521,9 +521,11 @@ test_with_external_tools.bat
 
 <div align="center">
 
-### 📖 **Complete Documentation Suite**
+### 📚 **Complete Documentation Suite**
 
 *Everything you need to master InvisioVault*
+
+> 📏 **Note**: Documentation has been reorganized! See the new structure in [`docs/README.md`](docs/README.md) for easy navigation.
 
 </div>
 
@@ -709,24 +711,36 @@ For complete build instructions, troubleshooting, and advanced options:
 │   ├── 📁 file_manager.py               # File management utilities
 │   ├── 🛡️ security_service.py          # Security service layer
 │   └── 🔐 crypto_utils.py               # Cryptographic utilities
-├── 📚 docs/                              # Comprehensive documentation
-│   ├── 📖 user_guide.md                 # Complete user manual
-│   ├── 🔧 api_reference.md              # Developer API documentation
-│   ├── 🛡️ security_notes.md            # Security best practices
-│   ├── 📋 changelog.md                  # Version history
-│   ├── 🏗️ PROJECT_STRUCTURE.md         # Architecture details
-│   ├── ⚡ PERFORMANCE_OPTIMIZATION_SUMMARY.md # Performance analysis
-│   ├── 🎭 MULTI_DECOY_IMPLEMENTATION.md # Multi-decoy features
-│   ├── 🛡️ SECURITY.md                  # Security framework
-│   ├── 🕵️ ANTI_DETECTION_IMPLEMENTATION_SUMMARY.md # Anti-detection guide
-│   ├── 📊 ANTI_DETECTION_TEST_REPORT.md # Steganalysis test results
-│   ├── 🎲 LSB_RANDOMIZATION_IMPLEMENTATION.md # LSB randomization
-│   ├── 🧪 TESTING_GUIDE.md             # Testing methodology
-│   ├── 🛡️ anti_detection_techniques.md # Technical anti-detection details
-│   ├── 📈 SECURITY_IMPROVEMENTS.md     # Security enhancement details
-│   ├── 🏗️ TECHNICAL_ARCHITECTURE.md   # System architecture
-│   ├── 📊 STATISTICAL_MASKING_DOCUMENTATION.md # Statistical techniques
-│   └── 📋 INSTALLATION.md              # Installation guide
+├── 📚 docs/                              # Organized documentation structure
+│   ├── 📚 README.md                     # Documentation navigation guide
+│   ├── 🎯 user-guides/                  # User documentation
+│   │   ├── 📖 user_guide.md             # Complete user manual
+│   │   └── 📋 INSTALLATION.md           # Installation guide
+│   ├── 🛡️ security/                    # Security documentation
+│   │   ├── 🛡️ SECURITY.md              # Development security practices
+│   │   ├── 🛡️ security_notes.md        # Application security features
+│   │   ├── 📈 SECURITY_IMPROVEMENTS.md # Security enhancements
+│   │   ├── 🛡️ anti_detection_techniques.md # Anti-detection methods
+│   │   ├── 🕵️ ANTI_DETECTION_IMPLEMENTATION_SUMMARY.md # Implementation details
+│   │   └── 📊 ANTI_DETECTION_TEST_REPORT.md # Test results
+│   ├── 🎵 audio-steganography/          # Audio-specific documentation
+│   │   ├── 🛠️ AUDIO_STEGANOGRAPHY_TROUBLESHOOTING.md # Audio issues & solutions
+│   │   ├── ⚡ AUDIO_STEGANOGRAPHY_ENHANCEMENTS.md # Feature enhancements
+│   │   ├── 🔄 AUDIO_STEGANOGRAPHY_MIGRATION_GUIDE.md # Migration guide
+│   │   └── 🔧 AUDIO_STEGANOGRAPHY_REWRITE.md # Technical details
+│   ├── 🔧 technical/                    # Technical documentation
+│   │   ├── 🏗️ TECHNICAL_ARCHITECTURE.md # System architecture
+│   │   ├── 🔧 api_reference.md          # Developer API documentation
+│   │   ├── 🎲 LSB_RANDOMIZATION_IMPLEMENTATION.md # LSB technique details
+│   │   ├── 🎭 MULTI_DECOY_IMPLEMENTATION.md # Decoy mode features
+│   │   └── 📊 STATISTICAL_MASKING_DOCUMENTATION.md # Statistical techniques
+│   ├── 🛠️ development/                  # Development documentation
+│   │   ├── 🏗️ PROJECT_STRUCTURE.md     # Project organization
+│   │   ├── 🧪 TESTING_GUIDE.md         # Testing methodology
+│   │   └── ⚡ PERFORMANCE_OPTIMIZATION_SUMMARY.md # Performance analysis
+│   └── 📋 changelogs/                   # Version history
+│       ├── 📋 changelog.md              # Main project changelog
+│       └── 📋 CHANGELOG_ANTI_DETECTION_UPDATE.md # Anti-detection updates
 ├── 🧪 examples/                         # Example implementations
 │   ├── 🛡️ anti_detection_integration.py # Anti-detection examples
 │   └── 🔍 image_analysis_example.py    # Image analysis examples
@@ -764,10 +778,8 @@ For complete build instructions, troubleshooting, and advanced options:
 │   │   ├── 🔑 password_input.py        # Secure password input
 │   │   ├── 📊 progress_dialog.py       # Progress tracking
 │   │   └── ⚙️ settings_panel.py        # Settings management
-│   ├── 🎨 themes/                       # Theme system
-│   │   ├── 🌙 dark_theme.py            # Dark mode theme
-│   │   ├── ☀️ light_theme.py           # Light mode theme
-│   │   └── 🎨 theme_manager.py         # Theme management
+│   ├── 🎨 themes/                       # Theme system (dark mode locked)
+│   │   └── 🌙 dark_theme.py            # Dark mode theme (locked)
 │   └── 🔗 integrations/                 # Feature integrations
 └── 🔧 utils/                            # Core utility modules
     ├── ⚙️ config_manager.py            # Configuration management

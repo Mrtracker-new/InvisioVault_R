@@ -1,7 +1,7 @@
 # 📦 InVisioVault Installation Guide
 ### *Complete Setup Instructions for All Platforms*
 
-**Version**: 1.0.1  
+**Version**: 1.0.0
 **Author**: Rolan (RNR) - [rolanlobo901@gmail.com](mailto:rolanlobo901@gmail.com)  
 **Last Updated**: January 2025  
 **Compatibility**: Python 3.8+ on Windows, macOS, and Linux
@@ -500,6 +500,6 @@ Once installed, you should be able to:
 ---
 
 **Last Updated**: January 2025  
-**Version**: 1.0.1  
+**Version**: 1.0.0
 **Author**: Rolan (RNR)  
 **License**: MIT Educational License

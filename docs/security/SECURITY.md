@@ -1,7 +1,8 @@
 # 🛡️ InvisioVault Security Guidelines
 
-## Author: Rolan (RNR)
-## Purpose: Comprehensive security practices for protecting sensitive data
+**Author**: Rolan (RNR)  
+**Version**: 1.0.0  
+**Purpose**: Comprehensive security practices for protecting sensitive data
 
 ---
 

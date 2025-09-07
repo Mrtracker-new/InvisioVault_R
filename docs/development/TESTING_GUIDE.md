@@ -1,5 +1,7 @@
 # 🧪 InVisioVault Anti-Detection Testing Guide
 
+**Version**: 1.0.0
+
 ## 🚀 Quick Start Testing
 
 ### **Step 1: Install Requirements**

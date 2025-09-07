@@ -1,6 +1,8 @@
 # 🚀 InvisioVault Anti-Detection Update
 
-## 📅 **Version 1.1.0 - Anti-Detection + Randomization Compatibility Fix**
+**Document Version**: 1.0.0
+
+## 📅 **Version 1.0.0 - Anti-Detection + Randomization Compatibility Fix**
 *Released: August 2025*
 
 ---

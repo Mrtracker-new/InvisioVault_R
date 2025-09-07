@@ -1,4 +1,6 @@
-﻿# Multi-Decoy Implementation - Educational Research
+# Multi-Decoy Implementation - Educational Research
+
+**Version**: 1.0.0
 
 ## 🎯 **Educational Project by Rolan (RNR)**
 

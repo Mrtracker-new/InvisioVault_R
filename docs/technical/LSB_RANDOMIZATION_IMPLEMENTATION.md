@@ -1,5 +1,7 @@
 # LSB Randomization Feature Implementation
 
+**Version**: 1.0.0
+
 ## ✅ FEATURE SUCCESSFULLY IMPLEMENTED
 
 Your **LSB (Least Significant Bit) randomization** option is now fully integrated into the InVisioVault application, giving users complete control over their steganography approach.

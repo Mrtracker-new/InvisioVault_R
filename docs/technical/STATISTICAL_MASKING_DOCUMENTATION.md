@@ -1,5 +1,7 @@
 # Advanced Statistical Masking Implementation
 
+**Version**: 1.0.0
+
 ## Overview
 
 The secure steganography engine now includes advanced statistical masking capabilities that make embedded data statistically indistinguishable from natural image noise. This implementation uses carrier-derived pseudo-random generators and entropy management to achieve unprecedented steganographic security.

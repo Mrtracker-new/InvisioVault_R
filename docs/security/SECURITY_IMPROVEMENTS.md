@@ -1,5 +1,7 @@
 # 🔒 InVisioVault Security Improvements
 
+**Version**: 1.0.0
+
 ## Security Issue Resolved
 
 **Problem**: The original InVisioVault implementation was easily detectable by forensic analysis tools like `binwalk` and `hexdump` because it:
