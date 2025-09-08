@@ -37,14 +37,21 @@ def demonstrate_basic_analysis(image_path: str):
         
         # Display results
         print("\n📊 Results:")
-        print(f"✅ Suitability: {analysis_op.get_suitability_rating()}")
         
-        capacity = analysis_op.get_capacity_estimate()
+        # Extract key information from results
+        file_info = results.get('file_info', {})
+        capacity = results.get('capacity_analysis', {})
+        security = results.get('security_assessment', {})
+        
+        print(f"✅ Security Rating: {security.get('security_rating', 'unknown').title()}")
+        print(f"📁 Format: {file_info.get('format', 'Unknown')} ({'Lossless' if file_info.get('is_lossless', False) else 'Lossy'})")
+        
         if capacity:
-            print(f"📦 Capacity: ~{capacity.get('estimated_capacity_kb', 0):.1f} KB")
+            capacity_kb = capacity.get('capacity_kb', 0)
+            print(f"📦 LSB Capacity: ~{capacity_kb:.1f} KB")
         
         print(f"\n💡 Recommendation:")
-        print(f"   {analysis_op.get_human_readable_summary()}")
+        print(f"   {results.get('basic_recommendation', 'Analysis completed')}")
         
     except Exception as e:
         print(f"❌ Error during basic analysis: {e}")
@@ -70,38 +77,75 @@ def demonstrate_comprehensive_analysis(image_path: str):
         # Display comprehensive results
         print("\n📊 Comprehensive Results:")
         
+        # Extract information from comprehensive results
+        comprehensive = results.get('comprehensive_analysis', {})
+        file_info = comprehensive.get('file_info', {})
+        security = comprehensive.get('security_assessment', {})
+        capacity = comprehensive.get('capacity_analysis', {})
+        quality_metrics = comprehensive.get('quality_metrics', {})
+        stego_detection = results.get('steganography_detection', {})
+        performance = comprehensive.get('performance_metrics', {})
+        
         # Basic info
-        rating = analysis_op.get_suitability_rating()
-        print(f"⭐ Overall Rating: {rating}")
+        security_rating = security.get('security_rating', 'unknown')
+        security_score = security.get('overall_security_score', 0)
+        print(f"⭐ Security Rating: {security_rating.title()} ({security_score:.1f}/10.0)")
         
         # Capacity information
-        capacity = analysis_op.get_capacity_estimate()
-        if capacity:
-            capacity_mb = capacity.get('lsb_capacity_mb', 0)
-            capacity_kb = capacity.get('lsb_capacity_kb', 0)
+        basic_lsb = capacity.get('basic_lsb', {})
+        if basic_lsb:
+            capacity_mb = basic_lsb.get('capacity_mb', 0)
+            capacity_kb = basic_lsb.get('capacity_kb', 0)
             if capacity_mb > 1:
                 print(f"📦 LSB Capacity: {capacity_mb:.2f} MB")
             else:
                 print(f"📦 LSB Capacity: {capacity_kb:.1f} KB")
         
+        # Quality metrics
+        rgb_quality = quality_metrics.get('rgb', {})
+        if rgb_quality:
+            entropy = rgb_quality.get('entropy', {}).get('overall', 0)
+            noise = rgb_quality.get('noise_analysis', {}).get('overall_noise_estimate', 0)
+            print(f"🎲 Entropy: {entropy:.2f}/8.0")
+            print(f"🔊 Noise Level: {noise:.1f}")
+        
         # Steganography detection
-        has_stego = analysis_op.has_potential_steganography()
-        print(f"🕵️ Potential Hidden Data: {'Yes' if has_stego else 'No'}")
+        if stego_detection:
+            likelihood = stego_detection.get('overall_likelihood', 'none')
+            confidence = stego_detection.get('detection_confidence', 0)
+            print(f"🕵️ Steganography Detection: {likelihood.upper()} ({confidence:.1%})")
+            
+            indicators = stego_detection.get('indicators', [])
+            if indicators:
+                print("   ⚠️ Indicators:")
+                for indicator in indicators[:3]:  # Show top 3
+                    print(f"     • {indicator}")
+        
+        # Performance information
+        if performance:
+            analysis_time = performance.get('total_analysis_time', 0)
+            gpu_used = performance.get('gpu_acceleration_used', False)
+            print(f"⌚ Performance: {analysis_time:.2f}s {'(GPU)' if gpu_used else '(CPU)'}")
         
         # Detailed summary
-        print(f"\n📋 Analysis Summary:")
-        summary_lines = analysis_op.get_human_readable_summary().split('\n')
-        for line in summary_lines:
-            if line.strip():
-                print(f"   {line}")
+        summary = results.get('human_readable_summary', '')
+        if summary:
+            print(f"\n📋 Enhanced Analysis Summary:")
+            # Show first few lines of summary
+            summary_lines = summary.split('\n')[:10]  # Limit to first 10 lines
+            for line in summary_lines:
+                if line.strip() and not line.startswith('='):
+                    print(f"   {line}")
         
         # Recommendations
-        recommendations = analysis_op.get_recommendations()
+        recommendations = comprehensive.get('recommendations', [])
         if recommendations:
-            print(f"\n💡 Recommendations:")
-            for i, rec in enumerate(recommendations, 1):
+            print(f"\n💡 Enhanced Recommendations:")
+            for i, rec in enumerate(recommendations[:5], 1):  # Show top 5
                 if rec.strip():
-                    print(f"   {i}. {rec}")
+                    # Clean up recommendation text
+                    clean_rec = rec.replace('⭐', '').replace('📊', '').replace('🔊', '').strip()
+                    print(f"   {i}. {clean_rec}")
         
     except Exception as e:
         print(f"❌ Error during comprehensive analysis: {e}")

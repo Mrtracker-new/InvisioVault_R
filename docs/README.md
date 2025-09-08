@@ -31,6 +31,7 @@ Specialized documentation for audio steganography:
 Deep technical documentation for developers and advanced users:
 - **[TECHNICAL_ARCHITECTURE.md](./technical/TECHNICAL_ARCHITECTURE.md)** - System architecture and design
 - **[api_reference.md](./technical/api_reference.md)** - API documentation and reference
+- **[ENHANCED_IMAGE_ANALYZER.md](./technical/ENHANCED_IMAGE_ANALYZER.md)** - Enhanced image analyzer implementation and features
 - **[LSB_RANDOMIZATION_IMPLEMENTATION.md](./technical/LSB_RANDOMIZATION_IMPLEMENTATION.md)** - LSB technique details
 - **[MULTI_DECOY_IMPLEMENTATION.md](./technical/MULTI_DECOY_IMPLEMENTATION.md)** - Decoy mode implementation
 - **[STATISTICAL_MASKING_DOCUMENTATION.md](./technical/STATISTICAL_MASKING_DOCUMENTATION.md)** - Statistical masking techniques

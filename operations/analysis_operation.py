@@ -72,8 +72,8 @@ class AnalysisOperation(BaseOperation):
             if not self.image_path or not self.image_path.exists():
                 raise UserInputError("Image not found", field="image_path")
             
-            # Use ImageAnalyzer for more comprehensive validation
-            if not self.image_analyzer.validate_image_file(self.image_path):
+            # Use enhanced ImageAnalyzer for comprehensive validation
+            if not self.image_analyzer._validate_image_file(self.image_path):
                 raise UserInputError("Invalid image format for analysis", field="image_path")
             
             self.logger.info("Analysis operation inputs validated successfully")
@@ -143,7 +143,7 @@ class AnalysisOperation(BaseOperation):
             raise InvisioVaultError(f"Analysis operation failed: {e}")
     
     def _perform_basic_analysis(self) -> Dict[str, Any]:
-        """Perform basic analysis using ImageAnalyzer.
+        """Perform basic analysis using enhanced ImageAnalyzer.
         
         Returns:
             Dictionary with basic analysis results
@@ -152,28 +152,50 @@ class AnalysisOperation(BaseOperation):
             if self.image_path is None:
                 raise UserInputError("Image path not configured")
             
-            self.update_status("Performing quick suitability check...")
+            self.update_status("Performing quick analysis...")
             
-            # Use ImageAnalyzer for quick assessment
-            quick_check = self.image_analyzer.quick_suitability_check(self.image_path)
+            # Use enhanced ImageAnalyzer for fast analysis
+            analysis_results = self.image_analyzer.analyze_image_advanced(
+                image_path=self.image_path,
+                analysis_level=AnalysisLevel.FAST,
+                enable_ml=False  # Disable ML for basic analysis for speed
+            )
             
             # Get basic file metadata
             metadata = self.file_manager.get_file_metadata(self.image_path)
             
-            # Combine results
+            # Extract key information from enhanced analysis
+            file_info = analysis_results.get('file_info', {})
+            capacity = analysis_results.get('capacity_analysis', {})
+            security = analysis_results.get('security_assessment', {})
+            
+            # Create compatibility layer for existing code
+            basic_recommendation = "Suitable for steganography"
+            if security.get('security_rating') == 'poor':
+                basic_recommendation = "Poor security characteristics - not recommended"
+            elif security.get('security_rating') == 'moderate':
+                basic_recommendation = "Moderate suitability for steganography"
+            elif security.get('security_rating') in ['good', 'excellent']:
+                basic_recommendation = "Good candidate for steganography"
+                
+            # Combine results in expected format
             results = {
                 'analysis_type': 'basic',
                 'analysis_timestamp': datetime.now().isoformat(),
                 'file_info': {
                     'file_name': self.image_path.name,
                     'file_path': str(self.image_path),
-                    'file_size_bytes': metadata['size'],
-                    'file_size_kb': metadata['size'] / 1024,
+                    'file_size_bytes': file_info.get('file_size_bytes', metadata['size']),
+                    'file_size_kb': file_info.get('file_size_kb', metadata['size'] / 1024),
                     'mime_type': metadata['mime_type'],
-                    'last_modified': metadata.get('modified', 'Unknown')
+                    'last_modified': metadata.get('modified', 'Unknown'),
+                    'format': file_info.get('file_extension', ''),
+                    'is_lossless': file_info.get('is_lossless_format', False)
                 },
-                'quick_suitability_check': quick_check,
-                'basic_recommendation': quick_check.get('recommendation', 'Analysis completed')
+                'capacity_analysis': capacity,
+                'security_assessment': security,
+                'basic_recommendation': basic_recommendation,
+                'enhanced_analysis_available': True
             }
             
             return results
@@ -183,7 +205,7 @@ class AnalysisOperation(BaseOperation):
             raise
     
     def _perform_full_analysis(self) -> Dict[str, Any]:
-        """Perform comprehensive analysis using ImageAnalyzer.
+        """Perform comprehensive analysis using enhanced ImageAnalyzer.
         
         Returns:
             Dictionary with comprehensive analysis results
@@ -195,58 +217,71 @@ class AnalysisOperation(BaseOperation):
             # Determine analysis level based on configuration
             if self.analysis_level == 'comprehensive':
                 analysis_level = AnalysisLevel.THOROUGH
+                enable_ml = True  # Enable ML for comprehensive analysis
             else:
                 analysis_level = AnalysisLevel.BALANCED
+                enable_ml = False  # Keep ML off for balanced performance
             
-            # Progressive updates for comprehensive analysis
+            # Progressive updates with progress callback
+            def progress_callback(progress: float):
+                # Convert 0.0-1.0 to our progress range
+                current_progress = 55 + (progress * 35)  # 55% to 90%
+                self.update_progress(int(current_progress))
+            
+            # Status updates based on analysis level
             if self.analysis_level == 'comprehensive':
-                self.update_status("Loading and preparing image for thorough analysis...")
-                self.update_progress(60)
+                self.update_status("Performing thorough analysis with ML detection...")
             else:
                 self.update_status(f"Performing {analysis_level.value} image analysis...")
-                self.update_progress(55)
             
-            # Perform comprehensive analysis using ImageAnalyzer
-            comprehensive_results = self.image_analyzer.analyze_image_comprehensive(
-                self.image_path, analysis_level
+            # Perform comprehensive analysis using enhanced ImageAnalyzer
+            comprehensive_results = self.image_analyzer.analyze_image_advanced(
+                image_path=self.image_path,
+                analysis_level=analysis_level,
+                enable_ml=enable_ml,
+                progress_callback=progress_callback
             )
             
-            if self.analysis_level == 'comprehensive':
-                self.update_status("Analyzing image properties and quality metrics...")
-                self.update_progress(75)
-            else:
-                self.update_progress(70)
+            self.update_progress(90)
+            self.update_status("Generating analysis summary...")
             
             # Generate human-readable summary
-            analysis_summary = self.image_analyzer.get_analysis_summary(comprehensive_results)
+            analysis_summary = self.image_analyzer.get_analysis_summary_enhanced(comprehensive_results)
             
+            self.update_progress(92)
+            
+            # Perform dedicated steganography detection if comprehensive
+            detection_results = None
             if self.analysis_level == 'comprehensive':
                 self.update_status("Running advanced steganography detection...")
-                self.update_progress(85)
-            else:
-                self.update_status("Detecting potential steganographic content...")
-                self.update_progress(80)
-            
-            # Perform steganography detection
-            detection_results = self.image_analyzer.detect_potential_steganography(
-                self.image_path, analysis_level
-            )
-            
-            if self.analysis_level == 'comprehensive':
-                self.update_status("Finalizing comprehensive analysis report...")
+                detection_results = self.image_analyzer.detect_steganography_advanced(
+                    image_path=self.image_path,
+                    analysis_level=analysis_level,
+                    use_ml=enable_ml
+                )
                 self.update_progress(95)
-            else:
-                self.update_progress(90)
+            
+            self.update_status("Finalizing analysis report...")
             
             # Combine all results
             full_results = {
-                'analysis_type': 'comprehensive',
+                'analysis_type': 'comprehensive' if self.analysis_level == 'comprehensive' else 'full',
                 'analysis_level': analysis_level.value,
                 'comprehensive_analysis': comprehensive_results,
-                'steganography_detection': detection_results,
                 'human_readable_summary': analysis_summary,
-                'detailed_recommendations': comprehensive_results.get('recommendations', [])
+                'detailed_recommendations': comprehensive_results.get('recommendations', []),
+                'performance_metrics': comprehensive_results.get('performance_metrics', {}),
+                'enhanced_features_used': {
+                    'machine_learning': enable_ml,
+                    'advanced_texture_analysis': analysis_level in [AnalysisLevel.THOROUGH, AnalysisLevel.RESEARCH],
+                    'frequency_domain_analysis': analysis_level in [AnalysisLevel.THOROUGH, AnalysisLevel.RESEARCH],
+                    'perceptual_fingerprinting': analysis_level != AnalysisLevel.LIGHTNING
+                }
             }
+            
+            # Add steganography detection results if available
+            if detection_results:
+                full_results['steganography_detection'] = detection_results
             
             return full_results
             
