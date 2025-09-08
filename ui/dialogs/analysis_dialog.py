@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
     QComboBox
 )
 from PySide6.QtCore import Qt, QThread, Signal
-from PySide6.QtGui import QFont, QPalette
+from PySide6.QtGui import QFont, QPalette, QColor
 
 from utils.logger import Logger
 from utils.config_manager import ConfigManager
@@ -1475,13 +1475,16 @@ class AnalysisDialog(QDialog):
             
             # Color coding for suspicion levels
             if "High" in suspicion or "very_high" in suspicion.lower():
-                suspicion_item.setBackground(QPalette().color(QPalette.ColorRole.BrightText))
-                suspicion_item.setStyleSheet("background-color: #ffcdd2; color: #d32f2f;")
+                suspicion_item.setBackground(QColor("#ffcdd2"))
+                suspicion_item.setForeground(QColor("#d32f2f"))
             elif "Medium" in suspicion or "medium" in suspicion.lower():
-                suspicion_item.setBackground(QPalette().color(QPalette.ColorRole.Light))
-                suspicion_item.setStyleSheet("background-color: #fff3e0; color: #f57c00;")
+                suspicion_item.setBackground(QColor("#fff3e0"))
+                suspicion_item.setForeground(QColor("#f57c00"))
             elif "Enhanced" in test:
-                suspicion_item.setStyleSheet("background-color: #e3f2fd; color: #1976d2; font-weight: bold;")
+                suspicion_item.setBackground(QColor("#e3f2fd"))
+                suspicion_item.setForeground(QColor("#1976d2"))
+                # Note: font-weight: bold cannot be set on QTableWidgetItem directly
+                # Consider using a QFont if bold styling is needed
             
             self.detection_table.setItem(i, 2, suspicion_item)
         
