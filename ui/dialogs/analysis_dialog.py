@@ -260,6 +260,9 @@ class AnalysisWorkerThread(QThread):
             if recommendations:
                 formatted['suitability']['reasons'].extend(recommendations[:5])  # Limit to 5
             
+            # CRITICAL FIX: Add comprehensive_analysis data to formatted results for UI access
+            formatted['comprehensive_analysis'] = comprehensive
+            
             return formatted
             
         except Exception as e:
@@ -1272,8 +1275,8 @@ class AnalysisDialog(QDialog):
         # Detection tab
         self.populate_detection(results['lsb_analysis'])
         
-        # Enhanced features tab
-        if 'enhanced_analysis' in results and results['enhanced_analysis']:
+        # Enhanced features tab - fix: check for comprehensive analysis data
+        if ('enhanced_analysis' in results and results['enhanced_analysis']) or 'comprehensive_analysis' in results:
             self.populate_enhanced_features(results)
         
         # Performance tab
