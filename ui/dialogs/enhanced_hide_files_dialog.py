@@ -25,6 +25,90 @@ from utils.config_manager import ConfigManager
 from utils.error_handler import ErrorHandler
 
 
+class CarrierAnalysisWorker(QThread):
+    """Worker thread for carrier image analysis to prevent UI blocking."""
+    
+    analysis_completed = Signal(dict)
+    analysis_failed = Signal(str)
+    progress_updated = Signal(int)
+    status_updated = Signal(str)
+    
+    def __init__(self, enhanced_engine, carrier_path, analysis_type="basic"):
+        super().__init__()
+        self.enhanced_engine = enhanced_engine
+        self.carrier_path = carrier_path
+        self.analysis_type = analysis_type  # "basic" or "detailed"
+        self.logger = Logger()
+    
+    def run(self):
+        """Perform image analysis in background thread."""
+        try:
+            self.status_updated.emit("Analyzing carrier image...")
+            self.progress_updated.emit(20)
+            
+            if self.analysis_type == "basic":
+                # Basic analysis for initial carrier selection
+                analysis = self.enhanced_engine.analyze_image_suitability(self.carrier_path)
+                self.progress_updated.emit(80)
+                
+                results = {
+                    'type': 'basic',
+                    'capacity_mb': analysis.get('capacity_mb', 0),
+                    'suitability_score': analysis.get('suitability_score', 0),
+                    'width': analysis.get('width', 0),
+                    'height': analysis.get('height', 0),
+                    'channels': analysis.get('channels', 0),
+                    'full_analysis': analysis
+                }
+                
+            else:  # detailed analysis
+                self.status_updated.emit("Performing detailed carrier analysis...")
+                analysis = self.enhanced_engine.analyze_carrier_suitability(self.carrier_path)
+                self.progress_updated.emit(60)
+                
+                self.status_updated.emit("Generating recommendations...")
+                results = {
+                    'type': 'detailed',
+                    'full_analysis': analysis,
+                    'analysis_text': self._format_detailed_analysis(analysis)
+                }
+                self.progress_updated.emit(80)
+            
+            self.progress_updated.emit(100)
+            self.status_updated.emit("Analysis complete!")
+            self.analysis_completed.emit(results)
+            
+        except Exception as e:
+            self.logger.error(f"Carrier analysis failed: {e}")
+            self.analysis_failed.emit(str(e))
+    
+    def _format_detailed_analysis(self, analysis):
+        """Format detailed analysis results for display."""
+        analysis_text = f"""
+🎯 ENHANCED CARRIER ANALYSIS
+
+📊 Basic Metrics:
+• Image Size: {analysis.get('width', 0)} x {analysis.get('height', 0)} pixels
+• Channels: {analysis.get('channels', 0)}
+• Total Capacity: {analysis.get('capacity_mb', 0):.2f} MB
+• Suitability Score: {analysis.get('suitability_score', 0)}/10
+
+🛡️ Anti-Detection Metrics:
+• Complexity Score: {analysis.get('complexity_score', 0):.3f}
+• Secure Capacity: {analysis.get('secure_capacity_bytes', 0):,} bytes
+• Texture Regions: {analysis.get('texture_regions_percent', 0):.1f}%
+• Smooth Regions: {analysis.get('smooth_regions_percent', 0):.1f}%
+• Anti-Detection Score: {analysis.get('anti_detection_score', 0)}/10
+
+💡 Recommendations:
+"""
+        
+        for rec in analysis.get('recommendations', []):
+            analysis_text += f"• {rec}\n"
+        
+        return analysis_text.strip()
+
+
 class EnhancedHideWorkerThread(QThread):
     """Worker thread for enhanced hiding operations with anti-detection."""
     
@@ -271,6 +355,7 @@ class EnhancedHideFilesDialog(QDialog):
         self.files_to_hide = []
         self.output_path = None
         self.worker_thread = None
+        self.analysis_worker = None  # For carrier analysis
         
         self.init_ui()
         self.connect_signals()
@@ -278,7 +363,7 @@ class EnhancedHideFilesDialog(QDialog):
         # Auto-analyze timer
         self.analysis_timer = QTimer()
         self.analysis_timer.setSingleShot(True)
-        self.analysis_timer.timeout.connect(self.analyze_carrier_delayed)
+        self.analysis_timer.timeout.connect(self.start_auto_analysis)
     
     def init_ui(self):
         """Initialize the enhanced user interface."""
@@ -347,6 +432,24 @@ class EnhancedHideFilesDialog(QDialog):
         self.image_preview.setStyleSheet("border: 1px solid #ccc; border-radius: 5px;")
         self.image_preview.hide()
         
+        # Analysis progress indicator
+        self.analysis_progress = QProgressBar()
+        self.analysis_progress.setRange(0, 100)
+        self.analysis_progress.setStyleSheet("""
+            QProgressBar {
+                border: 2px solid #555;
+                border-radius: 5px;
+                text-align: center;
+                height: 20px;
+                background-color: #3a3a3a;
+            }
+            QProgressBar::chunk {
+                background-color: #4fc3f7;
+                border-radius: 3px;
+            }
+        """)
+        self.analysis_progress.hide()
+        
         self.carrier_analysis_label = QLabel()
         self.carrier_analysis_label.setWordWrap(True)
         self.carrier_analysis_label.hide()
@@ -354,6 +457,7 @@ class EnhancedHideFilesDialog(QDialog):
         carrier_layout.addWidget(self.carrier_label)
         carrier_layout.addWidget(self.carrier_button)
         carrier_layout.addWidget(self.image_preview)
+        carrier_layout.addWidget(self.analysis_progress)
         carrier_layout.addWidget(self.carrier_analysis_label)
         layout.addWidget(carrier_group)
         
@@ -647,7 +751,7 @@ class EnhancedHideFilesDialog(QDialog):
         self.password_input.textChanged.connect(self.check_ready_state)
         self.use_anti_detection.toggled.connect(self.update_ui_mode)
         
-        # Auto-analyze carrier when selected
+        # Auto-analyze carrier when selected (delayed to allow UI to update)
         self.carrier_button.clicked.connect(lambda: self.analysis_timer.start(1000))
     
     def select_carrier_image(self):
@@ -662,73 +766,127 @@ class EnhancedHideFilesDialog(QDialog):
         if file_path:
             self.carrier_image_path = Path(file_path)
             
-            # Quick analysis
+            # Show immediate feedback
+            self.carrier_label.setText(
+                f"🔍 Analyzing {self.carrier_image_path.name}..."
+            )
+            
+            # Show image preview immediately (this is lightweight)
             try:
-                basic_analysis = self.enhanced_engine.analyze_image_suitability(self.carrier_image_path)
-                
-                capacity_mb = basic_analysis.get('capacity_mb', 0)
-                suitability = basic_analysis.get('suitability_score', 0)
-                
-                self.carrier_label.setText(
-                    f"✅ {self.carrier_image_path.name}\n"
-                    f"📊 Capacity: {capacity_mb:.2f} MB\n"
-                    f"⭐ Suitability: {suitability}/10"
-                )
-                
-                # Show image preview
                 pixmap = QPixmap(str(self.carrier_image_path))
                 if not pixmap.isNull():
                     scaled_pixmap = pixmap.scaled(200, 150, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
                     self.image_preview.setPixmap(scaled_pixmap)
                     self.image_preview.show()
-                
-                self.analyze_button.setEnabled(True)
-                
             except Exception as e:
-                self.carrier_label.setText(f"❌ Error analyzing image: {str(e)}")
+                self.logger.warning(f"Could not load image preview: {e}")
+            
+            # Start asynchronous basic analysis
+            self.start_basic_analysis()
             
             self.check_ready_state()
     
-    def analyze_carrier_delayed(self):
-        """Analyze carrier with delay to avoid blocking UI."""
+    def start_auto_analysis(self):
+        """Start automatic analysis with delay to avoid blocking UI."""
         if self.carrier_image_path:
-            self.analyze_carrier()
+            self.start_detailed_analysis()
     
-    def analyze_carrier(self):
-        """Perform detailed carrier analysis."""
+    def start_basic_analysis(self):
+        """Start basic carrier analysis in background thread."""
+        if not self.carrier_image_path or self.analysis_worker and self.analysis_worker.isRunning():
+            return
+        
+        # Clean up any previous analysis worker
+        if self.analysis_worker:
+            self.analysis_worker.quit()
+            self.analysis_worker.wait()
+        
+        # Show progress indicator
+        self.analysis_progress.setValue(0)
+        self.analysis_progress.show()
+        
+        # Start basic analysis worker
+        self.analysis_worker = CarrierAnalysisWorker(
+            self.enhanced_engine, self.carrier_image_path, "basic"
+        )
+        self.analysis_worker.analysis_completed.connect(self.on_basic_analysis_completed)
+        self.analysis_worker.analysis_failed.connect(self.on_analysis_failed)
+        self.analysis_worker.progress_updated.connect(self.analysis_progress.setValue)
+        self.analysis_worker.status_updated.connect(self.update_carrier_status)
+        self.analysis_worker.start()
+    
+    def start_detailed_analysis(self):
+        """Start detailed carrier analysis in background thread."""
         if not self.carrier_image_path:
             return
         
+        # Disable the analyze button during analysis
+        self.analyze_button.setEnabled(False)
+        self.analyze_button.setText("🔍 Analyzing...")
+        
+        # Clean up any previous analysis worker
+        if self.analysis_worker and self.analysis_worker.isRunning():
+            self.analysis_worker.quit()
+            self.analysis_worker.wait()
+        
+        # Show progress indicator 
+        self.analysis_progress.setValue(0)
+        self.analysis_progress.show()
+        
+        # Start detailed analysis worker
+        self.analysis_worker = CarrierAnalysisWorker(
+            self.enhanced_engine, self.carrier_image_path, "detailed"
+        )
+        self.analysis_worker.analysis_completed.connect(self.on_detailed_analysis_completed)
+        self.analysis_worker.analysis_failed.connect(self.on_analysis_failed)
+        self.analysis_worker.progress_updated.connect(self.analysis_progress.setValue)
+        self.analysis_worker.status_updated.connect(self.update_carrier_status)
+        self.analysis_worker.finished.connect(self.on_analysis_worker_finished)
+        self.analysis_worker.start()
+    
+    def analyze_carrier(self):
+        """Perform detailed carrier analysis (public method for button click)."""
+        self.start_detailed_analysis()
+    
+    def update_carrier_status(self, status):
+        """Update carrier status text during analysis."""
+        if self.carrier_image_path:
+            self.carrier_label.setText(f"🔍 {status}...")
+    
+    def on_basic_analysis_completed(self, results):
+        """Handle completed basic analysis."""
         try:
-            # Enhanced analysis
-            analysis = self.enhanced_engine.analyze_carrier_suitability(self.carrier_image_path)
+            # Hide progress indicator
+            self.analysis_progress.hide()
             
-            # Format analysis results
-            analysis_text = f"""
-🎯 ENHANCED CARRIER ANALYSIS
-
-📊 Basic Metrics:
-• Image Size: {analysis.get('width', 0)} x {analysis.get('height', 0)} pixels
-• Channels: {analysis.get('channels', 0)}
-• Total Capacity: {analysis.get('capacity_mb', 0):.2f} MB
-• Suitability Score: {analysis.get('suitability_score', 0)}/10
-
-🛡️ Anti-Detection Metrics:
-• Complexity Score: {analysis.get('complexity_score', 0):.3f}
-• Secure Capacity: {analysis.get('secure_capacity_bytes', 0):,} bytes
-• Texture Regions: {analysis.get('texture_regions_percent', 0):.1f}%
-• Smooth Regions: {analysis.get('smooth_regions_percent', 0):.1f}%
-• Anti-Detection Score: {analysis.get('anti_detection_score', 0)}/10
-
-💡 Recommendations:
-"""
+            capacity_mb = results.get('capacity_mb', 0)
+            suitability = results.get('suitability_score', 0)
             
-            for rec in analysis.get('recommendations', []):
-                analysis_text += f"• {rec}\n"
+            self.carrier_label.setText(
+                f"✅ {self.carrier_image_path.name}\n"
+                f"📊 Capacity: {capacity_mb:.2f} MB\n"
+                f"⭐ Suitability: {suitability}/10"
+            )
             
-            self.analysis_text.setText(analysis_text.strip())
+            self.analyze_button.setEnabled(True)
             
-            # Get optimal settings
+        except Exception as e:
+            self.logger.error(f"Error processing basic analysis results: {e}")
+            self.on_analysis_failed(str(e))
+    
+    def on_detailed_analysis_completed(self, results):
+        """Handle completed detailed analysis."""
+        try:
+            # Hide progress indicator
+            self.analysis_progress.hide()
+            
+            analysis = results.get('full_analysis', {})
+            analysis_text = results.get('analysis_text', "Analysis completed")
+            
+            # Display analysis results
+            self.analysis_text.setText(analysis_text)
+            
+            # Get optimal settings if files are selected
             if self.files_to_hide:
                 total_size = sum(Path(f).stat().st_size for f in self.files_to_hide if Path(f).exists())
                 optimal = self.enhanced_engine.get_optimal_settings(self.carrier_image_path, total_size)
@@ -757,7 +915,22 @@ class EnhancedHideFilesDialog(QDialog):
             self.tab_widget.setCurrentIndex(2)
             
         except Exception as e:
-            QMessageBox.warning(self, "Analysis Error", f"Failed to analyze carrier: {str(e)}")
+            self.logger.error(f"Error processing detailed analysis results: {e}")
+            self.on_analysis_failed(str(e))
+    
+    def on_analysis_failed(self, error_message):
+        """Handle analysis failure."""
+        # Hide progress indicator
+        self.analysis_progress.hide()
+        
+        self.carrier_label.setText(f"❌ Error analyzing image: {error_message}")
+        self.analyze_button.setEnabled(True)
+        
+    def on_analysis_worker_finished(self):
+        """Handle analysis worker completion."""
+        # Re-enable the analyze button
+        self.analyze_button.setEnabled(True)
+        self.analyze_button.setText("🔍 Analyze Current Carrier")
     
     def create_undetectable_stego(self):
         """Create undetectable steganographic image."""
@@ -1063,9 +1236,20 @@ Average Detection Risk: {overall_assessment.get('average_detection_risk', 0):.3f
     
     def cancel_operation(self):
         """Cancel current operation or close dialog."""
+        # Cancel hide operation if running
         if self.worker_thread and self.worker_thread.isRunning():
             self.worker_thread.cancel()
             self.progress_group.hide()
             self.hide_button.setEnabled(True)
-        else:
+        
+        # Cancel analysis operation if running
+        if self.analysis_worker and self.analysis_worker.isRunning():
+            self.analysis_worker.quit()
+            self.analysis_worker.wait(1000)  # Wait up to 1 second
+            self.analyze_button.setEnabled(True)
+            self.analyze_button.setText("🔍 Analyze Current Carrier")
+        
+        # Close dialog if no operations are running
+        if not ((self.worker_thread and self.worker_thread.isRunning()) or 
+                (self.analysis_worker and self.analysis_worker.isRunning())):
             self.reject()

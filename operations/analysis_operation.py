@@ -23,6 +23,8 @@ class AnalysisOperation(BaseOperation):
         self.operation_type = OperationType.ANALYZE
         self.steg_engine = SteganographyEngine()
         self.image_analyzer = ImageAnalyzer()
+        # Start async warmup to avoid UI freeze on first analysis
+        self.image_analyzer.warmup_async()
         # Note: file_manager, logger, error_handler are inherited from BaseOperation
         
         # Operation parameters

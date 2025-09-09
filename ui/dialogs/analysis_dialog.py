@@ -39,6 +39,7 @@ class AnalysisWorkerThread(QThread):
         
         # Create AnalysisOperation instance
         self.analysis_operation = AnalysisOperation()
+        # ImageAnalyzer warmup is already called in AnalysisOperation.__init__
     
     def cancel(self):
         """Cancel the analysis operation."""

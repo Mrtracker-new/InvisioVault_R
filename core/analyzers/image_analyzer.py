@@ -42,12 +42,24 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 try:
     import numpy as np
     from PIL import Image, ImageFilter, ImageEnhance, ImageStat
-    import cv2
     CORE_DEPS_AVAILABLE = True
 except ImportError as e:
-    print(f"âš ï¸ Core dependencies missing: {e}")
-    print("Install with: pip install numpy pillow opencv-python")
+    print(f"⚠️ Core dependencies missing: {e}")
+    print("Install with: pip install numpy pillow")
     CORE_DEPS_AVAILABLE = False
+
+# Lazy OpenCV import to avoid UI freeze on first-time import
+_cv2_module = None
+
+def _ensure_cv2():
+    global _cv2_module
+    if _cv2_module is None:
+        try:
+            import cv2 as _cv2
+            _cv2_module = _cv2
+        except ImportError as e:
+            raise RuntimeError("OpenCV (cv2) is required for edge/sharpness operations. Install with: pip install opencv-python") from e
+    return _cv2_module
 
 # Advanced scientific computing
 try:
@@ -172,7 +184,8 @@ class ImageAnalyzer:
         # Thread pool for parallel processing
         if self.enable_parallel:
             self.thread_pool = ThreadPoolExecutor(max_workers=self.max_workers)
-            self.process_pool = ProcessPoolExecutor(max_workers=min(4, self.max_workers))
+            # Defer expensive process pool creation until first actual use
+            self.process_pool = None
         else:
             self.thread_pool = None
             self.process_pool = None
@@ -187,6 +200,15 @@ class ImageAnalyzer:
         self.logger.info(f"Parallel processing: {'enabled' if self.enable_parallel else 'disabled'}")
         self.logger.info(f"Advanced features: {'enabled' if ADVANCED_DEPS_AVAILABLE else 'disabled'}")
         self.logger.info(f"ML features: {'enabled' if ML_AVAILABLE else 'disabled'}")
+
+        # Non-blocking background warmup hook (optional)
+        self._warmed_up = False
+    
+    def _ensure_process_pool(self):
+        """Lazy initialization of ProcessPoolExecutor to avoid startup delay."""
+        if self.enable_parallel and self.process_pool is None:
+            self.process_pool = ProcessPoolExecutor(max_workers=min(4, self.max_workers))
+        return self.process_pool
     
     def __del__(self):
         """Cleanup resources."""
@@ -813,7 +835,8 @@ class ImageAnalyzer:
         else:
             gray = img_array
         
-        # Edge detection
+        # Edge detection (lazy import of OpenCV)
+        cv2 = _ensure_cv2()
         edges = cv2.Canny((gray * 255).astype(np.uint8), 100, 200)
         
         # Divide into blocks and compute edge density
@@ -1182,7 +1205,8 @@ class ImageAnalyzer:
             else:
                 gray = img_array
             
-            # Laplacian variance (standard sharpness measure)
+            # Laplacian variance (standard sharpness measure) using lazy OpenCV import
+            cv2 = _ensure_cv2()
             laplacian_var = float(cv2.Laplacian(gray.astype(np.uint8), cv2.CV_64F).var())
             
             # Gradient magnitude
@@ -1922,6 +1946,44 @@ class ImageAnalyzer:
             self.logger.error(f"Image similarity comparison failed: {e}")
             return {'error': str(e)}
     
+    def warmup_async(self) -> None:
+        """Preload heavy dependencies in a background thread to avoid UI freeze on first use.
+        Safe to call multiple times; subsequent calls are no-ops.
+        """
+        if getattr(self, '_warmed_up', False):
+            return
+
+        def _warmup():
+            try:
+                # Trigger lazy cv2 import
+                try:
+                    _ = _ensure_cv2()
+                except Exception:
+                    pass
+                # Light-touch numpy ops to allocate internal caches
+                try:
+                    _ = np.fft.fft(np.zeros(8))
+                except Exception:
+                    pass
+                # Touch advanced deps if available to compile C-extensions
+                try:
+                    if ADVANCED_DEPS_AVAILABLE:
+                        from scipy import fftpack as _fp  # noqa: F401
+                        from skimage import color as _col  # noqa: F401
+                except Exception:
+                    pass
+                # Touch ML deps if available
+                try:
+                    if ML_AVAILABLE:
+                        from sklearn.ensemble import IsolationForest  # noqa: F401
+                except Exception:
+                    pass
+            finally:
+                self._warmed_up = True
+
+        t = threading.Thread(target=_warmup, name="ImageAnalyzerWarmup", daemon=True)
+        t.start()
+
     def batch_analyze(self, image_paths: List[Union[str, Path]], 
                      analysis_level: AnalysisLevel = AnalysisLevel.FAST,
                      max_parallel: int = None) -> Dict[str, Any]:
