@@ -330,6 +330,7 @@ temp_files/
 archives/
 backups/
 backup/
+docs_ignore/
 
 # Image files (potential carriers or outputs)
 # NOTE: Uncomment if you want to exclude all images
