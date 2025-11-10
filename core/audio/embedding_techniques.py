@@ -146,13 +146,12 @@ class LSBEmbedding(BaseEmbeddingTechnique):
                 self.logger.error("Insufficient embedding positions")
                 return None
             
-            # Embed bits
-            flat_audio = audio_int.flatten()  # int16 view
-            # CRITICAL FIX: Perform bitwise ops in unsigned 16-bit space to avoid Python int overflow
+            # Embed bits using uint16 to avoid int16 overflow
+            flat_audio = audio_int.flatten()
             flat_uint = flat_audio.view(np.uint16)
             for i, pos in enumerate(positions[:len(data_bits)]):
                 if pos < flat_uint.size:
-                    # Clear LSB and set data bit using uint16-safe operations
+                    # Clear LSB and set data bit
                     flat_uint[pos] = (flat_uint[pos] & np.uint16(0xFFFE)) | np.uint16(data_bits[i])
             
             # Reshape and convert back to float
@@ -185,7 +184,7 @@ class LSBEmbedding(BaseEmbeddingTechnique):
             audio_int = self._float_to_int16(audio_data)
             channels, samples = audio_int.shape
             
-            # CRITICAL FIX for randomization: Use two-phase extraction when size is unknown
+            # Use two-phase extraction when size is unknown and randomized
             if expected_size is None and self.randomize:
                 self.logger.debug("Using two-phase extraction for randomized positions")
                 
