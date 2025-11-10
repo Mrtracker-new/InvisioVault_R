@@ -5,7 +5,6 @@ This module provides robust audio file handling, format conversion, and validati
 capabilities optimized for steganographic operations.
 """
 
-import os
 import numpy as np
 import warnings
 from pathlib import Path
@@ -21,11 +20,10 @@ try:
     import librosa
     import soundfile as sf
     from pydub import AudioSegment
-    from scipy import signal
     AUDIO_LIBS_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Audio dependencies not available: {e}")
-    print("Please install: pip install librosa soundfile pydub scipy")
+    print("Please install: pip install librosa soundfile pydub")
     AUDIO_LIBS_AVAILABLE = False
 
 from utils.logger import Logger
@@ -237,10 +235,8 @@ class AudioProcessor:
             for warning in format_warnings:
                 self.logger.warning(warning)
             
-            # CRITICAL: DO NOT normalize audio for steganography!
-            # Normalization (scaling) destroys LSB data by multiplying samples.
-            # Audio has already been prepared with proper levels during embedding.
-            # audio_data = self._normalize_audio(audio_data)  # DISABLED FOR STEGO
+            # Skip normalization to preserve LSB steganographic data
+            # audio_data = self._normalize_audio(audio_data)
             
             # Try soundfile first for lossless formats
             if output_path.suffix.lower() in self.LOSSLESS_FORMATS:
@@ -502,8 +498,7 @@ class AudioProcessor:
     
     def _load_with_soundfile(self, audio_path: Path, target_sr: Optional[int] = None) -> Tuple[np.ndarray, int]:
         """Load audio using soundfile library."""
-        # CRITICAL FIX: Load as int16 dtype to preserve LSB data for steganography!
-        # Default float loading destroys LSB precision through rounding errors
+        # Load as int16 to preserve LSB data for steganography
         audio_data, sample_rate = sf.read(str(audio_path), always_2d=False, dtype='int16')
         
         # Handle channel dimension
@@ -512,7 +507,7 @@ class AudioProcessor:
         else:
             audio_data = audio_data.reshape(1, -1)  # Mono -> (1, samples)
         
-        # CRITICAL: Convert int16 to float32 BEFORE resampling to preserve precision
+        # Convert to float32 for processing
         audio_float = audio_data.astype(np.float32) / 32767.0
         
         # Resample if needed
@@ -574,17 +569,13 @@ class AudioProcessor:
             else:
                 save_data = audio_data
             
-            # CRITICAL FIX: Save int16 directly to preserve exact LSB bit patterns!
-            # DO NOT convert to float, as float→int16 conversion loses precision
+            # Save int16 directly to preserve LSB bit patterns
             format_ext = output_path.suffix.lower().lstrip('.')
             if format_ext in ['wav', 'flac']:
-                # Convert to 16-bit integer directly
-                # CRITICAL: Clip before conversion to prevent overflow
+                # Clip and convert to 16-bit integer
                 clipped_data = np.clip(save_data, -1.0, 1.0)
                 save_data_int16 = (clipped_data * 32767).astype(np.int16)
                 
-                # CRITICAL: Save int16 directly, not float!
-                # This preserves exact bit patterns for LSB steganography
                 sf.write(
                     str(output_path),
                     save_data_int16,
@@ -616,8 +607,7 @@ class AudioProcessor:
                 channels, samples = 1, len(audio_data)
                 audio_data = audio_data.reshape(1, -1)
             
-            # Convert to int16
-            # CRITICAL FIX: Clip before conversion to prevent int16 overflow
+            # Clip and convert to int16
             clipped_audio = np.clip(audio_data, -1.0, 1.0)
             audio_int16 = (clipped_audio * 32767).astype(np.int16)
             
@@ -648,8 +638,7 @@ class AudioProcessor:
             
             if format_ext in ['wav', 'flac']:
                 if format_ext == 'flac':
-                    # CRITICAL FIX: Use minimum compression for steganography precision
-                    # High compression can interfere with LSB data integrity
+                    # Use minimum compression to preserve LSB data
                     export_params['parameters'] = ['-compression_level', '0']
             else:
                 export_params['bitrate'] = '320k'
