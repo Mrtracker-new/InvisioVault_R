@@ -626,13 +626,14 @@ class VideoSteganographyEngine:
             # Copy audio from original video if present
             audio_streams = [s for s in probe['streams'] if s['codec_type'] == 'audio']
             
-            # Use libx264 with lossless settings to preserve LSB data
+            # Use FFV1 codec to truly preserve LSB data  
+            # FFV1 with bgr0 preserves exact RGB pixel values (100% LSB preservation)
             encoding_params = {
-                'vcodec': 'libx264',      # H.264 codec
-                'qp': 0,                  # Lossless quality
-                'preset': 'veryslow',     # Best compression
-                'pix_fmt': 'yuv444p',     # 4:4:4 chroma (no color loss)
-                'movflags': 'faststart',
+                'vcodec': 'ffv1',         # FFV1 lossless codec
+                'level': 3,               # FFV1 version 3 (best compression)
+                'pix_fmt': 'bgr0',        # BGRA format (4 channels)
+                'slices': 24,             # Enable parallel processing
+                'slicecrc': 1,            # Enable CRC error detection
             }
             
             if audio_streams:
