@@ -3,8 +3,6 @@ Video Steganography Engine
 Implements advanced video steganography techniques for hiding data in video files.
 """
 
-import os
-import sys
 import tempfile
 import shutil
 import struct
@@ -628,14 +626,12 @@ class VideoSteganographyEngine:
             # Copy audio from original video if present
             audio_streams = [s for s in probe['streams'] if s['codec_type'] == 'audio']
             
-            # CRITICAL FIX: Use libx264 with truly lossless settings (qp=0)
-            # FFV1 was causing pixel format conversion issues between BGR and BGRA
-            # libx264 with qp=0 provides perfect lossless encoding with proper BGR24 support
+            # Use libx264 with lossless settings to preserve LSB data
             encoding_params = {
-                'vcodec': 'libx264',      # H.264 codec with lossless mode
-                'qp': 0,                  # CRITICAL: qp=0 means completely lossless
-                'preset': 'veryslow',     # Best compression for lossless
-                'pix_fmt': 'yuv444p',     # 4:4:4 chroma subsampling (no color loss)
+                'vcodec': 'libx264',      # H.264 codec
+                'qp': 0,                  # Lossless quality
+                'preset': 'veryslow',     # Best compression
+                'pix_fmt': 'yuv444p',     # 4:4:4 chroma (no color loss)
                 'movflags': 'faststart',
             }
             
