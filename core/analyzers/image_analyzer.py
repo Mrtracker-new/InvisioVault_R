@@ -68,12 +68,21 @@ try:
     import scipy.signal
     import scipy.stats
     from scipy.fftpack import dct, idct
-    from skimage import feature, measure, filters, color, segmentation
-    from skimage.feature import local_binary_pattern, graycomatrix, graycoprops
-    from skimage.filters import gabor
+    from skimage import feature, measure  # type: ignore
+    from skimage.feature import local_binary_pattern, graycomatrix, graycoprops  # type: ignore
+    try:
+        from skimage import filters, color, segmentation  # type: ignore
+        from skimage.filters import gabor  # type: ignore
+    except ImportError:
+        filters = None  # type: ignore
+        color = None  # type: ignore
+        segmentation = None  # type: ignore
+        gabor = None  # type: ignore
     ADVANCED_DEPS_AVAILABLE = True
 except ImportError:
     ADVANCED_DEPS_AVAILABLE = False
+    color = None  # type: ignore
+    filters = None  # type: ignore
 
 # Machine Learning (optional)
 try:
@@ -158,7 +167,7 @@ class ImageAnalyzer:
                  enable_gpu: bool = True,
                  enable_parallel: bool = True,
                  cache_size: int = 128,
-                 max_workers: int = None):
+                 max_workers: Optional[int] = None):
         """
         Initialize the enhanced image analyzer.
         
@@ -227,9 +236,9 @@ class ImageAnalyzer:
     def analyze_image_advanced(self, 
                              image_path: Union[str, Path],
                              analysis_level: AnalysisLevel = AnalysisLevel.BALANCED,
-                             color_spaces: List[ColorSpace] = None,
+                             color_spaces: Optional[List[ColorSpace]] = None,
                              enable_ml: bool = True,
-                             progress_callback: Callable[[float], None] = None) -> Dict[str, Any]:
+                             progress_callback: Optional[Callable[[float], None]] = None) -> Dict[str, Any]:
         """
         Perform advanced image analysis using modern computer vision techniques.
         
@@ -407,13 +416,13 @@ class ImageAnalyzer:
             elif color_space == ColorSpace.HSV:
                 if self.enable_gpu and GPU_AVAILABLE:
                     # GPU-accelerated conversion
-                    arrays['hsv'] = self._rgb_to_hsv_gpu(rgb_array)
+                    arrays['hsv'] = self._rgb_to_hsv_cpu(rgb_array)
                 else:
                     hsv_img = optimized_img.convert('HSV')
                     arrays['hsv'] = np.array(hsv_img)
             elif color_space == ColorSpace.LAB:
-                if ADVANCED_DEPS_AVAILABLE:
-                    arrays['lab'] = color.rgb2lab(rgb_array)
+                if ADVANCED_DEPS_AVAILABLE and color is not None:
+                    arrays['lab'] = color.rgb2lab(rgb_array)  # type: ignore
                 else:
                     arrays['lab'] = rgb_array  # Fallback
             elif color_space == ColorSpace.GRAY:
@@ -446,13 +455,13 @@ class ImageAnalyzer:
     
     def _analyze_texture_advanced(self, img_array: np.ndarray, analysis_level: AnalysisLevel) -> Dict[str, Any]:
         """Advanced texture analysis using multiple methods."""
-        if not ADVANCED_DEPS_AVAILABLE:
+        if not ADVANCED_DEPS_AVAILABLE or color is None:
             return {'error': 'Advanced dependencies required for texture analysis'}
         
         try:
             # Convert to grayscale for texture analysis
             if len(img_array.shape) == 3:
-                gray = color.rgb2gray(img_array)
+                gray = color.rgb2gray(img_array)  # type: ignore
             else:
                 gray = img_array
             
@@ -496,8 +505,8 @@ class ImageAnalyzer:
                     glcm = graycomatrix(gray_quantized, distances=[distance], 
                                      angles=angles, levels=64, symmetric=True, normed=True)
                     
-                    for prop_name in glcm_props.keys():
-                        prop_values = graycoprops(glcm, prop_name)
+                for prop_name in glcm_props.keys():
+                        prop_values = graycoprops(glcm, prop_name)  # type: ignore
                         glcm_props[prop_name].extend(prop_values.flatten().tolist())
                 
                 # Calculate statistics for each property
@@ -513,14 +522,14 @@ class ImageAnalyzer:
                 results['glcm_analysis'] = glcm_stats
             
             # Gabor filter responses (for research level)
-            if analysis_level == AnalysisLevel.RESEARCH:
+            if analysis_level == AnalysisLevel.RESEARCH and gabor is not None:
                 gabor_responses = []
                 frequencies = [0.1, 0.3, 0.5]
                 angles = [0, 45, 90, 135]
                 
                 for freq in frequencies:
                     for angle in angles:
-                        filtered_real, _ = gabor(gray, frequency=freq, theta=np.deg2rad(angle))
+                        filtered_real, _ = gabor(gray, frequency=freq, theta=np.deg2rad(angle))  # type: ignore
                         response_stats = {
                             'frequency': freq,
                             'angle': angle,
@@ -1314,7 +1323,7 @@ class ImageAnalyzer:
             results['overall_assessment'] = {
                 'average_lsb_entropy': float(avg_entropy),
                 'average_ratio_deviation': float(avg_ratio_deviation),
-                'steganography_likelihood': self._assess_stego_likelihood(avg_entropy, avg_ratio_deviation)
+                'steganography_likelihood': self._assess_stego_likelihood(float(avg_entropy), float(avg_ratio_deviation))
             }
             
             return results
@@ -1969,7 +1978,8 @@ class ImageAnalyzer:
                 try:
                     if ADVANCED_DEPS_AVAILABLE:
                         from scipy import fftpack as _fp  # noqa: F401
-                        from skimage import color as _col  # noqa: F401
+                        if color is not None:
+                            pass  # color already imported
                 except Exception:
                     pass
                 # Touch ML deps if available
@@ -1986,7 +1996,7 @@ class ImageAnalyzer:
 
     def batch_analyze(self, image_paths: List[Union[str, Path]], 
                      analysis_level: AnalysisLevel = AnalysisLevel.FAST,
-                     max_parallel: int = None) -> Dict[str, Any]:
+                     max_parallel: Optional[int] = None) -> Dict[str, Any]:
         """Batch analyze multiple images with parallel processing."""
         try:
             if not self.enable_parallel:
@@ -2163,21 +2173,14 @@ class ImageAnalyzer:
         return self.get_analysis_summary_enhanced(results)
 
 
-# GPU acceleration helpers (if available)
-if GPU_AVAILABLE:
-    def _rgb_to_hsv_gpu(self, rgb_array: np.ndarray) -> np.ndarray:
-        """GPU-accelerated RGB to HSV conversion."""
+    def _rgb_to_hsv_cpu(self, rgb_array: np.ndarray) -> np.ndarray:
+        """CPU RGB to HSV conversion."""
         try:
-            rgb_gpu = cp.asarray(rgb_array)
-            # Simplified HSV conversion on GPU
-            # This is a basic implementation - could be optimized further
-            hsv_gpu = cp.zeros_like(rgb_gpu)
-            # ... GPU conversion logic here ...
-            return cp.asnumpy(hsv_gpu)
-        except Exception as e:
-            # Fallback to CPU
+            cv2 = _ensure_cv2()
             return cv2.cvtColor(rgb_array.astype(np.uint8), cv2.COLOR_RGB2HSV)
-else:
-    def _rgb_to_hsv_gpu(self, rgb_array: np.ndarray) -> np.ndarray:
-        """Fallback CPU RGB to HSV conversion."""
-        return cv2.cvtColor(rgb_array.astype(np.uint8), cv2.COLOR_RGB2HSV)
+        except Exception:
+            # Fallback to PIL
+            from PIL import Image
+            img = Image.fromarray(rgb_array.astype(np.uint8), mode='RGB')
+            hsv_img = img.convert('HSV')
+            return np.array(hsv_img)
