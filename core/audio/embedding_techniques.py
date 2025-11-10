@@ -147,11 +147,13 @@ class LSBEmbedding(BaseEmbeddingTechnique):
                 return None
             
             # Embed bits
-            flat_audio = audio_int.flatten()
+            flat_audio = audio_int.flatten()  # int16 view
+            # CRITICAL FIX: Perform bitwise ops in unsigned 16-bit space to avoid Python int overflow
+            flat_uint = flat_audio.view(np.uint16)
             for i, pos in enumerate(positions[:len(data_bits)]):
-                if pos < len(flat_audio):
-                    # Clear LSB and set data bit
-                    flat_audio[pos] = (flat_audio[pos] & 0xFFFE) | data_bits[i]
+                if pos < flat_uint.size:
+                    # Clear LSB and set data bit using uint16-safe operations
+                    flat_uint[pos] = (flat_uint[pos] & np.uint16(0xFFFE)) | np.uint16(data_bits[i])
             
             # Reshape and convert back to float
             modified_audio = flat_audio.reshape(channels, samples)
@@ -333,7 +335,11 @@ class LSBEmbedding(BaseEmbeddingTechnique):
     
     def _float_to_int16(self, audio_data: np.ndarray) -> np.ndarray:
         """Convert float audio to 16-bit integer."""
-        return (audio_data * 32767).astype(np.int16)
+        # CRITICAL FIX: Clip values to [-1.0, 1.0] range before conversion
+        # Audio values can sometimes exceed ±1.0 due to processing/modification
+        # Without clipping, values > 1.0 would overflow int16 range (-32768 to 32767)
+        clipped_audio = np.clip(audio_data, -1.0, 1.0)
+        return (clipped_audio * 32767).astype(np.int16)
     
     def _int16_to_float(self, audio_data: np.ndarray) -> np.ndarray:
         """Convert 16-bit integer audio to float."""
