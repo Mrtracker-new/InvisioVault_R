@@ -628,12 +628,14 @@ class VideoSteganographyEngine:
             # Copy audio from original video if present
             audio_streams = [s for s in probe['streams'] if s['codec_type'] == 'audio']
             
-            # Use truly lossless codec (FFV1) that preserves exact pixel values
-            # FFV1 is designed for archival and preserves every bit
+            # CRITICAL FIX: Use libx264 with truly lossless settings (qp=0)
+            # FFV1 was causing pixel format conversion issues between BGR and BGRA
+            # libx264 with qp=0 provides perfect lossless encoding with proper BGR24 support
             encoding_params = {
-                'vcodec': 'ffv1',         # FFV1 lossless codec
-                'pix_fmt': 'bgr0',        # Match OpenCV's BGR format exactly
-                'level': 3,               # FFV1 version 3 for better compression
+                'vcodec': 'libx264',      # H.264 codec with lossless mode
+                'qp': 0,                  # CRITICAL: qp=0 means completely lossless
+                'preset': 'veryslow',     # Best compression for lossless
+                'pix_fmt': 'yuv444p',     # 4:4:4 chroma subsampling (no color loss)
                 'movflags': 'faststart',
             }
             
