@@ -237,8 +237,10 @@ class AudioProcessor:
             for warning in format_warnings:
                 self.logger.warning(warning)
             
-            # Normalize audio data
-            audio_data = self._normalize_audio(audio_data)
+            # CRITICAL: DO NOT normalize audio for steganography!
+            # Normalization (scaling) destroys LSB data by multiplying samples.
+            # Audio has already been prepared with proper levels during embedding.
+            # audio_data = self._normalize_audio(audio_data)  # DISABLED FOR STEGO
             
             # Try soundfile first for lossless formats
             if output_path.suffix.lower() in self.LOSSLESS_FORMATS:
@@ -500,7 +502,9 @@ class AudioProcessor:
     
     def _load_with_soundfile(self, audio_path: Path, target_sr: Optional[int] = None) -> Tuple[np.ndarray, int]:
         """Load audio using soundfile library."""
-        audio_data, sample_rate = sf.read(str(audio_path), always_2d=False)
+        # CRITICAL FIX: Load as int16 dtype to preserve LSB data for steganography!
+        # Default float loading destroys LSB precision through rounding errors
+        audio_data, sample_rate = sf.read(str(audio_path), always_2d=False, dtype='int16')
         
         # Handle channel dimension
         if audio_data.ndim == 2:
@@ -508,12 +512,15 @@ class AudioProcessor:
         else:
             audio_data = audio_data.reshape(1, -1)  # Mono -> (1, samples)
         
+        # CRITICAL: Convert int16 to float32 BEFORE resampling to preserve precision
+        audio_float = audio_data.astype(np.float32) / 32767.0
+        
         # Resample if needed
         if target_sr and target_sr != sample_rate:
-            audio_data = librosa.resample(audio_data, orig_sr=sample_rate, target_sr=target_sr)
+            audio_float = librosa.resample(audio_float, orig_sr=sample_rate, target_sr=target_sr)
             sample_rate = target_sr
         
-        return audio_data.astype(np.float32), int(sample_rate)
+        return audio_float, int(sample_rate)
     
     def _load_with_librosa(self, audio_path: Path, target_sr: Optional[int] = None) -> Tuple[np.ndarray, int]:
         """Load audio using librosa library."""
@@ -567,29 +574,30 @@ class AudioProcessor:
             else:
                 save_data = audio_data
             
-            # CRITICAL FIX: For LSB steganography, we need to preserve exact bit patterns
-            # Convert to 16-bit integer first, then back to float to ensure consistency
-            # This prevents floating-point precision issues from corrupting LSB data
+            # CRITICAL FIX: Save int16 directly to preserve exact LSB bit patterns!
+            # DO NOT convert to float, as float→int16 conversion loses precision
             format_ext = output_path.suffix.lower().lstrip('.')
             if format_ext in ['wav', 'flac']:
-                # Convert to 16-bit integer and back to ensure exact LSB preservation
-                save_data_int16 = (save_data * 32767).astype(np.int16)
-                save_data = save_data_int16.astype(np.float32) / 32767.0
+                # Convert to 16-bit integer directly
+                # CRITICAL: Clip before conversion to prevent overflow
+                clipped_data = np.clip(save_data, -1.0, 1.0)
+                save_data_int16 = (clipped_data * 32767).astype(np.int16)
+                
+                # CRITICAL: Save int16 directly, not float!
+                # This preserves exact bit patterns for LSB steganography
+                sf.write(
+                    str(output_path),
+                    save_data_int16,
+                    sample_rate,
+                    subtype='PCM_16'
+                )
+                return output_path.exists() and output_path.stat().st_size > 0
             
-            # Determine subtype based on format
-            # Use 16-bit PCM for LSB steganography compatibility
-            if format_ext == 'wav':
-                subtype = 'PCM_16'  # Use 16-bit for LSB compatibility
-            elif format_ext == 'flac':
-                subtype = 'PCM_16'  # Use 16-bit for consistency
-            else:
-                subtype = None
-            
+            # For other formats, use default float saving
             sf.write(
                 str(output_path),
                 save_data,
-                sample_rate,
-                subtype=subtype
+                sample_rate
             )
             
             return output_path.exists() and output_path.stat().st_size > 0
@@ -609,7 +617,9 @@ class AudioProcessor:
                 audio_data = audio_data.reshape(1, -1)
             
             # Convert to int16
-            audio_int16 = (audio_data * 32767).astype(np.int16)
+            # CRITICAL FIX: Clip before conversion to prevent int16 overflow
+            clipped_audio = np.clip(audio_data, -1.0, 1.0)
+            audio_int16 = (clipped_audio * 32767).astype(np.int16)
             
             if channels == 1:
                 # Mono
